@@ -119,7 +119,9 @@ export const create_expert_requests_api = (supabase) => ({
 		);
 
 		// 한국 시간 기준 오늘 날짜 (YYYY-MM-DD 형식)
-		const today = new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Seoul' });
+		const today = new Date().toLocaleDateString('sv-SE', {
+			timeZone: 'Asia/Seoul',
+		});
 
 		let query = supabase
 			.from('expert_requests')
@@ -509,7 +511,9 @@ export const create_expert_requests_api = (supabase) => ({
 
 		// 3. 수수료 계산
 		const commission_rate = request.commission_rate || 0.05;
-		const commission_amount = Math.floor(request.reward_amount * commission_rate);
+		const commission_amount = Math.floor(
+			request.reward_amount * commission_rate,
+		);
 		const expert_payout = request.reward_amount - commission_amount;
 
 		// 4. 상태 업데이트 + 수수료 기록
@@ -563,5 +567,47 @@ export const create_expert_requests_api = (supabase) => ({
 			commission_amount,
 			expert_payout,
 		};
+	},
+
+	// 입금 대기 중인 공고 목록 조회 (관리자용)
+	select_pending_payments: async () => {
+		const { data, error } = await supabase
+			.from('expert_requests')
+			.select(
+				`
+				*,
+				users:requester_id(id, handle, name, avatar_url, email),
+				expert:selected_expert_id(id, handle, name, avatar_url),
+				expert_request_proposals!request_id(
+					id,
+					expert_id,
+					message,
+					status,
+					created_at,
+					contact_info,
+					proposed_amount,
+					users:expert_id(id, handle, name, avatar_url)
+				)
+			`,
+			)
+			.eq('status', 'pending_payment')
+			.is('deleted_at', null)
+			.order('created_at', { ascending: false });
+
+		if (error)
+			throw new Error(`Failed to select pending payments: ${error.message}`);
+
+		// 전문가 정보를 expert_request_proposals에서 accepted된 것으로 설정
+		const processed_data = data?.map((request) => {
+			const accepted_proposal = request.expert_request_proposals?.find(
+				(p) => p.status === 'accepted',
+			);
+			if (accepted_proposal?.users) {
+				request.expert = accepted_proposal.users;
+			}
+			return request;
+		});
+
+		return processed_data || [];
 	},
 });

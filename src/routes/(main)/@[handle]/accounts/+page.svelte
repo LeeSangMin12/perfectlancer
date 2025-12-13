@@ -89,7 +89,7 @@
 		>
 			<div class="flex items-center">
 				<RiContactsLine size={22} color={colors.gray[600]} class="mr-3" />
-				<span>연락처 관리</span>
+				<span>결제 정보 관리</span>
 			</div>
 			<RiArrowRightSLine size={20} color={colors.gray[400]} />
 		</a>

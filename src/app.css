@@ -12,6 +12,9 @@
 	--color-error: #f82349;
 }
 
+/* ============================================
+   Font Settings
+   ============================================ */
 :root {
 	font-family:
 		'Pretendard Variable',
@@ -33,43 +36,24 @@
 }
 
 pre {
-	font-family:
-		'Pretendard Variable',
-		Pretendard,
-		-apple-system,
-		BlinkMacSystemFont,
-		system-ui,
-		Roboto,
-		'Helvetica Neue',
-		'Segoe UI',
-		'Apple SD Gothic Neo',
-		'Noto Sans KR',
-		'Malgun Gothic',
-		'Apple Color Emoji',
-		'Segoe UI Emoji',
-		'Segoe UI Symbol',
-		sans-serif;
+	font-family: inherit;
+	white-space: pre-wrap;
+	word-wrap: break-word;
+	overflow-wrap: break-word;
 }
 
+body {
+	text-rendering: optimizeSpeed;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+}
+
+/* ============================================
+   Layout & Safe Area
+   ============================================ */
 main {
 	padding-bottom: calc(env(safe-area-inset-bottom) + 100px);
 	padding-bottom: calc(constant(safe-area-inset-bottom) + 100px);
-}
-
-/* 없으면 margin,padding이 적용이 안됨 */
-*::before,
-*::after {
-	margin: 0;
-	padding: 0;
-}
-
-/* 숫자 입력 시 스핀 버튼 제거 */
-@layer base {
-	input[type='number']::-webkit-inner-spin-button,
-	input[type='number']::-webkit-outer-spin-button {
-		-webkit-appearance: none;
-		margin: 0;
-	}
 }
 
 .pt-safe {
@@ -82,70 +66,47 @@ main {
 	padding-bottom: constant(safe-area-inset-bottom);
 }
 
-/* Hide scrollbar for Chrome, Safari and Opera */
-.scrollbar-hide::-webkit-scrollbar {
-	display: none;
-}
-.scrollbar-hide {
-	-ms-overflow-style: none; /* IE and Edge */
-	scrollbar-width: none; /* Firefox */
-}
-
-.btn {
-	@apply shadow-none;
-}
-.btn-gray {
-	@apply border-none bg-gray-200;
+/* ============================================
+   Base Resets
+   ============================================ */
+*::before,
+*::after {
+	margin: 0;
+	padding: 0;
 }
 
-/* Performance optimizations */
+@layer base {
+	input[type='number']::-webkit-inner-spin-button,
+	input[type='number']::-webkit-outer-spin-button {
+		-webkit-appearance: none;
+		margin: 0;
+	}
+}
+
 img {
 	max-width: 100%;
 	height: auto;
 }
 
-/* Reduce layout shift */
-.aspect-ratio-16-9 {
-	aspect-ratio: 16 / 9;
+/* ============================================
+   Utility Classes
+   ============================================ */
+.scrollbar-hide {
+	-ms-overflow-style: none;
+	scrollbar-width: none;
 }
 
-/* Critical CSS for LCP optimization */
-.line-clamp-8 {
-	display: -webkit-box;
-	-webkit-line-clamp: 8;
-	-webkit-box-orient: vertical;
-	overflow: hidden;
+.scrollbar-hide::-webkit-scrollbar {
+	display: none;
 }
 
-.max-h-32 {
-	max-height: 8rem;
+/* ============================================
+   Component Overrides
+   ============================================ */
+.btn {
+	@apply shadow-none;
 }
 
-/* Prevent layout shifts */
-.animate-pulse {
-	animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-}
-
-@keyframes pulse {
-	0%,
-	100% {
-		opacity: 1;
-	}
-	50% {
-		opacity: 0.5;
-	}
-}
-
-/* Optimize text rendering */
-body {
-	text-rendering: optimizeSpeed;
-	-webkit-font-smoothing: antialiased;
-	-moz-osx-font-smoothing: grayscale;
-}
-
-/* Critical content optimization */
-pre {
-	white-space: pre-wrap;
-	word-wrap: break-word;
-	overflow-wrap: break-word;
+.btn-gray {
+	@apply border-none bg-gray-200;
 }
