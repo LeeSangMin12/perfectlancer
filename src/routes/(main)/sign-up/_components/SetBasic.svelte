@@ -1,24 +1,18 @@
 <script>
-	export let data;
-	export let handle_error;
-	export let email_error;
+	let {
+		data = $bindable(),
+		handle_error = $bindable(false),
+		email_error = $bindable(false),
+	} = $props();
 
 	const validate_handle = (value) => {
 		const regex = /^[a-zA-Z0-9._]+$/;
-		if (!regex.test(value)) {
-			handle_error = true;
-		} else {
-			handle_error = false;
-		}
+		handle_error = !regex.test(value);
 	};
 
 	const validate_email = (value) => {
 		const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-		if (!regex.test(value)) {
-			email_error = true;
-		} else {
-			email_error = false;
-		}
+		email_error = !regex.test(value);
 	};
 </script>
 

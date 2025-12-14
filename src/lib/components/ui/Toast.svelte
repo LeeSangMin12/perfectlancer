@@ -1,6 +1,5 @@
 <script>
-	export let message;
-	export let type = 'success';
+	let { message, type = 'success' } = $props();
 </script>
 
 <div class="flex items-center">

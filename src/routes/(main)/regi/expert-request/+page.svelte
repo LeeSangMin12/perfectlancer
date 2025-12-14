@@ -15,7 +15,7 @@
 	import Date_range_picker from '$lib/components/ui/Date_range_picker.svelte';
 	import Header from '$lib/components/ui/Header.svelte';
 	import Modal from '$lib/components/ui/Modal.svelte';
-	import SimpleEditor from '$lib/components/tiptap-templates/simple/simple-editor.svelte';
+	import SimpleEditor from '$lib/components/shared/tiptap-templates/simple/simple-editor.svelte';
 
 	import { update_global_store } from '$lib/store/global_store.js';
 
@@ -242,20 +242,22 @@
 </svelte:head>
 
 <Header>
-	<button
-		slot="left"
-		onclick={() => {
-			if (current_step > 1) {
-				go_to_prev_step();
-			} else {
-				smart_go_back();
-			}
-		}}
-	>
-		<RiArrowLeftSLine size={28} color={colors.gray[600]} />
-	</button>
-
-	<h1 slot="center" class="font-semibold">{TITLE}</h1>
+	{#snippet left()}
+		<button
+			onclick={() => {
+				if (current_step > 1) {
+					go_to_prev_step();
+				} else {
+					smart_go_back();
+				}
+			}}
+		>
+			<RiArrowLeftSLine size={28} color={colors.gray[600]} />
+		</button>
+	{/snippet}
+	{#snippet center()}
+		<h1 class="font-semibold">{TITLE}</h1>
+	{/snippet}
 </Header>
 <!-- Progress bar -->
 <div class="mb-4">

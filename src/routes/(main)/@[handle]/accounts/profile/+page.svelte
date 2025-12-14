@@ -28,12 +28,14 @@
 </svelte:head>
 
 <Header>
-	<div slot="left">
+	{#snippet left()}
 		<a class="flex items-center" href={`/@${me?.handle}/accounts`}>
 			<RiArrowLeftSLine size={24} color={colors.gray[800]} />
 		</a>
-	</div>
-	<h1 slot="center" class="font-semibold">{TITLE}</h1>
+	{/snippet}
+	{#snippet center()}
+		<h1 class="font-semibold">{TITLE}</h1>
+	{/snippet}
 </Header>
 
 <main>

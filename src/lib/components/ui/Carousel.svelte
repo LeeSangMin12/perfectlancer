@@ -3,42 +3,44 @@
 
 	import Icon from './Icon.svelte';
 
-	export let images = [];
+	let { images = [] } = $props();
 
-	let currentIndex = 0;
-	const maxDots = 5;
-	let showModal = false;
-	let modalImage = '';
+	let current_index = $state(0);
+	const MAX_DOTS = 5;
+	let show_modal = $state(false);
+	let modal_image = $state('');
 
-	const goToSlide = (i) => {
-		currentIndex = i;
+	const go_to_slide = (i) => {
+		current_index = i;
 	};
 
 	const prev = () => {
-		currentIndex = (currentIndex - 1 + images.length) % images.length;
+		current_index = (current_index - 1 + images.length) % images.length;
 	};
 
 	const next = () => {
-		currentIndex = (currentIndex + 1) % images.length;
+		current_index = (current_index + 1) % images.length;
 	};
 
 	// 가운데 정렬을 위한 시작 인덱스 계산
-	$: startIndex = Math.min(
-		Math.max(0, currentIndex - Math.floor(maxDots / 2)),
-		Math.max(0, images.length - maxDots),
+	let start_index = $derived(
+		Math.min(
+			Math.max(0, current_index - Math.floor(MAX_DOTS / 2)),
+			Math.max(0, images.length - MAX_DOTS)
+		)
 	);
 
 	// 보여줄 dot 리스트
-	$: visibleDots = images.slice(startIndex, startIndex + maxDots);
+	let visible_dots = $derived(images.slice(start_index, start_index + MAX_DOTS));
 
-	const openModal = (img) => {
-		modalImage = img;
-		showModal = true;
+	const open_modal = (img) => {
+		modal_image = img;
+		show_modal = true;
 	};
 
-	const closeModal = () => {
-		showModal = false;
-		modalImage = '';
+	const close_modal = () => {
+		show_modal = false;
+		modal_image = '';
 	};
 </script>
 
@@ -46,14 +48,14 @@
 	<!-- 이미지 슬라이드 -->
 	<div
 		class="flex transition-transform duration-500 ease-in-out"
-		style="transform: translateX(-{currentIndex * 100}%);"
+		style="transform: translateX(-{current_index * 100}%);"
 	>
 		{#each images as img, index}
 			<div class="flex min-w-full items-start justify-center">
 				<button
 					type="button"
 					class="block w-full cursor-pointer overflow-hidden rounded-lg border-0 bg-transparent p-0"
-					onclick={() => openModal(img)}
+					onclick={() => open_modal(img)}
 					aria-label="이미지 크게 보기"
 				>
 					<img
@@ -89,23 +91,23 @@
 	<div
 		class="absolute bottom-2 left-1/2 z-5 flex -translate-x-1/2 gap-2 rounded-full bg-black/50 px-2 py-1"
 	>
-		{#each visibleDots as _, i}
+		{#each visible_dots as _, i}
 			<button
 				class="h-1.5 w-1.5 rounded-full transition-all duration-300 ease-in-out"
-				class:bg-white={currentIndex === startIndex + i}
-				class:bg-gray-400={currentIndex !== startIndex + i}
-				class:scale-125={currentIndex === startIndex + i}
-				aria-label={`Go to slide ${startIndex + i + 1}`}
-				onclick={() => goToSlide(startIndex + i)}
+				class:bg-white={current_index === start_index + i}
+				class:bg-gray-400={current_index !== start_index + i}
+				class:scale-125={current_index === start_index + i}
+				aria-label={`Go to slide ${start_index + i + 1}`}
+				onclick={() => go_to_slide(start_index + i)}
 			></button>
 		{/each}
 	</div>
 </div>
 
-{#if showModal}
+{#if show_modal}
 	<div
 		class="fixed inset-0 z-50 flex items-center justify-center bg-black/70"
-		onclick={closeModal}
+		onclick={close_modal}
 		role="presentation"
 	>
 		<div
@@ -114,11 +116,11 @@
 			tabindex="0"
 			onclick={(e) => e.stopPropagation()}
 			onkeydown={(e) => {
-				if (e.key === 'Escape') closeModal();
+				if (e.key === 'Escape') close_modal();
 			}}
 		>
 			<img
-				src={modalImage}
+				src={modal_image}
 				alt="이미지 확대보기"
 				class="max-h-[80vh] max-w-[90vw] rounded-lg shadow-lg"
 				loading="eager"
@@ -126,7 +128,7 @@
 			/>
 			<button
 				class="absolute top-2 right-2 rounded-full bg-black/60 p-1 text-white hover:bg-black/80"
-				onclick={closeModal}
+				onclick={close_modal}
 				aria-label="닫기"
 			>
 				<Icon attribute="close" size={20} color={colors.white} />

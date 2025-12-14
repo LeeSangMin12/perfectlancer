@@ -12,7 +12,7 @@
 	import Bottom_nav from '$lib/components/ui/Bottom_nav.svelte';
 	import Header from '$lib/components/ui/Header.svelte';
 	import TabSelector from '$lib/components/ui/TabSelector.svelte';
-	import ExpertRequestCard from '$lib/components/ExpertRequestCard.svelte';
+	import ExpertRequestCard from '$lib/components/domain/expert/ExpertRequestCard.svelte';
 
 	const me = get_user_context();
 
@@ -67,10 +67,14 @@
 </svelte:head>
 
 <Header>
-	<button slot="left" onclick={() => goto(`/@${me?.handle}/accounts`)}>
-		<RiArrowLeftSLine size={24} color={colors.gray[600]} />
-	</button>
-	<h1 slot="center" class="font-semibold">{TITLE}</h1>
+	{#snippet left()}
+		<button onclick={() => goto(`/@${me?.handle}/accounts`)}>
+			<RiArrowLeftSLine size={24} color={colors.gray[600]} />
+		</button>
+	{/snippet}
+	{#snippet center()}
+		<h1 class="font-semibold">{TITLE}</h1>
+	{/snippet}
 </Header>
 
 <main class="min-h-screen pb-20">

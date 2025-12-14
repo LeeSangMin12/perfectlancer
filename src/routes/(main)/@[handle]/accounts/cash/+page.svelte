@@ -70,10 +70,14 @@
 </svelte:head>
 
 <Header>
-	<button slot="left" onclick={smart_go_back}>
-		<RiArrowLeftSLine size={24} class="text-gray-800" />
-	</button>
-	<span slot="center" class="text-[17px] font-semibold">문캐시</span>
+	{#snippet left()}
+		<button onclick={smart_go_back}>
+			<RiArrowLeftSLine size={24} class="text-gray-800" />
+		</button>
+	{/snippet}
+	{#snippet center()}
+		<span class="text-[17px] font-semibold">문캐시</span>
+	{/snippet}
 </Header>
 
 <main class="min-h-screen pb-24">

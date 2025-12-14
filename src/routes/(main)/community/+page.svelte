@@ -134,7 +134,9 @@
 </svelte:head>
 
 <Header>
-	<h1 slot="left" class="font-semibold">커뮤니티</h1>
+	{#snippet left()}
+		<h1 class="font-semibold">커뮤니티</h1>
+	{/snippet}
 </Header>
 
 <main>

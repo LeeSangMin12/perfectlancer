@@ -22,7 +22,7 @@
 
 	import Header from '$lib/components/ui/Header.svelte';
 	import Modal from '$lib/components/ui/Modal.svelte';
-	import AddBankAccountModal from '$lib/components/AddBankAccountModal.svelte';
+	import AddBankAccountModal from '$lib/components/modals/AddBankAccountModal.svelte';
 
 	import { update_global_store } from '$lib/store/global_store.js';
 
@@ -303,10 +303,14 @@
 </svelte:head>
 
 <Header>
-	<button slot="left" onclick={go_prev}>
-		<RiArrowLeftSLine size={24} color={colors.gray[600]} />
-	</button>
-	<h1 slot="center" class="font-semibold">주문하기</h1>
+	{#snippet left()}
+		<button onclick={go_prev}>
+			<RiArrowLeftSLine size={24} color={colors.gray[600]} />
+		</button>
+	{/snippet}
+	{#snippet center()}
+		<h1 class="font-semibold">주문하기</h1>
+	{/snippet}
 </Header>
 
 <!-- Progress bar -->
@@ -636,5 +640,5 @@
 <!-- 계좌 추가 모달 -->
 <AddBankAccountModal
 	bind:is_modal_open={show_add_account_modal}
-	onSuccess={handle_account_added}
+	on_success={handle_account_added}
 />

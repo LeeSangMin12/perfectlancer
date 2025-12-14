@@ -63,12 +63,14 @@
 </svelte:head>
 
 <Header>
-	<div slot="left">
+	{#snippet left()}
 		<button onclick={() => goto(`/@${me.handle}/accounts`)}>
 			<RiArrowLeftSLine size={24} color={colors.gray[800]} />
 		</button>
-	</div>
-	<h1 slot="center" class="font-semibold">참여 커뮤니티</h1>
+	{/snippet}
+	{#snippet center()}
+		<h1 class="font-semibold">참여 커뮤니티</h1>
+	{/snippet}
 </Header>
 
 <main>

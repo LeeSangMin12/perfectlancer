@@ -56,9 +56,11 @@
 </svelte:head>
 
 <Header>
-	<button slot="left" onclick={smart_go_back}>
-		<RiArrowLeftSLine size={28} color={colors.gray[800]} />
-	</button>
+	{#snippet left()}
+		<button onclick={smart_go_back}>
+			<RiArrowLeftSLine size={28} color={colors.gray[800]} />
+		</button>
+	{/snippet}
 </Header>
 
 <main class="flex h-screen flex-col items-center justify-between">

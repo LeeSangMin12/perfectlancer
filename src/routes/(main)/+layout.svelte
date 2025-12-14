@@ -7,9 +7,9 @@
 	import { register_fcm_token } from '$lib/firebase/messaging.js';
 	import { onMount } from 'svelte';
 
-	import Contact_required_modal from '$lib/components/ui/Contact_required_modal.svelte';
-	import CouponPopup from '$lib/components/ui/CouponPopup.svelte';
-	import Login_prompt_modal from '$lib/components/ui/Login_prompt_modal.svelte';
+	import Contact_required_modal from '$lib/components/modals/Contact_required_modal.svelte';
+	import CouponPopup from '$lib/components/modals/CouponPopup.svelte';
+	import Login_prompt_modal from '$lib/components/modals/Login_prompt_modal.svelte';
 
 	import {
 		is_contact_required_modal,

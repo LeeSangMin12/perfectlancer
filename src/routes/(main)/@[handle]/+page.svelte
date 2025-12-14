@@ -16,10 +16,10 @@
 	import Icon from '$lib/components/ui/Icon.svelte';
 	import Modal from '$lib/components/ui/Modal.svelte';
 	import TabSelector from '$lib/components/ui/TabSelector.svelte';
-	import Post from '$lib/components/Post.svelte';
-	import UserCard from '$lib/components/Profile/UserCard.svelte';
-	import Service from '$lib/components/Service.svelte';
-	import CoffeeChatModal from '$lib/components/CoffeeChatModal.svelte';
+	import Post from '$lib/components/domain/post/Post.svelte';
+	import UserCard from '$lib/components/shared/Profile/UserCard.svelte';
+	import Service from '$lib/components/domain/service/Service.svelte';
+	import CoffeeChatModal from '$lib/components/modals/CoffeeChatModal.svelte';
 
 	import colors from '$lib/config/colors';
 	import { check_login, copy_to_clipboard, show_toast } from '$lib/utils/common';
@@ -365,7 +365,7 @@
 </svelte:head>
 
 <Header>
-	<div slot="left">
+	{#snippet left()}
 		{#if $page.params.handle !== me?.handle}
 			<button
 				class="flex items-center"
@@ -375,9 +375,8 @@
 				<RiArrowLeftSLine size={28} color={colors.gray[600]} />
 			</button>
 		{/if}
-	</div>
-
-	<div slot="right">
+	{/snippet}
+	{#snippet right()}
 		<button
 			class="flex items-center"
 			onclick={() => {
@@ -393,7 +392,7 @@
 		>
 			<Icon attribute="menu" size={24} color={colors.gray[600]} />
 		</button>
-	</div>
+	{/snippet}
 </Header>
 
 <main>
@@ -535,9 +534,9 @@
 			<div class="mt-4">
 				<Post
 				{post}
-				onGiftCommentAdded={handle_gift_comment_added}
-				onBookmarkChanged={handle_bookmark_changed}
-				onVoteChanged={handle_vote_changed}
+				on_gift_comment_added={handle_gift_comment_added}
+				on_bookmark_changed={handle_bookmark_changed}
+				on_vote_changed={handle_vote_changed}
 			/>
 			</div>
 		{/each}
@@ -622,7 +621,7 @@
 		<!-- 서비스 탭 -->
 		<div class="mt-4 grid grid-cols-2 gap-4 px-4">
 			{#each selected_data.services as service (service.id)}
-				<Service {service} service_likes={selected_data.service_likes} onLikeChanged={handle_service_like_changed} />
+				<Service {service} service_likes={selected_data.service_likes} on_like_changed={handle_service_like_changed} />
 			{/each}
 		</div>
 	{:else if selected === 3 && (selected_data.service_reviews.length > 0 || selected_data.expert_request_reviews.length > 0)}
@@ -888,4 +887,4 @@
 </Modal>
 
 <!-- 커피챗 모달 -->
-<CoffeeChatModal bind:isOpen={modal.coffee_chat} recipientUser={user} />
+<CoffeeChatModal bind:is_open={modal.coffee_chat} recipient_user={user} />

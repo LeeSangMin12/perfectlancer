@@ -33,10 +33,14 @@
 </svelte:head>
 
 <Header>
-	<button slot="left" onclick={() => goto('/event')}>
-		<RiArrowLeftSLine size={26} color={colors.gray[600]} />
-	</button>
-	<h1 slot="center" class="font-semibold">문 외주 무료 등록 쿠폰 이벤트</h1>
+	{#snippet left()}
+		<button onclick={() => goto('/event')}>
+			<RiArrowLeftSLine size={26} color={colors.gray[600]} />
+		</button>
+	{/snippet}
+	{#snippet center()}
+		<h1 class="font-semibold">문 외주 무료 등록 쿠폰 이벤트</h1>
+	{/snippet}
 </Header>
 
 <div class="relative mx-auto max-w-screen-md bg-white">

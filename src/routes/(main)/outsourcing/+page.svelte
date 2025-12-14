@@ -8,7 +8,7 @@
 	import Bottom_nav from '$lib/components/ui/Bottom_nav.svelte';
 	import Header from '$lib/components/ui/Header.svelte';
 	import TabSelector from '$lib/components/ui/TabSelector.svelte';
-	import ExpertRequestTab from '$lib/components/ExpertRequestTab.svelte';
+	import ExpertRequestTab from '$lib/components/domain/expert/ExpertRequestTab.svelte';
 
 	import Banner from '../service/Banner.svelte';
 	import SearchInput from '../service/SearchInput.svelte';
@@ -149,7 +149,9 @@
 </svelte:head>
 
 <Header>
-	<h1 slot="left" class="font-semibold">{TITLE}</h1>
+	{#snippet left()}
+		<h1 class="font-semibold">{TITLE}</h1>
+	{/snippet}
 </Header>
 
 <main>

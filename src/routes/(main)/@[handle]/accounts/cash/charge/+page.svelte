@@ -13,7 +13,7 @@
 		RiFileCopyLine,
 	} from 'svelte-remixicon';
 
-	import AddBankAccountModal from '$lib/components/AddBankAccountModal.svelte';
+	import AddBankAccountModal from '$lib/components/modals/AddBankAccountModal.svelte';
 	import Header from '$lib/components/ui/Header.svelte';
 
 	const me = get_user_context();
@@ -114,10 +114,14 @@
 </svelte:head>
 
 <Header>
-	<button slot="left" onclick={smart_go_back}>
-		<RiArrowLeftSLine size={24} class="text-gray-800" />
-	</button>
-	<span slot="center" class="text-[17px] font-semibold">충전하기</span>
+	{#snippet left()}
+		<button onclick={smart_go_back}>
+			<RiArrowLeftSLine size={24} class="text-gray-800" />
+		</button>
+	{/snippet}
+	{#snippet center()}
+		<span class="text-[17px] font-semibold">충전하기</span>
+	{/snippet}
 </Header>
 
 <main class="min-h-screen bg-gray-50 pb-32">
@@ -280,5 +284,5 @@
 <!-- 계좌 추가 모달 -->
 <AddBankAccountModal
 	bind:is_modal_open={show_add_account_modal}
-	onSuccess={handle_account_added}
+	on_success={handle_account_added}
 />

@@ -25,9 +25,11 @@
 </script>
 
 <Header>
-	<button slot="left" onclick={smart_go_back}>
-		<RiArrowLeftSLine size={26} color={colors.gray[600]} />
-	</button>
+	{#snippet left()}
+		<button onclick={smart_go_back}>
+			<RiArrowLeftSLine size={26} color={colors.gray[600]} />
+		</button>
+	{/snippet}
 </Header>
 
 <div class="mt-10 flex flex-col justify-center gap-2">

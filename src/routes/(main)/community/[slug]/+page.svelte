@@ -22,8 +22,8 @@
 	import Header from '$lib/components/ui/Header.svelte';
 	import Icon from '$lib/components/ui/Icon.svelte';
 	import Modal from '$lib/components/ui/Modal.svelte';
-	import Post from '$lib/components/Post.svelte';
-	import UserCard from '$lib/components/Profile/UserCard.svelte';
+	import Post from '$lib/components/domain/post/Post.svelte';
+	import UserCard from '$lib/components/shared/Profile/UserCard.svelte';
 
 	const me = get_user_context();
 	const api = get_api_context();
@@ -206,7 +206,7 @@
 </svelte:head>
 
 <Header>
-	<div slot="left">
+	{#snippet left()}
 		<button
 			class="flex items-center"
 			onclick={smart_go_back}
@@ -214,9 +214,11 @@
 		>
 			<RiArrowLeftSLine size={28} color={colors.gray[600]} />
 		</button>
-	</div>
-	<h1 slot="center" class="text-medium">{community.title}</h1>
-	<div slot="right">
+	{/snippet}
+	{#snippet center()}
+		<h1 class="text-medium">{community.title}</h1>
+	{/snippet}
+	{#snippet right()}
 		<button
 			class="flex items-center"
 			onclick={() => {
@@ -227,7 +229,7 @@
 		>
 			<Icon attribute="menu" size={24} color={colors.gray[600]} />
 		</button>
-	</div>
+	{/snippet}
 </Header>
 
 <main>
@@ -301,9 +303,9 @@
 		<div class="mt-4">
 			<Post
 				{post}
-				onGiftCommentAdded={handle_gift_comment_added}
-				onBookmarkChanged={handle_bookmark_changed}
-				onVoteChanged={handle_vote_changed}
+				on_gift_comment_added={handle_gift_comment_added}
+				on_bookmark_changed={handle_bookmark_changed}
+				on_vote_changed={handle_vote_changed}
 			/>
 		</div>
 	{/each}

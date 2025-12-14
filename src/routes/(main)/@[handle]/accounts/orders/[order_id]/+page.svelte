@@ -164,10 +164,14 @@
 </svelte:head>
 
 <Header>
-	<button slot="left" onclick={() => history.back()}>
-		<RiArrowLeftSLine size={24} color={colors.gray[600]} />
-	</button>
-	<h1 slot="center" class="font-semibold">주문 상세</h1>
+	{#snippet left()}
+		<button onclick={() => history.back()}>
+			<RiArrowLeftSLine size={24} color={colors.gray[600]} />
+		</button>
+	{/snippet}
+	{#snippet center()}
+		<h1 class="font-semibold">주문 상세</h1>
+	{/snippet}
 </Header>
 
 <main class="mx-4 pb-24">

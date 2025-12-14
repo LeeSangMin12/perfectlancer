@@ -108,5 +108,5 @@ img {
 }
 
 .btn-gray {
-	@apply border-none bg-gray-200;
+	@apply border-none bg-gray-100;
 }

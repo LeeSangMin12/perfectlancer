@@ -81,10 +81,14 @@
 </svelte:head>
 
 <Header>
-	<a slot="left" href={`/@${me?.handle}/accounts/profile`}>
-		<RiArrowLeftSLine size={24} color={colors.gray[800]} />
-	</a>
-	<h1 slot="center" class="font-semibold">프로필 수정</h1>
+	{#snippet left()}
+		<a href={`/@${me?.handle}/accounts/profile`}>
+			<RiArrowLeftSLine size={24} color={colors.gray[800]} />
+		</a>
+	{/snippet}
+	{#snippet center()}
+		<h1 class="font-semibold">프로필 수정</h1>
+	{/snippet}
 </Header>
 
 <main class="p-4">

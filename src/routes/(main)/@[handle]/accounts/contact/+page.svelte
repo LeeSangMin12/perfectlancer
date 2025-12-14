@@ -5,7 +5,6 @@
 		get_user_context,
 	} from '$lib/contexts/app_context.svelte.js';
 	import { show_toast } from '$lib/utils/common';
-	import Select from 'svelte-select';
 	import { onMount } from 'svelte';
 	import {
 		RiAddLine,
@@ -16,6 +15,7 @@
 
 	import Header from '$lib/components/ui/Header.svelte';
 	import Modal from '$lib/components/ui/Modal.svelte';
+	import AddBankAccountModal from '$lib/components/modals/AddBankAccountModal.svelte';
 
 	const me = get_user_context();
 	const api = get_api_context();
@@ -36,44 +36,6 @@
 	let show_account_modal = $state(false);
 	let show_delete_modal = $state(false);
 	let account_to_delete = $state(null);
-	let account_submitting = $state(false);
-
-	let account_form = $state({
-		account_type: 'individual',
-		bank: '',
-		account_number: '',
-		account_holder: '',
-		resident_number: '',
-		business_number: '',
-	});
-
-	// 은행 목록
-	const banks = [
-		'카카오뱅크',
-		'농협은행',
-		'국민은행',
-		'토스뱅크',
-		'신한은행',
-		'우리은행',
-		'기업은행',
-		'하나은행',
-		'새마을금고',
-		'부산은행',
-		'케이뱅크',
-		'신협은행',
-		'우체국',
-		'SC제일',
-		'광주은행',
-		'경남은행',
-		'수협은행',
-		'전북은행',
-		'제주은행',
-		'씨티은행',
-		'산업은행',
-	];
-
-	const bank_items = banks.map((bank) => ({ label: bank, value: bank }));
-	let selected_bank = $state(null);
 
 	// 정보 로드
 	onMount(async () => {
@@ -196,69 +158,10 @@
 	};
 
 	// 계좌 관련 함수들
-	function reset_account_form() {
-		account_form = {
-			account_type: 'individual',
-			bank: '',
-			account_number: '',
-			account_holder: '',
-			resident_number: '',
-			business_number: '',
-		};
-		selected_bank = null;
-	}
-
-	function open_account_modal() {
-		reset_account_form();
-		show_account_modal = true;
-	}
-
-	function close_account_modal() {
-		show_account_modal = false;
-	}
-
-	const is_account_valid = $derived(
-		selected_bank &&
-			account_form.account_number.length >= 10 &&
-			account_form.account_holder.length >= 2 &&
-			(account_form.account_type === 'individual'
-				? account_form.resident_number.length === 13
-				: account_form.business_number.length === 10),
-	);
-
-	async function handle_account_submit() {
-		if (!is_account_valid || account_submitting) return;
-
-		account_submitting = true;
-		try {
-			const new_account = await api.user_bank_accounts.insert({
-				user_id: me.id,
-				account_type: account_form.account_type,
-				bank: selected_bank.value,
-				account_number: account_form.account_number.replace(/[^0-9]/g, ''),
-				account_holder: account_form.account_holder,
-				resident_number:
-					account_form.account_type === 'individual'
-						? account_form.resident_number.replace(/[^0-9]/g, '')
-						: null,
-				business_number:
-					account_form.account_type === 'business'
-						? account_form.business_number.replace(/[^0-9]/g, '')
-						: null,
-			});
-
-			bank_accounts = bank_accounts.map((a) => ({ ...a, is_default: false }));
-			bank_accounts = [new_account, ...bank_accounts];
-
-			close_account_modal();
-			show_toast('success', '계좌가 등록되었어요');
-		} catch (err) {
-			console.error('Add bank account error:', err);
-			show_toast('error', '계좌 등록에 실패했어요');
-		} finally {
-			account_submitting = false;
-		}
-	}
+	const handle_account_added = (new_account) => {
+		bank_accounts = bank_accounts.map((a) => ({ ...a, is_default: false }));
+		bank_accounts = [new_account, ...bank_accounts];
+	};
 
 	async function set_default(account) {
 		if (account.is_default) return;
@@ -298,35 +201,6 @@
 			account_to_delete = null;
 		}
 	}
-
-	function on_resident_input(e) {
-		let value = e.target.value.replace(/[^0-9]/g, '');
-		if (value.length > 13) value = value.slice(0, 13);
-		account_form.resident_number = value;
-	}
-
-	function on_business_input(e) {
-		let value = e.target.value.replace(/[^0-9]/g, '');
-		if (value.length > 10) value = value.slice(0, 10);
-		account_form.business_number = value;
-	}
-
-	function on_account_input(e) {
-		account_form.account_number = e.target.value.replace(/[^0-9-]/g, '');
-	}
-
-	const display_resident = $derived(() => {
-		const num = account_form.resident_number;
-		if (num.length <= 6) return num;
-		return num.slice(0, 6) + '-' + num.slice(6);
-	});
-
-	const display_business = $derived(() => {
-		const num = account_form.business_number;
-		if (num.length <= 3) return num;
-		if (num.length <= 5) return num.slice(0, 3) + '-' + num.slice(3);
-		return num.slice(0, 3) + '-' + num.slice(3, 5) + '-' + num.slice(5);
-	});
 </script>
 
 <svelte:head>
@@ -338,10 +212,14 @@
 </svelte:head>
 
 <Header>
-	<a slot="left" href={`/@${me?.handle}/accounts`}>
-		<RiArrowLeftSLine size={24} color={colors.gray[800]} />
-	</a>
-	<h1 slot="center" class="font-semibold">결제 정보 관리</h1>
+	{#snippet left()}
+		<a href={`/@${me?.handle}/accounts`}>
+			<RiArrowLeftSLine size={24} color={colors.gray[800]} />
+		</a>
+	{/snippet}
+	{#snippet center()}
+		<h1 class="font-semibold">결제 정보 관리</h1>
+	{/snippet}
 </Header>
 
 <main class="p-4 pb-32">
@@ -426,7 +304,7 @@
 			<div class="flex items-center justify-between">
 				<h2 class="ml-1 font-semibold">정산 계좌</h2>
 				<button
-					onclick={open_account_modal}
+					onclick={() => (show_account_modal = true)}
 					class="text-primary flex items-center gap-1 text-sm"
 				>
 					<RiAddLine size={16} />
@@ -510,124 +388,10 @@
 </div>
 
 <!-- 계좌 추가 모달 -->
-<Modal bind:is_modal_open={show_account_modal} modal_position="bottom">
-	<div class="flex flex-col items-center p-4">
-		<div class="h-1 w-10 self-center rounded-full bg-gray-300"></div>
-
-		<h3 class="mt-4 text-[17px] font-semibold">계좌 등록</h3>
-
-		<!-- 폼 -->
-		<div class="pb-safe mt-4 w-full">
-			<!-- 계좌 유형 -->
-			<div>
-				<p class="text-[13px] text-gray-500">계좌 유형</p>
-				<div class="mt-2 flex gap-2">
-					<button
-						onclick={() => (account_form.account_type = 'individual')}
-						class="flex-1 rounded-lg border py-3 text-[14px] font-medium transition
-							{account_form.account_type === 'individual'
-							? 'border-primary bg-primary text-white'
-							: 'border-gray-100 bg-gray-100 text-gray-600'}"
-					>
-						개인
-					</button>
-					<button
-						onclick={() => (account_form.account_type = 'business')}
-						class="flex-1 rounded-lg border py-3 text-[14px] font-medium transition
-							{account_form.account_type === 'business'
-							? 'border-primary bg-primary text-white'
-							: 'border-gray-100 bg-gray-100 text-gray-600'}"
-					>
-						사업자
-					</button>
-				</div>
-			</div>
-
-			<!-- 은행 선택 -->
-			<div class="mt-5">
-				<p class="text-[13px] text-gray-500">은행</p>
-				<div class="mt-2">
-					<Select
-						items={bank_items}
-						bind:value={selected_bank}
-						placeholder="은행 선택"
-						--border-radius="0.5rem"
-						--padding="0 1rem"
-						--height="48px"
-						--font-size="15px"
-						--border="1px solid #e5e7eb"
-						--border-hover="1px solid #237bf8"
-						--border-focused="1px solid #237bf8"
-						--item-height="44px"
-					/>
-				</div>
-			</div>
-
-			<!-- 계좌번호 -->
-			<div class="mt-5">
-				<p class="text-[13px] text-gray-500">계좌번호</p>
-				<input
-					type="text"
-					inputmode="numeric"
-					value={account_form.account_number}
-					oninput={on_account_input}
-					placeholder="- 없이 숫자만 입력"
-					class="focus:border-primary mt-2 w-full rounded-lg border border-gray-200 px-4 py-3 text-[15px] text-gray-900 placeholder-gray-400 focus:outline-none"
-				/>
-			</div>
-
-			<!-- 예금주 -->
-			<div class="mt-5">
-				<p class="text-[13px] text-gray-500">예금주</p>
-				<input
-					type="text"
-					bind:value={account_form.account_holder}
-					placeholder="예금주명 입력"
-					class="focus:border-primary mt-2 w-full rounded-lg border border-gray-200 px-4 py-3 text-[15px] text-gray-900 placeholder-gray-400 focus:outline-none"
-				/>
-			</div>
-
-			<!-- 주민등록번호 / 사업자등록번호 -->
-			{#if account_form.account_type === 'individual'}
-				<div class="mt-5">
-					<p class="text-[13px] text-gray-500">주민등록번호</p>
-					<input
-						type="text"
-						inputmode="numeric"
-						value={display_resident()}
-						oninput={on_resident_input}
-						placeholder="000000-0000000"
-						class="focus:border-primary mt-2 w-full rounded-lg border border-gray-200 px-4 py-3 text-[15px] text-gray-900 placeholder-gray-400 focus:outline-none"
-					/>
-					<p class="mt-2 text-[12px] text-gray-400">
-						원천징수 신고를 위해 필요해요
-					</p>
-				</div>
-			{:else}
-				<div class="mt-5">
-					<p class="text-[13px] text-gray-500">사업자등록번호</p>
-					<input
-						type="text"
-						inputmode="numeric"
-						value={display_business()}
-						oninput={on_business_input}
-						placeholder="000-00-00000"
-						class="focus:border-primary mt-2 w-full rounded-lg border border-gray-200 px-4 py-3 text-[15px] text-gray-900 placeholder-gray-400 focus:outline-none"
-					/>
-				</div>
-			{/if}
-
-			<!-- 제출 버튼 -->
-			<button
-				onclick={handle_account_submit}
-				disabled={!is_account_valid || account_submitting}
-				class="btn btn-primary mt-6 w-full"
-			>
-				{account_submitting ? '등록 중...' : '등록하기'}
-			</button>
-		</div>
-	</div>
-</Modal>
+<AddBankAccountModal
+	bind:is_modal_open={show_account_modal}
+	on_success={handle_account_added}
+/>
 
 <!-- 삭제 확인 모달 -->
 <Modal bind:is_modal_open={show_delete_modal} modal_position="center">

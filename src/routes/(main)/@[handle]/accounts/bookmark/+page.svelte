@@ -4,7 +4,7 @@
 	import { RiArrowLeftSLine } from 'svelte-remixicon';
 
 	import Header from '$lib/components/ui/Header.svelte';
-	import Post from '$lib/components/Post.svelte';
+	import Post from '$lib/components/domain/post/Post.svelte';
 
 	import colors from '$lib/config/colors';
 	import { get_user_context, get_api_context } from '$lib/contexts/app_context.svelte.js';
@@ -54,12 +54,14 @@
 </svelte:head>
 
 <Header>
-	<div slot="left">
+	{#snippet left()}
 		<button onclick={() => goto(`/@${me.handle}/accounts`)}>
 			<RiArrowLeftSLine size={24} color={colors.gray[800]} />
 		</button>
-	</div>
-	<h1 slot="center" class="font-semibold">북마크</h1>
+	{/snippet}
+	{#snippet center()}
+		<h1 class="font-semibold">북마크</h1>
+	{/snippet}
 </Header>
 
 <main>
@@ -68,9 +70,9 @@
 			<div class="mt-4">
 				<Post
 					post={bookmark.post}
-					onGiftCommentAdded={handle_gift_comment_added}
-				onBookmarkChanged={handle_bookmark_changed}
-				onVoteChanged={handle_vote_changed}
+					on_gift_comment_added={handle_gift_comment_added}
+					on_bookmark_changed={handle_bookmark_changed}
+					on_vote_changed={handle_vote_changed}
 				/>
 			</div>
 		{/if}

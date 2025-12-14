@@ -55,10 +55,14 @@
 </svelte:head>
 
 <Header>
-	<button slot="left" onclick={smart_go_back}>
-		<RiArrowLeftSLine size={24} color={colors.gray[600]} />
-	</button>
-	<h1 slot="center" class="font-semibold">알림</h1>
+	{#snippet left()}
+		<button onclick={smart_go_back}>
+			<RiArrowLeftSLine size={24} color={colors.gray[600]} />
+		</button>
+	{/snippet}
+	{#snippet center()}
+		<h1 class="font-semibold">알림</h1>
+	{/snippet}
 </Header>
 
 <main class="px-4">

@@ -12,7 +12,7 @@
 
 	import Bottom_nav from '$lib/components/ui/Bottom_nav.svelte';
 	import Header from '$lib/components/ui/Header.svelte';
-	import ServiceTab from '$lib/components/ServiceTab.svelte';
+	import ServiceTab from '$lib/components/domain/service/ServiceTab.svelte';
 
 	import Banner from './Banner.svelte';
 	import SearchInput from './SearchInput.svelte';
@@ -90,7 +90,9 @@
 </svelte:head>
 
 <Header>
-	<h1 slot="left" class="font-semibold">{TITLE}</h1>
+	{#snippet left()}
+		<h1 class="font-semibold">{TITLE}</h1>
+	{/snippet}
 </Header>
 
 <main>

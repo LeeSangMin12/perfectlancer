@@ -95,12 +95,14 @@
 </svelte:head>
 
 <Header nav_class="bg-white">
-	<div slot="left">
+	{#snippet left()}
 		<a href={`/@${me.handle}/accounts`}>
 			<RiArrowLeftSLine size={24} color={colors.gray[600]} />
 		</a>
-	</div>
-	<h1 slot="center" class="font-bold text-gray-800">{TITLE}</h1>
+	{/snippet}
+	{#snippet center()}
+		<h1 class="font-bold text-gray-800">{TITLE}</h1>
+	{/snippet}
 </Header>
 
 <main>

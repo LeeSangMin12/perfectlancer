@@ -17,9 +17,9 @@
 
 	import Bottom_nav from '$lib/components/ui/Bottom_nav.svelte';
 	import Header from '$lib/components/ui/Header.svelte';
-	import Post from '$lib/components/Post.svelte';
 	import PostSkeleton from '$lib/components/ui/PostSkeleton.svelte';
 	import TabSelector from '$lib/components/ui/TabSelector.svelte';
+	import Post from '$lib/components/domain/post/Post.svelte';
 
 	// ===== Constants =====
 	const TITLE = '문';
@@ -152,28 +152,35 @@
 </svelte:head>
 
 <Header>
-	<h1 slot="left" class="font-semibold">{TITLE}</h1>
+	{#snippet left()}
+		<h1 class="font-semibold">{TITLE}</h1>
+	{/snippet}
 
-	<div slot="right" class="flex items-center gap-4">
-		<!-- 검색 버튼 -->
-		<button onclick={handle_search} aria-label="검색">
-			<RiSearchLine size={20} color={colors.gray[400]} />
-		</button>
+	{#snippet right()}
+		<div class="flex items-center gap-4">
+			<!-- 검색 버튼 -->
+			<button onclick={handle_search} aria-label="검색">
+				<RiSearchLine size={20} color={colors.gray[400]} />
+			</button>
 
-		<button onclick={handle_alarm} class="relative" aria-label="알림">
-			<RiNotificationFill size={20} color={colors.gray[400]} />
-			{#if home_data.unread_count > 0}
-				<span
-					class="absolute -top-1 -right-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] leading-none text-white"
-					aria-label={`읽지 않은 알림 ${home_data.unread_count}개`}
-				>
-					{home_data.unread_count > MAX_NOTIFICATION_BADGE
-						? `${MAX_NOTIFICATION_BADGE}+`
-						: home_data.unread_count}
-				</span>
-			{/if}
-		</button>
-	</div>
+			<button onclick={handle_alarm} class="relative" aria-label="알림">
+				<RiNotificationFill size={20} color={colors.gray[400]} />
+				{#if home_data.unread_count > 0}
+					<span
+						class="absolute -top-1 -right-1 flex h-4
+ min-w-[16px] items-center justify-center rounded-full
+bg-red-500 px-1 text-[10px] leading-none text-white"
+						aria-label={`읽지 않은 알림
+${home_data.unread_count}개`}
+					>
+						{home_data.unread_count > MAX_NOTIFICATION_BADGE
+							? `${MAX_NOTIFICATION_BADGE}+`
+							: home_data.unread_count}
+					</span>
+				{/if}
+			</button>
+		</div>
+	{/snippet}
 </Header>
 
 <main>
@@ -194,9 +201,9 @@
 			<div class="mt-4">
 				<Post
 					{post}
-					onGiftCommentAdded={handle_gift_comment_added}
-					onBookmarkChanged={handle_bookmark_changed}
-					onVoteChanged={handle_vote_changed}
+					on_gift_comment_added={handle_gift_comment_added}
+					on_bookmark_changed={handle_bookmark_changed}
+					on_vote_changed={handle_vote_changed}
 				/>
 			</div>
 		{/each}

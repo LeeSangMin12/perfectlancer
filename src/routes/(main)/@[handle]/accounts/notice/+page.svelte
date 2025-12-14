@@ -15,15 +15,14 @@
 </svelte:head>
 
 <Header>
-	<div slot="left">
+	{#snippet left()}
 		<button class="flex items-center" onclick={() => history.back()}>
 			<RiArrowLeftSLine size={24} color={colors.gray[600]} />
 		</button>
-	</div>
-
-	<div slot="center">
+	{/snippet}
+	{#snippet center()}
 		<h1 class="text-lg font-semibold">공지사항</h1>
-	</div>
+	{/snippet}
 </Header>
 
 <div class="flex h-full items-center justify-center">

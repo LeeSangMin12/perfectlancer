@@ -33,6 +33,7 @@
 	import Icon from '$lib/components/ui/Icon.svelte';
 	import Modal from '$lib/components/ui/Modal.svelte';
 	import StarRating from '$lib/components/ui/StarRating.svelte';
+	import ReviewModal from '$lib/components/modals/ReviewModal.svelte';
 
 	const me = get_user_context();
 	const api = get_api_context();
@@ -534,17 +535,21 @@
 </svelte:head>
 
 <Header>
-	<button slot="left" onclick={smart_go_back}>
-		<RiArrowLeftSLine size={24} color={colors.gray[600]} />
-	</button>
-	<h1 slot="center" class="font-semibold">서비스</h1>
-	<div slot="right">
+	{#snippet left()}
+		<button onclick={smart_go_back}>
+			<RiArrowLeftSLine size={24} color={colors.gray[600]} />
+		</button>
+	{/snippet}
+	{#snippet center()}
+		<h1 class="font-semibold">서비스</h1>
+	{/snippet}
+	{#snippet right()}
 		{#if is_own_service}
 			<button onclick={open_service_config_modal}>
 				<Icon attribute="ellipsis" size={20} color={colors.gray[500]} />
 			</button>
 		{/if}
-	</div>
+	{/snippet}
 </Header>
 
 <main>
@@ -853,84 +858,14 @@
 </Modal>
 
 <!-- Review Modal -->
-<Modal bind:is_modal_open={is_review_modal_open} modal_position="center">
-	<div class="p-5">
-		<p class="text-[16px] font-semibold text-gray-900">
-			{editing_review ? '리뷰 수정' : '리뷰 작성'}
-		</p>
-
-		<div class="mt-5 space-y-4">
-			<div>
-				<p class="mb-2 text-[14px] font-medium text-gray-700">별점</p>
-				<StarRating
-					bind:rating={review_form_data.rating}
-					size={24}
-					show_rating_text={true}
-				/>
-			</div>
-
-			<div>
-				<p class="mb-2 text-[14px] font-medium text-gray-700">리뷰 제목</p>
-				<input
-					bind:value={review_form_data.title}
-					type="text"
-					placeholder="리뷰 제목을 입력해주세요"
-					class="w-full rounded-lg border border-gray-200 px-4 py-3 text-[15px] text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:outline-none"
-				/>
-			</div>
-
-			<div>
-				<p class="mb-2 text-[14px] font-medium text-gray-700">리뷰 내용</p>
-				<textarea
-					bind:value={review_form_data.content}
-					placeholder="서비스에 대한 자세한 리뷰를 작성해주세요"
-					class="w-full resize-none rounded-lg border border-gray-200 px-4 py-3 text-[15px] text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:outline-none"
-					rows="4"
-				></textarea>
-			</div>
-		</div>
-
-		<div class="mt-5 flex gap-2">
-			<button
-				onclick={() => {
-					is_review_modal_open = false;
-					editing_review = null;
-				}}
-				class="flex-1 rounded-lg bg-gray-100 py-3 text-[14px] font-medium text-gray-700 active:bg-gray-200"
-			>
-				취소
-			</button>
-			<button
-				onclick={handle_review_submit}
-				disabled={is_submitting_review || !is_review_form_valid}
-				class="flex-1 rounded-lg bg-blue-500 py-3 text-[14px] font-medium text-white active:bg-blue-600 disabled:bg-gray-300 disabled:text-gray-500"
-			>
-				{#if is_submitting_review}
-					<span class="flex items-center justify-center">
-						<svg class="mr-2 h-4 w-4 animate-spin" viewBox="0 0 24 24">
-							<circle
-								class="opacity-25"
-								cx="12"
-								cy="12"
-								r="10"
-								stroke="currentColor"
-								stroke-width="4"
-							></circle>
-							<path
-								class="opacity-75"
-								fill="currentColor"
-								d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-							></path>
-						</svg>
-						{editing_review ? '수정 중...' : '작성 중...'}
-					</span>
-				{:else}
-					{editing_review ? '수정하기' : '작성하기'}
-				{/if}
-			</button>
-		</div>
-	</div>
-</Modal>
+<ReviewModal
+	bind:is_open={is_review_modal_open}
+	is_editing={!!editing_review}
+	is_submitting={is_submitting_review}
+	bind:form_data={review_form_data}
+	on_submit={handle_review_submit}
+	on_close={() => (editing_review = null)}
+/>
 
 <!-- Service Config Modal -->
 <Modal
