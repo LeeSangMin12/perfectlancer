@@ -12,6 +12,7 @@
 		RiContactsLine,
 		RiCupLine,
 		RiCustomerService2Line,
+		RiFileList2Line,
 		RiGiftLine,
 		RiHeartLine,
 		RiSettings4Line,
@@ -101,10 +102,21 @@
 		<a
 			href={`/@${me?.handle}/accounts/orders`}
 			class="flex items-center justify-between px-4 py-4 transition hover:bg-gray-50"
+			>
+				<div class="flex items-center">
+					<RiShoppingBag3Line size={22} color={colors.gray[600]} class="mr-3" />
+					<span>서비스 관리</span>
+				</div>
+			<RiArrowRightSLine size={20} color={colors.gray[400]} />
+		</a>
+
+		<a
+			href={`/@${me?.handle}/accounts/quote-templates`}
+			class="flex items-center justify-between px-4 py-4 transition hover:bg-gray-50"
 		>
 			<div class="flex items-center">
-				<RiShoppingBag3Line size={22} color={colors.gray[600]} class="mr-3" />
-				<span>서비스 관리</span>
+				<RiFileList2Line size={22} color={colors.gray[600]} class="mr-3" />
+				<span>견적서 템플릿</span>
 			</div>
 			<RiArrowRightSLine size={20} color={colors.gray[400]} />
 		</a>

@@ -37,17 +37,9 @@
 	];
 
 	const serviceData = create_service_data(
-		{ services: data.services || [], service_likes: [] },
+		{ services: data.services || [], service_likes: data.service_likes || [] },
 		api,
 	);
-
-	$effect(() => {
-		if (data.service_likes) {
-			Promise.resolve(data.service_likes).then((likes) => {
-				serviceData.serviceLikes = likes;
-			});
-		}
-	});
 
 	const serviceInfiniteScroll = create_infinite_scroll({
 		items: serviceData.services,

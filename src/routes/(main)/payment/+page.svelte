@@ -18,13 +18,6 @@
 	let { data } = $props();
 	let { user, transactions, stats } = $state(data);
 
-	// 서버에서 받은 사용자 정보를 컨텍스트에 동기화
-	$effect(() => {
-		if (user?.id && !me.id) {
-			Object.assign(me, user);
-		}
-	});
-
 	// 결제 폼 상태
 	let test_amount = $state(1000);
 	let is_processing = $state(false);
@@ -42,8 +35,13 @@
 			: transactions.filter((t) => t.status === selected_status),
 	);
 
-	// 포트원 SDK 로드
+	// 포트원 SDK 로드 및 사용자 컨텍스트 동기화
 	onMount(() => {
+		// 서버에서 받은 사용자 정보를 컨텍스트에 동기화
+		if (user?.id && !me.id) {
+			Object.assign(me, user);
+		}
+
 		if (browser) {
 			const script = document.createElement('script');
 			script.src = 'https://cdn.iamport.kr/v1/iamport.js';

@@ -33,12 +33,11 @@ import { create_service_options_api } from '$lib/supabase/service/service_option
 import { create_service_reviews_api } from '$lib/supabase/service/service_reviews';
 import { create_service_likes_api } from '$lib/supabase/service/service_likes';
 import { create_order_options_api } from '$lib/supabase/service/order_options';
+import { create_quote_templates_api } from '$lib/supabase/service/quote_templates';
 
-// === Expert APIs ===
-import { create_expert_requests_api } from '$lib/supabase/expert/expert_requests';
-import { create_expert_request_proposals_api } from '$lib/supabase/expert/expert_request_proposals';
-import { create_expert_request_reviews_api } from '$lib/supabase/expert/expert_request_reviews';
-import { create_proposal_attachments_api } from '$lib/supabase/expert/proposal_attachments';
+// === Outsourcing APIs ===
+import { create_work_requests_api } from '$lib/supabase/outsourcing/work_requests';
+import { create_work_request_proposals_api } from '$lib/supabase/outsourcing/work_request_proposals';
 
 // === Community APIs ===
 import { create_communities_api } from '$lib/supabase/community/communities';
@@ -91,12 +90,11 @@ export const create_api = (supabase) => ({
 	service_reviews: create_service_reviews_api(supabase),
 	service_likes: create_service_likes_api(supabase),
 	order_options: create_order_options_api(supabase),
+	quote_templates: create_quote_templates_api(supabase),
 
-	// Expert
-	expert_requests: create_expert_requests_api(supabase),
-	expert_request_proposals: create_expert_request_proposals_api(supabase),
-	expert_request_reviews: create_expert_request_reviews_api(supabase),
-	proposal_attachments: create_proposal_attachments_api(supabase),
+	// Outsourcing
+	work_requests: create_work_requests_api(supabase),
+	work_request_proposals: create_work_request_proposals_api(supabase),
 
 	// Community
 	communities: create_communities_api(supabase),

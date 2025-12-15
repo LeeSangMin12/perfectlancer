@@ -75,8 +75,8 @@
 	let selected = $state(0);
 	let is_tab_loading = $state(false);
 
-	// 각 탭별 데이터를 개별 state로 관리
-	let tab_posts = $state([]);
+	// 각 탭별 데이터를 개별 state로 관리 (서버 데이터로 초기화)
+	let tab_posts = $state(data.posts || []);
 	let tab_post_comments = $state([]);
 	let tab_services = $state([]);
 	let tab_service_likes = $state([]);
@@ -91,13 +91,6 @@
 		service_likes: tab_service_likes,
 		service_reviews: tab_service_reviews,
 		expert_request_reviews: tab_expert_request_reviews,
-	});
-
-	// posts가 로드되면 tab_posts 초기화
-	$effect(() => {
-		if (posts && posts.length > 0) {
-			tab_posts = posts;
-		}
 	});
 
 	let is_following = $state(false);

@@ -27,34 +27,26 @@
 	let page_count = $state(1);
 	let is_back_modal = $state(false);
 
-	let form_data = $state({
-		id: null,
-		title: '',
-		slug: '',
-		content: '',
-		avatar_url: '',
-		selected_topics: [],
-	});
-
-	$effect(() => {
-		if (is_edit_mode) {
-			form_data.id = community.id;
-			form_data.title = community.title;
-			form_data.slug = community.slug;
-			form_data.content = community.content;
-			form_data.avatar_url = community.avatar_url;
-			form_data.selected_topics = community.community_topics.map(
-				(ct) => ct.topics,
-			);
-		} else {
-			form_data.id = null;
-			form_data.title = '';
-			form_data.slug = '';
-			form_data.content = '';
-			form_data.avatar_url = '';
-			form_data.selected_topics = [];
-		}
-	});
+	// 편집 모드일 경우 기존 데이터로 초기화, 아니면 빈 값으로 초기화
+	let form_data = $state(
+		data.community
+			? {
+					id: data.community.id,
+					title: data.community.title,
+					slug: data.community.slug,
+					content: data.community.content,
+					avatar_url: data.community.avatar_url,
+					selected_topics: data.community.community_topics.map((ct) => ct.topics),
+				}
+			: {
+					id: null,
+					title: '',
+					slug: '',
+					content: '',
+					avatar_url: '',
+					selected_topics: [],
+				}
+	);
 
 	/**
 	 * 회원 가입 이전페이지 이동
