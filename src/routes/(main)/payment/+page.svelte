@@ -12,6 +12,8 @@
 		RiShoppingBag3Line,
 	} from 'svelte-remixicon';
 
+	import ConfirmModal from '$lib/components/ui/ConfirmModal.svelte';
+
 	const me = get_user_context();
 	const api = get_api_context();
 
@@ -27,6 +29,10 @@
 
 	// 포트원 SDK 로드 상태
 	let is_portone_loaded = $state(false);
+
+	// 결제 취소 모달
+	let show_cancel_modal = $state(false);
+	let cancel_target = $state(null);
 
 	// 필터링된 거래 목록
 	const filtered_transactions = $derived(
@@ -259,15 +265,17 @@
 		);
 	};
 
-	// 결제 취소
-	const handle_cancel = async (transaction) => {
-		if (
-			!confirm(
-				'이 결제를 취소하시겠습니까?\n\n포트원 API를 통해 실제로 결제가 취소됩니다.',
-			)
-		) {
-			return;
-		}
+	// 결제 취소 모달 열기
+	const open_cancel_modal = (transaction) => {
+		cancel_target = transaction;
+		show_cancel_modal = true;
+	};
+
+	// 결제 취소 실행
+	const handle_cancel = async () => {
+		if (!cancel_target) return;
+		const transaction = cancel_target;
+		show_cancel_modal = false;
 
 		try {
 			// 서버 API를 통해 포트원 결제 취소
@@ -492,7 +500,7 @@
 								<td class="px-3 py-4 text-center">
 									{#if transaction.status === 'completed'}
 										<button
-											onclick={() => handle_cancel(transaction)}
+											onclick={() => open_cancel_modal(transaction)}
 											class="text-sm font-medium text-red-600 hover:text-red-800 hover:underline"
 										>
 											취소
@@ -518,6 +526,14 @@
 		{/if}
 	</div>
 </div>
+
+<ConfirmModal
+	bind:is_open={show_cancel_modal}
+	title="결제를 취소할까요?"
+	description="포트원 API를 통해 실제로 결제가 취소됩니다."
+	button_2_text="취소하기"
+	button_2_action={handle_cancel}
+/>
 
 <style>
 	/* 테이블 스타일 */

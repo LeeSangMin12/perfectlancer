@@ -32,6 +32,7 @@ export const create_work_request_proposals_api = (supabase) => ({
 			.from('work_request_proposals')
 			.select(`
 				id, expert_id, message, proposed_amount, status, created_at, contact_info, attachment_url,
+				quote_template_id, quote_data, completion_requested_at,
 				${EXPERT_SELECT},
 				work_requests:work_request_id(id, title)
 			`)
@@ -126,7 +127,8 @@ export const create_work_request_proposals_api = (supabase) => ({
 			message: proposal_data.message,
 			proposed_amount: proposal_data.proposed_amount,
 			contact_info: proposal_data.contact_info,
-			attachment_url: proposal_data.attachment_url,
+			quote_template_id: proposal_data.quote_template_id || null,
+			quote_data: proposal_data.quote_data || null,
 			status: 'pending',
 		};
 
@@ -188,7 +190,8 @@ export const create_work_request_proposals_api = (supabase) => ({
 			message: proposal_data.message,
 			proposed_amount: proposal_data.proposed_amount,
 			contact_info: proposal_data.contact_info,
-			attachment_url: proposal_data.attachment_url,
+			quote_template_id: proposal_data.quote_template_id,
+			quote_data: proposal_data.quote_data,
 			updated_at: new Date().toISOString(),
 		};
 
@@ -247,17 +250,35 @@ export const create_work_request_proposals_api = (supabase) => ({
 	},
 
 	/**
-	 * 제안 수락
+	 * 결제 완료 처리
+	 * - 제안서 상태를 pending → accepted로 변경
+	 * - 공고 상태 업데이트
+	 * - 모집 인원 도달 시 자동 마감
 	 */
-	accept: async (proposal_id, work_request_id, user_id) => {
+	complete_payment: async (proposal_id, work_request_id, user_id) => {
 		if (!user_id) {
 			throw new Error('로그인이 필요합니다.');
 		}
 
-		// 공고 소유권 확인
+		// 제안서 정보 조회
+		const { data: proposal, error: proposal_check } = await supabase
+			.from('work_request_proposals')
+			.select('expert_id, status, proposed_amount')
+			.eq('id', proposal_id)
+			.single();
+
+		if (proposal_check || !proposal) {
+			throw new Error('제안서를 찾을 수 없습니다.');
+		}
+
+		if (proposal.status !== 'pending') {
+			throw new Error('대기 중인 제안서만 결제할 수 있습니다.');
+		}
+
+		// 공고 정보 조회
 		const { data: request, error: request_error } = await supabase
 			.from('work_requests')
-			.select('requester_id, title, status')
+			.select('requester_id, title, status, max_applicants')
 			.eq('id', work_request_id)
 			.single();
 
@@ -266,22 +287,11 @@ export const create_work_request_proposals_api = (supabase) => ({
 		}
 
 		if (request.requester_id !== user_id) {
-			throw new Error('자신의 공고만 수락할 수 있습니다.');
+			throw new Error('자신의 공고만 처리할 수 있습니다.');
 		}
 
-		if (request.status !== 'open') {
-			throw new Error('열린 공고만 제안을 수락할 수 있습니다.');
-		}
-
-		// 제안서 정보 조회
-		const { data: proposal } = await supabase
-			.from('work_request_proposals')
-			.select('expert_id')
-			.eq('id', proposal_id)
-			.single();
-
-		// 제안서 상태 업데이트
-		const { error: proposal_error } = await supabase
+		// 제안서 상태를 accepted로 변경
+		const { error: update_error } = await supabase
 			.from('work_request_proposals')
 			.update({
 				status: 'accepted',
@@ -289,16 +299,28 @@ export const create_work_request_proposals_api = (supabase) => ({
 			})
 			.eq('id', proposal_id);
 
-		if (proposal_error) {
-			throw new Error(`제안 수락 실패: ${proposal_error.message}`);
+		if (update_error) {
+			throw new Error(`제안서 상태 업데이트 실패: ${update_error.message}`);
+		}
+
+		// 수락된 제안 수 확인
+		const { count: accepted_count } = await supabase
+			.from('work_request_proposals')
+			.select('id', { count: 'exact', head: true })
+			.eq('work_request_id', work_request_id)
+			.eq('status', 'accepted');
+
+		// 공고 상태 결정: max_applicants 도달 시 closed, 아니면 in_progress
+		let new_status = 'in_progress';
+		if (request.max_applicants && accepted_count >= request.max_applicants) {
+			new_status = 'closed';
 		}
 
 		// 공고 상태 업데이트
 		const { data, error } = await supabase
 			.from('work_requests')
 			.update({
-				accepted_proposal_id: proposal_id,
-				status: 'in_progress',
+				status: new_status,
 				updated_at: new Date().toISOString(),
 			})
 			.eq('id', work_request_id)
@@ -310,7 +332,7 @@ export const create_work_request_proposals_api = (supabase) => ({
 		}
 
 		// 전문가에게 알림 전송
-		if (proposal?.expert_id) {
+		if (proposal.expert_id) {
 			await supabase.from('notifications').insert({
 				recipient_id: proposal.expert_id,
 				type: 'proposal_accepted',
@@ -321,7 +343,7 @@ export const create_work_request_proposals_api = (supabase) => ({
 			});
 		}
 
-		return data;
+		return { work_request: data, auto_closed: new_status === 'closed' };
 	},
 
 	/**
@@ -362,5 +384,239 @@ export const create_work_request_proposals_api = (supabase) => ({
 		}
 
 		return data;
+	},
+
+	/**
+	 * 제안 완료 처리 (의뢰인이 서비스 완료 확인)
+	 * - proposal: accepted → completed
+	 * - 모든 accepted proposal이 completed면 work_request도 completed
+	 */
+	complete_proposal: async (proposal_id, work_request_id, user_id) => {
+		if (!user_id) {
+			throw new Error('로그인이 필요합니다.');
+		}
+
+		// 공고 소유자 확인
+		const { data: request, error: request_error } = await supabase
+			.from('work_requests')
+			.select('requester_id, title, status')
+			.eq('id', work_request_id)
+			.single();
+
+		if (request_error || !request) {
+			throw new Error('공고를 찾을 수 없습니다.');
+		}
+
+		if (request.requester_id !== user_id) {
+			throw new Error('자신의 공고만 완료 처리할 수 있습니다.');
+		}
+
+		// proposal 상태 확인
+		const { data: proposal, error: proposal_check } = await supabase
+			.from('work_request_proposals')
+			.select('expert_id, status')
+			.eq('id', proposal_id)
+			.single();
+
+		if (proposal_check || !proposal) {
+			throw new Error('제안서를 찾을 수 없습니다.');
+		}
+
+		if (proposal.status !== 'accepted') {
+			throw new Error('수락된 제안서만 완료 처리할 수 있습니다.');
+		}
+
+		// proposal 상태를 completed로 변경
+		const { error: update_error } = await supabase
+			.from('work_request_proposals')
+			.update({
+				status: 'completed',
+				completed_at: new Date().toISOString(),
+				updated_at: new Date().toISOString(),
+			})
+			.eq('id', proposal_id);
+
+		if (update_error) {
+			throw new Error(`제안 완료 처리 실패: ${update_error.message}`);
+		}
+
+		// 모든 accepted proposal이 completed인지 확인
+		const { data: remaining_accepted } = await supabase
+			.from('work_request_proposals')
+			.select('id')
+			.eq('work_request_id', work_request_id)
+			.eq('status', 'accepted');
+
+		// 남은 accepted가 없으면 work_request도 completed
+		if (!remaining_accepted || remaining_accepted.length === 0) {
+			await supabase
+				.from('work_requests')
+				.update({
+					status: 'completed',
+					updated_at: new Date().toISOString(),
+				})
+				.eq('id', work_request_id);
+		}
+
+		// 전문가에게 알림 전송
+		if (proposal.expert_id) {
+			await supabase.from('notifications').insert({
+				recipient_id: proposal.expert_id,
+				actor_id: user_id,
+				type: 'proposal_completed',
+				resource_type: 'work_request',
+				resource_id: work_request_id,
+				payload: { title: request.title },
+				link_url: `/work-request/${work_request_id}`,
+			});
+		}
+
+		return { success: true };
+	},
+
+	/**
+	 * 전문가가 완료 요청 (7일 후 자동 완료)
+	 */
+	request_completion: async (proposal_id, user_id) => {
+		if (!user_id) {
+			throw new Error('로그인이 필요합니다.');
+		}
+
+		// 제안서 정보 조회
+		const { data: proposal, error: check_error } = await supabase
+			.from('work_request_proposals')
+			.select(`
+				expert_id, status, completion_requested_at,
+				work_requests:work_request_id(id, title, requester_id)
+			`)
+			.eq('id', proposal_id)
+			.single();
+
+		if (check_error || !proposal) {
+			throw new Error('제안서를 찾을 수 없습니다.');
+		}
+
+		if (proposal.expert_id !== user_id) {
+			throw new Error('자신의 제안서만 완료 요청할 수 있습니다.');
+		}
+
+		if (proposal.status !== 'accepted') {
+			throw new Error('수락된 제안서만 완료 요청할 수 있습니다.');
+		}
+
+		if (proposal.completion_requested_at) {
+			throw new Error('이미 완료 요청이 되었습니다.');
+		}
+
+		// 완료 요청 시간 기록
+		const { data, error } = await supabase
+			.from('work_request_proposals')
+			.update({
+				completion_requested_at: new Date().toISOString(),
+				updated_at: new Date().toISOString(),
+			})
+			.eq('id', proposal_id)
+			.select()
+			.single();
+
+		if (error) {
+			throw new Error(`완료 요청 실패: ${error.message}`);
+		}
+
+		// 의뢰인에게 알림 전송
+		if (proposal.work_requests?.requester_id) {
+			await supabase.from('notifications').insert({
+				recipient_id: proposal.work_requests.requester_id,
+				actor_id: user_id,
+				type: 'completion_requested',
+				resource_type: 'work_request',
+				resource_id: proposal.work_requests.id,
+				payload: { title: proposal.work_requests.title },
+				link_url: `/work-request/${proposal.work_requests.id}`,
+			});
+		}
+
+		return data;
+	},
+
+	/**
+	 * 자동 완료 처리 (7일 경과된 완료 요청)
+	 * - 서버에서 페이지 로드 시 호출
+	 */
+	process_auto_completions: async (work_request_id) => {
+		const seven_days_ago = new Date();
+		seven_days_ago.setDate(seven_days_ago.getDate() - 7);
+
+		// 7일 경과된 완료 요청 조회
+		const { data: pending_completions, error: check_error } = await supabase
+			.from('work_request_proposals')
+			.select('id, expert_id, work_request_id')
+			.eq('work_request_id', work_request_id)
+			.eq('status', 'accepted')
+			.not('completion_requested_at', 'is', null)
+			.lt('completion_requested_at', seven_days_ago.toISOString());
+
+		if (check_error || !pending_completions || pending_completions.length === 0) {
+			return { processed: 0 };
+		}
+
+		// 공고 정보 조회
+		const { data: request } = await supabase
+			.from('work_requests')
+			.select('requester_id, title')
+			.eq('id', work_request_id)
+			.single();
+
+		let processed = 0;
+
+		for (const proposal of pending_completions) {
+			// 제안 완료 처리
+			const { error: update_error } = await supabase
+				.from('work_request_proposals')
+				.update({
+					status: 'completed',
+					completed_at: new Date().toISOString(),
+					updated_at: new Date().toISOString(),
+				})
+				.eq('id', proposal.id);
+
+			if (!update_error) {
+				processed++;
+
+				// 전문가에게 알림 전송
+				await supabase.from('notifications').insert({
+					recipient_id: proposal.expert_id,
+					type: 'proposal_completed',
+					resource_type: 'work_request',
+					resource_id: work_request_id,
+					payload: {
+						title: request?.title,
+						auto_completed: true
+					},
+					link_url: `/work-request/${work_request_id}`,
+				});
+			}
+		}
+
+		// 모든 accepted proposal이 completed인지 확인
+		const { data: remaining_accepted } = await supabase
+			.from('work_request_proposals')
+			.select('id')
+			.eq('work_request_id', work_request_id)
+			.eq('status', 'accepted');
+
+		// 남은 accepted가 없으면 work_request도 completed
+		if (!remaining_accepted || remaining_accepted.length === 0) {
+			await supabase
+				.from('work_requests')
+				.update({
+					status: 'completed',
+					completed_at: new Date().toISOString(),
+					updated_at: new Date().toISOString(),
+				})
+				.eq('id', work_request_id);
+		}
+
+		return { processed };
 	},
 });

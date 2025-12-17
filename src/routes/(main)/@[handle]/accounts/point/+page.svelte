@@ -46,7 +46,7 @@
 
 	async function handle_withdraw() {
 		if (!withdraw_form.amount || withdraw_form.amount <= 0) {
-			alert('출금할 금액을 입력하세요.');
+			show_toast('error', '출금할 금액을 입력하세요.');
 			return;
 		}
 		if (
@@ -54,12 +54,12 @@
 			!withdraw_form.account_number.trim() ||
 			!withdraw_form.account_holder.trim()
 		) {
-			alert('은행, 계좌번호, 예금주를 모두 입력하세요.');
+			show_toast('error', '은행, 계좌번호, 예금주를 모두 입력하세요.');
 			return;
 		}
 
 		if (me.moon_point < withdraw_form.amount) {
-			alert('보유 문이 부족합니다.');
+			show_toast('error', '보유 문이 부족합니다.');
 			return;
 		}
 
@@ -73,13 +73,13 @@
 				account_holder: withdraw_form.account_holder,
 			});
 			if (error) throw error;
-			alert('출금 신청이 완료되었습니다!');
+			show_toast('success', '출금 신청이 완료되었습니다!');
 			is_withdraw_modal_open = false;
 			moon_withdrawals = await api.moon_withdrawals.select_by_user_id(me.id);
 
 			// 필요시 출금 내역 새로고침 등
 		} catch (e) {
-			alert(e.message);
+			show_toast('error', e.message);
 		} finally {
 			withdraw_loading = false;
 		}

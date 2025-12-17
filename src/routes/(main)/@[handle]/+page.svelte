@@ -238,7 +238,7 @@
 				// 받은리뷰 탭 - 서비스 리뷰와 전문가 리뷰 모두 조회
 				const [service_reviews, expert_reviews] = await Promise.all([
 					api.service_reviews.select_by_service_author_id(user.id),
-					api.expert_request_reviews.select_by_expert_id(user.id),
+					api.work_request_reviews.select_by_expert_id(user.id),
 				]);
 				tab_service_reviews = service_reviews;
 				tab_expert_request_reviews = expert_reviews;
@@ -623,15 +623,15 @@
 			<!-- 전문가 요청 리뷰 -->
 			{#each selected_data.expert_request_reviews as review}
 				<div class="rounded-lg border border-gray-200 bg-white p-4">
-					<!-- 리뷰받은 전문가 요청 정보 -->
-					{#if review.request}
+					<!-- 리뷰받은 외주 요청 정보 -->
+					{#if review.work_request}
 						<div class="mb-3 rounded bg-emerald-50 p-3">
-							<p class="mb-1 text-xs text-emerald-700">전문가 요청 리뷰</p>
+							<p class="mb-1 text-xs text-emerald-700">외주 요청 리뷰</p>
 							<p class="text-sm font-medium text-gray-900">
-								{review.request.title || '제목 없음'}
+								{review.work_request.title || '제목 없음'}
 							</p>
 							<button
-								onclick={() => goto(`/expert-request/${review.request.id}`)}
+								onclick={() => goto(`/work-request/${review.work_request.id}`)}
 								class="mt-1 text-xs text-emerald-600 hover:underline"
 								aria-label="전문가 요청 상세보기"
 							>

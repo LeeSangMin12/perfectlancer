@@ -111,7 +111,7 @@
 
 		//이미지 개수가 7개 이상이면 에러
 		if (images_copy.length > 7) {
-			alert('이미지 개수는 7개를 초과할 수 없습니다.');
+			show_toast('error', '이미지 개수는 7개를 초과할 수 없습니다.');
 			return;
 		}
 
@@ -191,16 +191,16 @@
 				}
 			}
 			if (files_copy.length > 7) {
-				alert('이미지 개수는 7개를 초과할 수 없습니다.');
+				show_toast('error', '이미지 개수는 7개를 초과할 수 없습니다.');
 				return;
 			}
 		} else if (upload_type === 'video') {
 			if (selected_files.length > 1) {
-				alert('영상은 1개만 업로드할 수 있습니다.');
+				show_toast('error', '영상은 1개만 업로드할 수 있습니다.');
 				return;
 			}
 			if (!selected_files[0].type.startsWith('video/')) {
-				alert('영상 파일만 업로드할 수 있습니다.');
+				show_toast('error', '영상 파일만 업로드할 수 있습니다.');
 				return;
 			}
 			selected_files[0].uri = URL.createObjectURL(selected_files[0]);

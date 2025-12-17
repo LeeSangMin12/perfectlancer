@@ -13,8 +13,8 @@
 		RiFileCopyLine,
 	} from 'svelte-remixicon';
 
-	import AddBankAccountModal from '$lib/components/modals/AddBankAccountModal.svelte';
 	import Header from '$lib/components/ui/Header.svelte';
+	import AddBankAccountModal from '$lib/components/modals/AddBankAccountModal.svelte';
 
 	const me = get_user_context();
 	const api = get_api_context();
@@ -203,7 +203,8 @@
 						</div>
 						<div class="min-w-0 flex-1">
 							<p class="truncate text-[14px] font-medium text-gray-900">
-								{account.bank} {account.account_number}
+								{account.bank}
+								{account.account_number}
 							</p>
 							<p class="text-[12px] text-gray-500">
 								{account.account_holder}
@@ -262,7 +263,7 @@
 	<section class="px-5 py-5">
 		<ul class="space-y-1.5 text-[12px] text-gray-400">
 			<li>• 입금 후 충전 신청을 해주세요</li>
-			<li>• 영업일 기준 1일 내 처리됩니다</li>
+			<li>• 영업일 기준 1주일 내 처리됩니다</li>
 			<li>• 최소 충전 금액은 1,000원입니다</li>
 		</ul>
 	</section>

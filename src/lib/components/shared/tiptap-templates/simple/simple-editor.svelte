@@ -54,7 +54,7 @@
 			editorProps: {
 				attributes: {
 					class:
-						'prose prose-sm sm:prose lg:prose-lg xl:prose-2xl mx-auto focus:outline-none min-h-[300px] p-4',
+						'focus:outline-none min-h-[300px] p-4 text-[15px] text-gray-800',
 				},
 			},
 			// Disable all on-type input rules so characters like "- " stay literal
@@ -342,7 +342,9 @@
 	}
 
 	:global(.ProseMirror p) {
-		margin: 0.5rem 0 !important;
+		margin: 0 !important;
+		padding: 0 !important;
+		line-height: 1.5 !important;
 	}
 
 	:global(.ProseMirror ul, .ProseMirror ol) {

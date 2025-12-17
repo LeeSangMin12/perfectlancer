@@ -42,10 +42,12 @@ async function fetch_portone_payment(imp_uid, access_token) {
 
 export const POST = async ({ request, locals }) => {
 	try {
-		const { imp_uid, merchant_uid } = await request.json();
+		const { imp_uid, merchant_uid, proposal_id, work_request_id } = await request.json();
 
 		console.log('🔍 [결제 검증] imp_uid:', imp_uid);
 		console.log('🔍 [결제 검증] merchant_uid:', merchant_uid);
+		console.log('🔍 [결제 검증] proposal_id:', proposal_id);
+		console.log('🔍 [결제 검증] work_request_id:', work_request_id);
 
 		// 1. 포트원에서 실제 결제 상태 조회
 		const access_token = await get_portone_access_token();
@@ -120,10 +122,31 @@ export const POST = async ({ request, locals }) => {
 
 			console.log('✅ [결제 검증] 업데이트 완료:', updated);
 
+			// 제안 수락 결제인 경우 추가 처리
+			let auto_closed = false;
+			if (proposal_id && work_request_id) {
+				console.log('✅ [결제 검증] 제안 수락 결제 - complete_payment 호출');
+				const user = await locals.get_user();
+				if (user?.id) {
+					try {
+						const result = await api.work_request_proposals.complete_payment(
+							proposal_id,
+							work_request_id,
+							user.id
+						);
+						auto_closed = result.auto_closed;
+						console.log('✅ [결제 검증] 제안 수락 완료, 자동 마감:', auto_closed);
+					} catch (err) {
+						console.error('❌ [결제 검증] 제안 수락 처리 실패:', err);
+					}
+				}
+			}
+
 			return json({
 				success: true,
 				status: 'paid',
 				transaction: updated,
+				auto_closed,
 			});
 		} else if (payment_data.status === 'cancelled') {
 			// 결제 취소

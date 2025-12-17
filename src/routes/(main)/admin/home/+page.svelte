@@ -33,6 +33,7 @@
 		<h2 class="mb-3 text-lg font-semibold text-gray-700">외주 관리</h2>
 		<div class="flex flex-col gap-2 rounded-lg bg-gray-50 p-4">
 			<a href="/admin/work-requests" class=" hover:underline">외주 공고 관리</a>
+			<a href="/admin/payments" class=" hover:underline">외주 결제 관리</a>
 		</div>
 	</div>
 

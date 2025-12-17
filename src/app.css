@@ -106,7 +106,7 @@ img {
 
 /* Base button reset */
 .btn {
-	@apply rounded-lg border-none font-medium shadow-none;
+	@apply rounded-md border-none font-medium shadow-none;
 }
 
 /* Primary - 파란색 메인 버튼 */
@@ -146,7 +146,7 @@ img {
 
 /* Gray - 회색 버튼 (기존 호환) */
 .btn-gray {
-	@apply bg-gray-200 text-gray-900 hover:bg-gray-300 active:bg-gray-400;
+	@apply bg-gray-100 text-gray-900 hover:bg-gray-300 active:bg-gray-400;
 }
 
 /* ============================================

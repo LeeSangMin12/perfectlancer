@@ -31,7 +31,6 @@ export const create_work_requests_api = (supabase) => ({
 		const { data, error } = await supabase
 			.from('work_requests')
 			.select(`*, ${REQUESTER_SELECT}, ${PROPOSALS_DETAIL_SELECT}`)
-			.is('deleted_at', null)
 			.order('created_at', { ascending: false });
 
 		if (error) {
@@ -48,7 +47,6 @@ export const create_work_requests_api = (supabase) => ({
 			.from('work_requests')
 			.select(`*, ${REQUESTER_SELECT}, ${PROPOSALS_DETAIL_SELECT}`)
 			.eq('id', id)
-			.is('deleted_at', null)
 			.single();
 
 		if (error) {
@@ -66,7 +64,6 @@ export const create_work_requests_api = (supabase) => ({
 			.select(`*, ${REQUESTER_SELECT}, ${PROPOSALS_COUNT_SELECT}`)
 			.eq('category', category)
 			.eq('status', 'open')
-			.is('deleted_at', null)
 			.order('created_at', { ascending: false });
 
 		if (error) {
@@ -90,7 +87,6 @@ export const create_work_requests_api = (supabase) => ({
 				`title.ilike.%${sanitized_search}%,description.ilike.%${sanitized_search}%,category.ilike.%${sanitized_search}%`,
 			)
 			.eq('status', 'open')
-			.is('deleted_at', null)
 			.order('created_at', { ascending: false });
 
 		if (error) {
@@ -125,7 +121,6 @@ export const create_work_requests_api = (supabase) => ({
 			.from('work_requests')
 			.select(`*, ${REQUESTER_SELECT}, ${PROPOSALS_COUNT_SELECT}`)
 			.eq('status', 'open')
-			.is('deleted_at', null)
 			.lte('posting_start_date', today)
 			.gte('posting_end_date', today)
 			.order('created_at', { ascending: false })
@@ -171,7 +166,6 @@ export const create_work_requests_api = (supabase) => ({
 			.from('work_requests')
 			.select(`*, ${REQUESTER_SELECT}, ${PROPOSALS_COUNT_SELECT}`)
 			.eq('requester_id', requester_id)
-			.is('deleted_at', null)
 			.order('created_at', { ascending: false });
 
 		if (error) {
@@ -225,6 +219,8 @@ export const create_work_requests_api = (supabase) => ({
 
 	/**
 	 * 공고 수정
+	 * - open 또는 pending 상태일 때만 수정 가능
+	 * - 수정 후 status를 pending으로 변경 (관리자 재승인 필요)
 	 */
 	update: async (request_id, request_data, user_id) => {
 		if (!user_id) {
@@ -246,7 +242,7 @@ export const create_work_requests_api = (supabase) => ({
 			throw new Error('자신의 공고만 수정할 수 있습니다.');
 		}
 
-		if (!['draft', 'open'].includes(existing.status)) {
+		if (!['open', 'pending', 'pending_approval'].includes(existing.status)) {
 			throw new Error('진행 중이거나 완료된 공고는 수정할 수 없습니다.');
 		}
 
@@ -263,6 +259,7 @@ export const create_work_requests_api = (supabase) => ({
 			work_end_date: request_data.work_end_date,
 			max_applicants: request_data.max_applicants,
 			work_location: request_data.work_location,
+			status: 'pending_approval', // 수정 후 관리자 재승인 필요
 			updated_at: new Date().toISOString(),
 		};
 
@@ -285,46 +282,6 @@ export const create_work_requests_api = (supabase) => ({
 		}
 
 		return data;
-	},
-
-	/**
-	 * 공고 삭제 (soft delete)
-	 */
-	delete: async (request_id, user_id) => {
-		if (!user_id) {
-			throw new Error('로그인이 필요합니다.');
-		}
-
-		// 소유권 및 상태 확인
-		const { data: existing, error: check_error } = await supabase
-			.from('work_requests')
-			.select('requester_id, status')
-			.eq('id', request_id)
-			.single();
-
-		if (check_error || !existing) {
-			throw new Error('공고를 찾을 수 없습니다.');
-		}
-
-		if (existing.requester_id !== user_id) {
-			throw new Error('자신의 공고만 삭제할 수 있습니다.');
-		}
-
-		if (existing.status === 'in_progress') {
-			throw new Error('진행 중인 공고는 삭제할 수 없습니다.');
-		}
-
-		const { error } = await supabase
-			.from('work_requests')
-			.update({
-				deleted_at: new Date().toISOString(),
-				status: 'cancelled',
-			})
-			.eq('id', request_id);
-
-		if (error) {
-			throw new Error(`공고 삭제 실패: ${error.message}`);
-		}
 	},
 
 	/**
@@ -395,7 +352,9 @@ export const create_work_requests_api = (supabase) => ({
 		}
 
 		if (!['open', 'in_progress'].includes(existing.status)) {
-			throw new Error('모집중이거나 진행중인 공고만 제안을 수락할 수 있습니다.');
+			throw new Error(
+				'모집중이거나 진행중인 공고만 제안을 수락할 수 있습니다.',
+			);
 		}
 
 		// 제안서 상태 업데이트
@@ -512,11 +471,12 @@ export const create_work_requests_api = (supabase) => ({
 			.from('work_requests')
 			.select(`*, ${REQUESTER_SELECT}`)
 			.eq('status', 'pending_approval')
-			.is('deleted_at', null)
 			.order('created_at', { ascending: false });
 
 		if (error) {
-			throw new Error(`Failed to select pending work_requests: ${error.message}`);
+			throw new Error(
+				`Failed to select pending work_requests: ${error.message}`,
+			);
 		}
 		return data || [];
 	},
@@ -579,7 +539,7 @@ export const create_work_requests_api = (supabase) => ({
 			.from('work_requests')
 			.update({
 				status: 'rejected',
-				reject_reason: reject_reason,
+				admin_reject_reason: reject_reason,
 				updated_at: new Date().toISOString(),
 			})
 			.eq('id', request_id)
@@ -588,6 +548,127 @@ export const create_work_requests_api = (supabase) => ({
 
 		if (error) {
 			throw new Error(`공고 거절 실패: ${error.message}`);
+		}
+
+		return data;
+	},
+
+	/**
+	 * 추가 요청사항 등록
+	 * @param {number} request_id - 공고 ID
+	 * @param {object} request_data - { content: string, images?: string[] }
+	 * @param {string} user_id - 사용자 ID
+	 */
+	add_additional_request: async (request_id, request_data, user_id) => {
+		if (!user_id) {
+			throw new Error('로그인이 필요합니다.');
+		}
+
+		if (!request_data.content?.trim()) {
+			throw new Error('요청사항 내용을 입력해주세요.');
+		}
+
+		if (request_data.content.length > 200) {
+			throw new Error('요청사항은 200자 이내로 입력해주세요.');
+		}
+
+		// 소유권 확인
+		const { data: existing, error: check_error } = await supabase
+			.from('work_requests')
+			.select('requester_id, status, additional_requests')
+			.eq('id', request_id)
+			.single();
+
+		if (check_error || !existing) {
+			throw new Error('공고를 찾을 수 없습니다.');
+		}
+
+		if (existing.requester_id !== user_id) {
+			throw new Error('자신의 공고에만 요청사항을 추가할 수 있습니다.');
+		}
+
+		// 진행 중 또는 모집중인 공고만 추가 가능
+		if (!['open', 'in_progress'].includes(existing.status)) {
+			throw new Error(
+				'모집중이거나 진행중인 공고에만 요청사항을 추가할 수 있습니다.',
+			);
+		}
+
+		// 새 요청사항 생성
+		const new_request = {
+			id: crypto.randomUUID(),
+			content: request_data.content.trim(),
+			images: request_data.images || [],
+			created_at: new Date().toISOString(),
+		};
+
+		// 기존 요청사항에 추가
+		const updated_requests = [
+			...(existing.additional_requests || []),
+			new_request,
+		];
+
+		const { data, error } = await supabase
+			.from('work_requests')
+			.update({
+				additional_requests: updated_requests,
+				updated_at: new Date().toISOString(),
+			})
+			.eq('id', request_id)
+			.select()
+			.single();
+
+		if (error) {
+			throw new Error(`요청사항 추가 실패: ${error.message}`);
+		}
+
+		return data;
+	},
+
+	/**
+	 * 추가 요청사항 삭제
+	 */
+	delete_additional_request: async (
+		request_id,
+		additional_request_id,
+		user_id,
+	) => {
+		if (!user_id) {
+			throw new Error('로그인이 필요합니다.');
+		}
+
+		// 소유권 확인
+		const { data: existing, error: check_error } = await supabase
+			.from('work_requests')
+			.select('requester_id, additional_requests')
+			.eq('id', request_id)
+			.single();
+
+		if (check_error || !existing) {
+			throw new Error('공고를 찾을 수 없습니다.');
+		}
+
+		if (existing.requester_id !== user_id) {
+			throw new Error('자신의 공고에서만 요청사항을 삭제할 수 있습니다.');
+		}
+
+		// 요청사항 필터링
+		const updated_requests = (existing.additional_requests || []).filter(
+			(r) => r.id !== additional_request_id,
+		);
+
+		const { data, error } = await supabase
+			.from('work_requests')
+			.update({
+				additional_requests: updated_requests,
+				updated_at: new Date().toISOString(),
+			})
+			.eq('id', request_id)
+			.select()
+			.single();
+
+		if (error) {
+			throw new Error(`요청사항 삭제 실패: ${error.message}`);
 		}
 
 		return data;

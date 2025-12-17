@@ -4,58 +4,46 @@
 		get_api_context,
 		get_user_context,
 	} from '$lib/contexts/app_context.svelte.js';
-	import { check_login, show_toast } from '$lib/utils/common';
+	import { check_login, comma, show_toast } from '$lib/utils/common';
 	import { smart_go_back } from '$lib/utils/navigation';
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
 	import {
 		RiAddLine,
 		RiArrowLeftSLine,
-		RiCheckboxCircleLine,
-		RiDeleteBinLine,
+		RiCloseLine,
+		RiDraggable,
 	} from 'svelte-remixicon';
 
-	import Header from '$lib/components/ui/Header.svelte';
-	import Modal from '$lib/components/ui/Modal.svelte';
 	import FixedBottomButton from '$lib/components/ui/FixedBottomButton.svelte';
+	import Header from '$lib/components/ui/Header.svelte';
+	import ServiceProposal from '$lib/components/domain/service/ServiceProposal.svelte';
+	import SimpleEditor from '$lib/components/shared/tiptap-templates/simple/simple-editor.svelte';
 
 	import { update_global_store } from '$lib/store/global_store.js';
 
 	const me = get_user_context();
 	const api = get_api_context();
 
-	const TITLE = '견적서 템플릿 등록';
+	const TITLE = '견적서 템플릿 작성';
 
-	// 수정 횟수/범위 프리셋
-	const revision_count_presets = [0, 1, 2, 3];
-	const revision_scope_presets = [
-		'UI 색/레이아웃 변경은 포함',
-		'텍스트/카피 수정은 포함',
-		'경미한 버그 수정은 포함',
-		'기능 추가/범위 확장은 별도 협의',
-	];
-
+	// 폼 데이터
 	let form = $state({
 		title: '',
 		description: '',
-		audience: '',
-		process: '',
-		deliverables: '',
-		revision_count: 1,
-		revision_scopes: [
-			'UI 색/레이아웃 변경은 포함',
-			'기능 추가/범위 확장은 별도 협의',
-		],
-		faqs: [{ question: '', answer: '' }],
-		refund_policy: {
-			before_start: 100,
-			before_midpoint: 50,
-			after_midpoint: 0,
-		},
+		price: '',
+		duration: '',
+		target_audience: '',
+		work_process: [{ title: '', description: '' }],
+		deliverables: [''],
+		includes: [''],
+		revision_policy: '',
+		refund_policy: '',
+		faq: [{ question: '', answer: '' }],
 	});
 
-	let custom_scope = $state('');
-	let is_confirm_modal = $state(false);
+	// 미리보기 모드
+	let show_preview = $state(false);
 
 	onMount(() => {
 		if (!check_login(me)) {
@@ -63,127 +51,91 @@
 		}
 	});
 
-	// 스텝 관리
-	let current_step = $state(1);
-	const total_steps = 3;
-
-	const go_to_next_step = () => {
-		if (current_step < total_steps) {
-			current_step++;
-		}
+	// 작업 프로세스 관리
+	const add_step = () => {
+		form.work_process = [...form.work_process, { title: '', description: '' }];
 	};
 
-	const go_to_prev_step = () => {
-		if (current_step > 1) {
-			current_step--;
-		}
+	const remove_step = (index) => {
+		if (form.work_process.length <= 1) return;
+		form.work_process = form.work_process.filter((_, i) => i !== index);
 	};
 
-	// 수정 범위 토글
-	const toggle_revision_scope = (scope) => {
-		if (form.revision_scopes.includes(scope)) {
-			form.revision_scopes = form.revision_scopes.filter(
-				(item) => item !== scope,
-			);
-		} else {
-			form.revision_scopes = [...form.revision_scopes, scope];
-		}
+	// 산출물 관리
+	const add_deliverable = () => {
+		form.deliverables = [...form.deliverables, ''];
 	};
 
-	const add_custom_scope = () => {
-		const value = custom_scope.trim();
-		if (!value) return;
-		if (form.revision_scopes.includes(value)) {
-			show_toast('info', '이미 추가된 항목입니다.');
-			return;
-		}
-		form.revision_scopes = [...form.revision_scopes, value];
-		custom_scope = '';
+	const remove_deliverable = (index) => {
+		if (form.deliverables.length <= 1) return;
+		form.deliverables = form.deliverables.filter((_, i) => i !== index);
+	};
+
+	// 포함 사항 관리
+	const add_include = () => {
+		form.includes = [...form.includes, ''];
+	};
+
+	const remove_include = (index) => {
+		if (form.includes.length <= 1) return;
+		form.includes = form.includes.filter((_, i) => i !== index);
 	};
 
 	// FAQ 관리
 	const add_faq = () => {
-		form.faqs = [...form.faqs, { question: '', answer: '' }];
+		form.faq = [...form.faq, { question: '', answer: '' }];
 	};
 
 	const remove_faq = (index) => {
-		if (form.faqs.length === 1) {
-			show_toast('info', 'FAQ는 최소 1개 이상 필요합니다.');
-			return;
-		}
-		form.faqs = form.faqs.filter((_, i) => i !== index);
+		if (form.faq.length <= 1) return;
+		form.faq = form.faq.filter((_, i) => i !== index);
 	};
 
 	// 유효성 검증
-	const validate_step = (step) => {
-		switch (step) {
-			case 1:
-				if (!form.title.trim()) {
-					show_toast('error', '견적 제목을 입력해주세요.');
-					return false;
-				}
-				if (!form.description.trim()) {
-					show_toast('error', '설명을 입력해주세요.');
-					return false;
-				}
-				return true;
-			case 2:
-				if (!form.audience.trim()) {
-					show_toast('error', '추천 대상을 입력해주세요.');
-					return false;
-				}
-				if (!form.process.trim()) {
-					show_toast('error', '작업 프로세스를 입력해주세요.');
-					return false;
-				}
-				if (!form.deliverables.trim()) {
-					show_toast('error', '결과물을 입력해주세요.');
-					return false;
-				}
-				return true;
-			case 3:
-				if (form.revision_scopes.length === 0) {
-					show_toast('error', '수정 범위를 최소 1개 이상 선택해주세요.');
-					return false;
-				}
-				const incomplete_faq = form.faqs.some(
-					(item) => !item.question.trim() || !item.answer.trim(),
-				);
-				if (incomplete_faq) {
-					show_toast('error', 'FAQ의 질문과 답변을 모두 입력해주세요.');
-					return false;
-				}
-				return true;
-			default:
-				return true;
+	const validate = () => {
+		if (!form.title.trim()) {
+			show_toast('error', '견적서 제목을 입력해주세요.');
+			return false;
 		}
+		if (!form.description.trim() || form.description === '<p></p>') {
+			show_toast('error', '서비스 설명을 입력해주세요.');
+			return false;
+		}
+		return true;
 	};
 
-	const handle_next = () => {
-		if (validate_step(current_step)) {
-			go_to_next_step();
-		}
-	};
+	// 미리보기용 데이터 변환
+	const preview_steps = $derived(
+		form.work_process
+			.filter((s) => s.title.trim())
+			.map((s) => ({ title: s.title, description: s.description })),
+	);
 
+	const preview_deliverables = $derived(
+		form.deliverables.filter((d) => d.trim()),
+	);
+
+	const preview_includes = $derived(form.includes.filter((i) => i.trim()));
+
+	// 저장
 	const save_template = async () => {
+		if (!validate()) return;
+
 		update_global_store('loading', true);
 		try {
-			if (!me?.id) {
-				show_toast('error', '로그인이 필요합니다.');
-				return;
-			}
-
 			const template_data = {
 				user_id: me.id,
 				title: form.title.trim(),
-				description: form.description.trim(),
-				target_audience: form.audience.trim(),
-				work_process: form.process.trim(),
-				deliverables: form.deliverables.trim(),
-				revision_count: form.revision_count,
-				revision_scope: form.revision_scopes.join('\n'),
-				faq: form.faqs.filter((f) => f.question.trim() && f.answer.trim()),
-				refund_policy: form.refund_policy,
+				description: form.description,
+				price: form.price ? parseInt(form.price.replace(/,/g, '')) : null,
+				duration: form.duration.trim() || null,
+				target_audience: form.target_audience.trim() || null,
+				work_process: form.work_process.filter((s) => s.title.trim()),
+				deliverables: form.deliverables.filter((d) => d.trim()),
+				includes: form.includes.filter((i) => i.trim()),
+				revision_scope: form.revision_policy.trim() || '',
+				refund_policy: form.refund_policy.trim() || '',
+				faq: form.faq.filter((f) => f.question.trim() && f.answer.trim()),
 			};
 
 			await api.quote_templates.insert(template_data);
@@ -191,7 +143,7 @@
 			goto(`/@${me.handle}/accounts/quote-templates`, { replaceState: true });
 		} catch (e) {
 			console.error('Error saving template:', e);
-			show_toast('error', '템플릿 저장 중 오류가 발생했습니다.');
+			show_toast('error', '저장 중 오류가 발생했습니다.');
 		} finally {
 			update_global_store('loading', false);
 		}
@@ -200,357 +152,420 @@
 
 <svelte:head>
 	<title>{TITLE} | 문</title>
-	<meta
-		name="description"
-		content="외주 견적서 템플릿을 작성하고 저장하는 페이지입니다."
-	/>
 </svelte:head>
 
 <Header>
 	{#snippet left()}
 		<button
 			onclick={() => {
-				if (current_step > 1) {
-					go_to_prev_step();
+				if (show_preview) {
+					show_preview = false;
 				} else {
 					smart_go_back();
 				}
 			}}
 		>
-			<RiArrowLeftSLine size={28} color={colors.gray[600]} />
+			<RiArrowLeftSLine size={24} color={colors.gray[600]} />
 		</button>
 	{/snippet}
 	{#snippet center()}
-		<h1 class="font-semibold">{TITLE}</h1>
+		<h1 class="font-semibold">{show_preview ? '미리보기' : TITLE}</h1>
+	{/snippet}
+	{#snippet right()}
+		<button
+			onclick={() => (show_preview = !show_preview)}
+			class="text-sm font-medium text-blue-600"
+		>
+			{show_preview ? '편집' : '미리보기'}
+		</button>
 	{/snippet}
 </Header>
 
-<!-- Progress bar -->
-<div class="mb-4">
-	<div class="h-1 w-full rounded-full bg-gray-200">
-		<div
-			class="h-1 rounded-lg bg-blue-600 transition-all duration-300"
-			style="width: {(current_step / total_steps) * 100}%"
-		></div>
-	</div>
-</div>
+{#if show_preview}
+	<!-- 미리보기 모드 -->
+	<main class="px-4 py-6 pb-28">
+		<div class="mb-6">
+			<h1 class="mb-2 text-xl font-bold text-gray-900">
+				{form.title || '견적서 제목'}
+			</h1>
+			{#if form.price}
+				<p class="text-primary text-2xl font-bold">
+					₩{comma(parseInt(form.price.replace(/,/g, '') || 0))}
+				</p>
+			{/if}
+		</div>
 
-<main class="p-4 pb-28">
-	<form class="space-y-6">
-		{#if current_step === 1}
-			<!-- Step 1: 기본 정보 -->
-			<div class="space-y-6">
-				<h2 class="mb-4 text-lg font-semibold text-gray-900">
-					견적서의 기본 정보를
-					<br />
-					작성해주세요
+		<!-- 서비스 설명 -->
+		{#if form.description && form.description !== '<p></p>'}
+			<div class="prose prose-sm mb-8 max-w-none">
+				{@html form.description}
+			</div>
+		{/if}
+
+		<!-- 추천 대상 -->
+		{#if form.target_audience}
+			<div class="mb-8">
+				<h2 class="mb-3 text-base font-bold text-gray-900">
+					이런 분께 추천드립니다
 				</h2>
+				<div class="whitespace-pre-wrap text-gray-700">
+					{form.target_audience}
+				</div>
+			</div>
+		{/if}
 
-				<!-- 제목 -->
+		<!-- ServiceProposal 컴포넌트 -->
+		{#if preview_steps.length > 0 || preview_deliverables.length > 0}
+			<div class="mb-8">
+				<h2 class="mb-4 text-base font-bold text-gray-900">서비스 진행 안내</h2>
+				<ServiceProposal
+					steps={preview_steps}
+					deliverables={preview_deliverables}
+					price={form.price ? parseInt(form.price.replace(/,/g, '')) : 0}
+					duration={form.duration || '협의'}
+					includes={preview_includes}
+				/>
+			</div>
+		{/if}
+
+		<!-- 수정 및 재진행 -->
+		{#if form.revision_policy}
+			<div class="mb-8">
+				<h2 class="mb-3 text-base font-bold text-gray-900">수정 및 재진행</h2>
+				<div
+					class="rounded-xl bg-gray-50 p-4 text-sm whitespace-pre-wrap text-gray-700"
+				>
+					{form.revision_policy}
+				</div>
+			</div>
+		{/if}
+
+		<!-- 취소 및 환불 -->
+		{#if form.refund_policy}
+			<div class="mb-8">
+				<h2 class="mb-3 text-base font-bold text-gray-900">
+					취소 및 환불 규정
+				</h2>
+				<div
+					class="rounded-xl bg-gray-50 p-4 text-sm whitespace-pre-wrap text-gray-700"
+				>
+					{form.refund_policy}
+				</div>
+			</div>
+		{/if}
+
+		<!-- FAQ -->
+		{#if form.faq.some((f) => f.question.trim() && f.answer.trim())}
+			<div class="mb-8">
+				<h2 class="mb-4 text-base font-bold text-gray-900">자주 묻는 질문</h2>
+				<div class="space-y-3">
+					{#each form.faq.filter((f) => f.question.trim() && f.answer.trim()) as faq}
+						<div class="rounded-xl bg-gray-50 p-4">
+							<p class="mb-2 font-medium text-gray-900">Q. {faq.question}</p>
+							<p class="text-sm text-gray-600">A. {faq.answer}</p>
+						</div>
+					{/each}
+				</div>
+			</div>
+		{/if}
+	</main>
+{:else}
+	<!-- 편집 모드 -->
+	<main class="space-y-8 px-4 py-6 pb-28">
+		<!-- 기본 정보 -->
+		<section>
+			<h2 class="mb-3 text-sm font-semibold text-gray-500">기본 정보</h2>
+			<div class="space-y-4">
 				<div>
-					<label class="mb-2 block text-sm font-medium text-gray-700">
-						견적 제목 <span class="text-red-500">*</span>
+					<label class="mb-1.5 block text-sm font-medium text-gray-700">
+						견적서 제목 <span class="text-red-500">*</span>
 					</label>
 					<input
 						type="text"
 						bind:value={form.title}
-						placeholder="예: 웹앱 MVP 개발 + 1회 리비전"
-						class="focus:border-primary w-full rounded-md border border-gray-300 px-3 py-2.5 focus:outline-none"
-						maxlength="80"
+						placeholder="예: MVP 개발 패키지"
+						class="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:border-blue-500 focus:outline-none"
 					/>
 				</div>
 
-				<!-- 설명 -->
-				<div>
-					<label class="mb-2 block text-sm font-medium text-gray-700">
-						설명 <span class="text-red-500">*</span>
-					</label>
-					<textarea
-						bind:value={form.description}
-						rows="6"
-						placeholder="견적 전반 설명과 추가 안내를 적어주세요.
-거래 기준, 작업 방식, 커뮤니케이션 채널 등을 명확히 기재하면 분쟁을 줄일 수 있어요."
-						class="focus:border-primary w-full rounded-md border border-gray-300 px-3 py-2.5 leading-relaxed focus:outline-none"
-					></textarea>
-				</div>
-			</div>
-		{:else if current_step === 2}
-			<!-- Step 2: 대상/프로세스/결과물 -->
-			<div class="space-y-6">
-				<h2 class="mb-4 text-lg font-semibold text-gray-900">
-					작업 대상과 프로세스를
-					<br />
-					설정해주세요
-				</h2>
-
-				<!-- 추천 대상 -->
-				<div>
-					<label class="mb-2 block text-sm font-medium text-gray-700">
-						이런 분께 추천드립니다 <span class="text-red-500">*</span>
-					</label>
-					<textarea
-						bind:value={form.audience}
-						rows="4"
-						placeholder="예: - 아이디어는 있지만 요구사항 정리가 어려운 창업자
-- 개발 견적을 받기 전에 기준 문서가 필요한 팀
-- 디자인/기획 리소스가 부족한 스타트업"
-						class="focus:border-primary w-full rounded-md border border-gray-300 px-3 py-2.5 leading-relaxed focus:outline-none"
-					></textarea>
-				</div>
-
-				<!-- 작업 프로세스 -->
-				<div>
-					<label class="mb-2 block text-sm font-medium text-gray-700">
-						작업 프로세스 <span class="text-red-500">*</span>
-					</label>
-					<textarea
-						bind:value={form.process}
-						rows="4"
-						placeholder="예: - 킥오프 미팅 및 요구사항 인터뷰
-- 와이어프레임/자료 수집
-- 중간 산출물 검토 및 피드백 반영
-- 최종 산출물 전달"
-						class="focus:border-primary w-full rounded-md border border-gray-300 px-3 py-2.5 leading-relaxed focus:outline-none"
-					></textarea>
-				</div>
-
-				<!-- 결과물 -->
-				<div>
-					<label class="mb-2 block text-sm font-medium text-gray-700">
-						받는 결과물 <span class="text-red-500">*</span>
-					</label>
-					<textarea
-						bind:value={form.deliverables}
-						rows="4"
-						placeholder="예: - 최종 산출물: Figma 링크 / PDF / 소스 파일
-- 버전 관리: 수정본 이력 공유
-- 전달 방식: 이메일 및 구글드라이브"
-						class="focus:border-primary w-full rounded-md border border-gray-300 px-3 py-2.5 leading-relaxed focus:outline-none"
-					></textarea>
-				</div>
-			</div>
-		{:else if current_step === 3}
-			<!-- Step 3: 수정/환불 정책 + FAQ -->
-			<div class="space-y-6">
-				<h2 class="mb-4 text-lg font-semibold text-gray-900">
-					정책과 FAQ를
-					<br />
-					설정해주세요
-				</h2>
-
-				<!-- 수정 정책 -->
-				<div class="rounded-xl border border-gray-200 p-4">
-					<p class="font-semibold text-gray-900">수정 정책</p>
-					<p class="mt-1 text-sm text-gray-500">
-						수정 무한루프를 방지하기 위해 횟수/범위를 명시해주세요
-					</p>
-
-					<!-- 수정 횟수 -->
-					<div class="mt-4">
-						<label class="mb-2 block text-sm font-medium text-gray-700">
-							수정 횟수
-						</label>
-						<div class="flex flex-wrap gap-2">
-							{#each revision_count_presets as preset}
-								<button
-									type="button"
-									class={`rounded-full border px-3 py-1.5 text-sm ${form.revision_count === preset ? 'border-primary bg-primary/10 text-primary' : 'border-gray-200 text-gray-700'}`}
-									onclick={() => (form.revision_count = preset)}
-								>
-									{preset}회
-								</button>
-							{/each}
-						</div>
-					</div>
-
-					<!-- 수정 범위 -->
-					<div class="mt-4">
-						<label class="mb-2 block text-sm font-medium text-gray-700">
-							수정 범위 <span class="text-red-500">*</span>
-						</label>
-						<div class="flex flex-wrap gap-2">
-							{#each revision_scope_presets as scope}
-								<button
-									type="button"
-									class={`flex items-center gap-1 rounded-full border px-3 py-1.5 text-sm ${form.revision_scopes.includes(scope) ? 'border-primary bg-primary/10 text-primary' : 'border-gray-200 text-gray-700'}`}
-									onclick={() => toggle_revision_scope(scope)}
-								>
-									{#if form.revision_scopes.includes(scope)}
-										<RiCheckboxCircleLine size={16} color={colors.primary} />
-									{/if}
-									<span>{scope}</span>
-								</button>
-							{/each}
-						</div>
-
-						<div class="mt-3 flex gap-2">
+				<div class="grid grid-cols-2 gap-3">
+					<div>
+						<label class="mb-1.5 block text-sm font-medium text-gray-700"
+							>기본 가격</label
+						>
+						<div class="relative">
+							<span
+								class="absolute top-1/2 left-4 -translate-y-1/2 text-gray-500"
+								>₩</span
+							>
 							<input
 								type="text"
-								placeholder="직접 추가"
-								class="focus:border-primary flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none"
-								bind:value={custom_scope}
-								onkeydown={(e) =>
-									e.key === 'Enter' && (e.preventDefault(), add_custom_scope())}
+								bind:value={form.price}
+								placeholder="협의"
+								class="w-full rounded-xl border border-gray-200 py-3 pr-4 pl-8 text-sm focus:border-blue-500 focus:outline-none"
+								oninput={(e) => {
+									let value = e.target.value.replace(/[^0-9]/g, '');
+									if (value) {
+										value = parseInt(value).toLocaleString();
+									}
+									form.price = value;
+								}}
 							/>
+						</div>
+					</div>
+					<div>
+						<label class="mb-1.5 block text-sm font-medium text-gray-700"
+							>작업 기간</label
+						>
+						<input
+							type="text"
+							bind:value={form.duration}
+							placeholder="예: 2~3주"
+							class="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:border-blue-500 focus:outline-none"
+						/>
+					</div>
+				</div>
+			</div>
+		</section>
+
+		<!-- 서비스 설명 -->
+		<section>
+			<h2 class="mb-3 text-sm font-semibold text-gray-500">
+				서비스 설명 <span class="text-red-500">*</span>
+			</h2>
+			<SimpleEditor
+				bind:content={form.description}
+				placeholder="서비스에 대한 상세 설명을 작성해주세요..."
+			/>
+		</section>
+
+		<!-- 추천 대상 -->
+		<section>
+			<h2 class="mb-3 text-sm font-semibold text-gray-500">
+				이런 분께 추천드립니다
+			</h2>
+			<textarea
+				bind:value={form.target_audience}
+				placeholder="- 아이디어는 있지만 구현이 어려운 창업자&#10;- 빠른 MVP 검증이 필요한 스타트업"
+				rows="4"
+				class="w-full resize-none rounded-xl border border-gray-200 px-4 py-3 text-sm focus:border-blue-500 focus:outline-none"
+			></textarea>
+		</section>
+
+		<!-- 작업 프로세스 -->
+		<section>
+			<div class="mb-3 flex items-center justify-between">
+				<h2 class="text-sm font-semibold text-gray-500">작업 프로세스</h2>
+				<button
+					type="button"
+					onclick={add_step}
+					class="flex items-center gap-1 text-xs font-medium text-blue-600"
+				>
+					<RiAddLine size={14} />
+					단계 추가
+				</button>
+			</div>
+			<div class="space-y-3">
+				{#each form.work_process as step, index}
+					<div class="relative rounded-xl border border-gray-200 p-4">
+						<div class="flex items-start gap-3">
+							<div
+								class="mt-1 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-bold text-blue-600"
+							>
+								{index + 1}
+							</div>
+							<div class="flex-1 space-y-2">
+								<input
+									type="text"
+									bind:value={step.title}
+									placeholder="단계 제목 (예: 킥오프 미팅)"
+									class="w-full border-none bg-transparent text-sm font-medium text-gray-900 placeholder-gray-400 focus:outline-none"
+								/>
+								<input
+									type="text"
+									bind:value={step.description}
+									placeholder="설명 (예: 요구사항을 상세히 파악합니다)"
+									class="w-full border-none bg-transparent text-sm text-gray-500 placeholder-gray-300 focus:outline-none"
+								/>
+							</div>
+							{#if form.work_process.length > 1}
+								<button
+									type="button"
+									onclick={() => remove_step(index)}
+									class="flex-shrink-0 text-gray-300 hover:text-red-500"
+								>
+									<RiCloseLine size={18} />
+								</button>
+							{/if}
+						</div>
+					</div>
+				{/each}
+			</div>
+		</section>
+
+		<!-- 산출물 -->
+		<section>
+			<div class="mb-3 flex items-center justify-between">
+				<h2 class="text-sm font-semibold text-gray-500">받으시는 산출물</h2>
+				<button
+					type="button"
+					onclick={add_deliverable}
+					class="flex items-center gap-1 text-xs font-medium text-blue-600"
+				>
+					<RiAddLine size={14} />
+					항목 추가
+				</button>
+			</div>
+			<div class="space-y-2">
+				{#each form.deliverables as deliverable, index}
+					<div class="flex items-center gap-2">
+						<div
+							class="flex flex-1 items-center gap-2 rounded-xl border border-gray-200 px-4 py-2.5"
+						>
+							<span class="text-blue-500">✓</span>
+							<input
+								type="text"
+								bind:value={form.deliverables[index]}
+								placeholder="예: 요구사항 정의서 (PDF)"
+								class="flex-1 border-none bg-transparent text-sm text-gray-700 placeholder-gray-400 focus:outline-none"
+							/>
+						</div>
+						{#if form.deliverables.length > 1}
 							<button
 								type="button"
-								class="btn btn-outline btn-sm"
-								onclick={add_custom_scope}
+								onclick={() => remove_deliverable(index)}
+								class="text-gray-300 hover:text-red-500"
 							>
-								추가
+								<RiCloseLine size={18} />
 							</button>
-						</div>
+						{/if}
 					</div>
-				</div>
+				{/each}
+			</div>
+		</section>
 
-				<!-- 환불 정책 -->
-				<div class="rounded-xl border border-gray-200 p-4">
-					<p class="font-semibold text-gray-900">환불 정책</p>
-					<p class="mt-1 text-sm text-gray-500">
-						작업 진행 단계별 환불 비율을 설정해주세요
-					</p>
-
-					<div class="mt-4 space-y-3">
-						<div class="flex items-center justify-between">
-							<span class="text-sm text-gray-700">작업 시작 전</span>
-							<div class="flex items-center gap-2">
-								<input
-									type="number"
-									min="0"
-									max="100"
-									class="focus:border-primary w-20 rounded-md border border-gray-300 px-2 py-1.5 text-center text-sm focus:outline-none"
-									bind:value={form.refund_policy.before_start}
-								/>
-								<span class="text-sm text-gray-500">%</span>
-							</div>
-						</div>
-						<div class="flex items-center justify-between">
-							<span class="text-sm text-gray-700">중간 산출물 전달 전</span>
-							<div class="flex items-center gap-2">
-								<input
-									type="number"
-									min="0"
-									max="100"
-									class="focus:border-primary w-20 rounded-md border border-gray-300 px-2 py-1.5 text-center text-sm focus:outline-none"
-									bind:value={form.refund_policy.before_midpoint}
-								/>
-								<span class="text-sm text-gray-500">%</span>
-							</div>
-						</div>
-						<div class="flex items-center justify-between">
-							<span class="text-sm text-gray-700">중간 산출물 전달 후</span>
-							<div class="flex items-center gap-2">
-								<input
-									type="number"
-									min="0"
-									max="100"
-									class="focus:border-primary w-20 rounded-md border border-gray-300 px-2 py-1.5 text-center text-sm focus:outline-none"
-									bind:value={form.refund_policy.after_midpoint}
-								/>
-								<span class="text-sm text-gray-500">%</span>
-							</div>
-						</div>
+		<!-- 포함 사항 -->
+		<section>
+			<div class="mb-3 flex items-center justify-between">
+				<h2 class="text-sm font-semibold text-gray-500">포함 사항</h2>
+				<button
+					type="button"
+					onclick={add_include}
+					class="flex items-center gap-1 text-xs font-medium text-blue-600"
+				>
+					<RiAddLine size={14} />
+					항목 추가
+				</button>
+			</div>
+			<p class="mb-2 text-xs text-gray-400">
+				예: 1회 수정, NDA 체결, 1달간 보완 등
+			</p>
+			<div class="flex flex-wrap gap-2">
+				{#each form.includes as include, index}
+					<div
+						class="flex items-center gap-1 rounded-full border border-gray-200 py-1 pr-1 pl-3"
+					>
+						<input
+							type="text"
+							bind:value={form.includes[index]}
+							placeholder="포함 사항"
+							class="w-24 border-none bg-transparent text-xs text-gray-700 placeholder-gray-400 focus:outline-none"
+						/>
+						{#if form.includes.length > 1}
+							<button
+								type="button"
+								onclick={() => remove_include(index)}
+								class="p-0.5 text-gray-300 hover:text-red-500"
+							>
+								<RiCloseLine size={14} />
+							</button>
+						{/if}
 					</div>
-				</div>
+				{/each}
+			</div>
+		</section>
 
-				<!-- FAQ -->
-				<div class="rounded-xl border border-gray-200 p-4">
-					<div class="flex items-center justify-between">
-						<div>
-							<p class="font-semibold text-gray-900">FAQ</p>
-							<p class="mt-1 text-sm text-gray-500">자주 묻는 질문과 답변</p>
-						</div>
-						<button
-							type="button"
-							class="btn btn-outline btn-sm"
-							onclick={add_faq}
-						>
-							<RiAddLine size={16} />
-							추가
-						</button>
-					</div>
+		<!-- 수정 및 재진행 -->
+		<section>
+			<h2 class="mb-3 text-sm font-semibold text-gray-500">수정 및 재진행</h2>
+			<textarea
+				bind:value={form.revision_policy}
+				placeholder="수정 및 재진행 정책을 자유롭게 작성해주세요.&#10;&#10;예:&#10;- 무료 수정 1회 포함&#10;- 기능 추가/범위 확장은 별도 협의&#10;- 수정 요청은 최종 전달 후 7일 이내"
+				rows="5"
+				class="w-full resize-none rounded-xl border border-gray-200 px-4 py-3 text-sm focus:border-blue-500 focus:outline-none"
+			></textarea>
+		</section>
 
-					<div class="mt-4 space-y-4">
-						{#each form.faqs as faq, index}
-							<div class="rounded-lg bg-gray-50 p-3">
-								<div class="flex items-center justify-between">
-									<span class="text-sm font-medium text-gray-700"
-										>FAQ {index + 1}</span
-									>
-									<button
-										type="button"
-										class="text-gray-400 hover:text-red-500"
-										onclick={() => remove_faq(index)}
-									>
-										<RiDeleteBinLine size={16} />
-									</button>
-								</div>
+		<!-- 취소 및 환불 -->
+		<section>
+			<h2 class="mb-3 text-sm font-semibold text-gray-500">
+				취소 및 환불 규정
+			</h2>
+			<textarea
+				bind:value={form.refund_policy}
+				placeholder="취소 및 환불 규정을 자유롭게 작성해주세요.&#10;&#10;예:&#10;- 작업 시작 전: 100% 환불&#10;- 중간 산출물 전달 전: 50% 환불&#10;- 중간 산출물 전달 후: 환불 불가"
+				rows="5"
+				class="w-full resize-none rounded-xl border border-gray-200 px-4 py-3 text-sm focus:border-blue-500 focus:outline-none"
+			></textarea>
+		</section>
+
+		<!-- FAQ -->
+		<section>
+			<div class="mb-3 flex items-center justify-between">
+				<h2 class="text-sm font-semibold text-gray-500">
+					자주 묻는 질문 (FAQ)
+				</h2>
+				<button
+					type="button"
+					onclick={add_faq}
+					class="flex items-center gap-1 text-xs font-medium text-blue-600"
+				>
+					<RiAddLine size={14} />
+					질문 추가
+				</button>
+			</div>
+			<div class="space-y-3">
+				{#each form.faq as faq, index}
+					<div class="relative rounded-xl border border-gray-200 p-4">
+						{#if form.faq.length > 1}
+							<button
+								type="button"
+								onclick={() => remove_faq(index)}
+								class="absolute top-3 right-3 text-gray-300 hover:text-red-500"
+							>
+								<RiCloseLine size={18} />
+							</button>
+						{/if}
+						<div class="space-y-2">
+							<div class="flex items-start gap-2">
+								<span class="text-sm font-bold text-blue-600">Q.</span>
 								<input
 									type="text"
 									bind:value={faq.question}
-									placeholder="질문"
-									class="focus:border-primary mt-2 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none"
+									placeholder="자주 묻는 질문"
+									class="flex-1 border-none bg-transparent text-sm font-medium text-gray-900 placeholder-gray-400 focus:outline-none"
 								/>
+							</div>
+							<div class="flex items-start gap-2">
+								<span class="text-sm font-bold text-gray-400">A.</span>
 								<textarea
 									bind:value={faq.answer}
+									placeholder="답변을 입력하세요"
 									rows="2"
-									placeholder="답변"
-									class="focus:border-primary mt-2 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none"
+									class="flex-1 resize-none border-none bg-transparent text-sm text-gray-600 placeholder-gray-400 focus:outline-none"
 								></textarea>
 							</div>
-						{/each}
+						</div>
 					</div>
-				</div>
+				{/each}
 			</div>
-		{/if}
-	</form>
-</main>
+		</section>
+	</main>
+{/if}
 
+<!-- 하단 버튼 -->
 <FixedBottomButton>
-	{#if current_step === total_steps}
-		<button
-			onclick={() => {
-				if (validate_step(3)) {
-					is_confirm_modal = true;
-				}
-			}}
-			class="btn btn-primary w-full"
-		>
-			등록하기
-		</button>
-	{:else}
-		<button onclick={handle_next} class="btn btn-primary w-full">
-			다음
-		</button>
-	{/if}
+	<button class="btn btn-primary flex-1" onclick={save_template}>
+		견적서 저장
+	</button>
 </FixedBottomButton>
-
-<!-- 등록 확인 모달 -->
-<Modal bind:is_modal_open={is_confirm_modal} modal_position="center">
-	<div class="p-6">
-		<h3 class="text-lg font-semibold text-gray-900">
-			템플릿을 저장하시겠습니까?
-		</h3>
-		<p class="mt-2 text-sm text-gray-500">
-			저장된 템플릿은 외주 제안 시 사용할 수 있습니다.
-		</p>
-
-		<div class="mt-6 flex gap-3">
-			<button
-				onclick={() => (is_confirm_modal = false)}
-				class="flex-1 rounded-lg bg-gray-100 py-3 text-[14px] font-medium text-gray-700 active:bg-gray-200"
-			>
-				취소
-			</button>
-			<button
-				onclick={() => {
-					is_confirm_modal = false;
-					save_template();
-				}}
-				class="flex-1 rounded-lg bg-blue-500 py-3 text-[14px] font-medium text-white active:bg-blue-600 disabled:bg-gray-300 disabled:text-gray-500"
-			>
-				저장하기
-			</button>
-		</div>
-	</div>
-</Modal>

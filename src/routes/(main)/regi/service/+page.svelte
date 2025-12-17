@@ -70,7 +70,7 @@
 
 		//이미지 개수가 7개 이상이면 에러
 		if (images_copy.length > 7) {
-			alert('이미지 개수는 7개를 초과할 수 없습니다.');
+			show_toast('error', '이미지 개수는 7개를 초과할 수 없습니다.');
 			return;
 		}
 

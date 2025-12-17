@@ -225,8 +225,26 @@
 									<p class="mt-1 text-sm text-gray-600 break-words">
 										{n.payload?.subject}
 									</p>
+								{:else if n.type === 'work_request_approved'}
+									<p class="text-sm">외주 공고가 승인되었습니다.</p>
+									<p class="mt-1 text-sm text-gray-600 break-words">
+										{n.payload?.title}
+									</p>
 								{:else if n.type === 'proposal_received'}
-									<p class="text-sm">새로운 제안이 접수되었습니다.</p>
+									<p class="text-sm">
+										{#if n.actor}
+											<strong>{n.actor?.name || '@' + (n.actor?.handle || '익명')}</strong>님이 견적을 제안했습니다.
+										{:else}
+											새로운 견적 제안이 접수되었습니다.
+										{/if}
+									</p>
+									<p class="mt-1 text-sm text-gray-600 break-words">
+										{n.payload?.title}
+									</p>
+								{:else if n.type === 'proposal_updated'}
+									<p class="text-sm">
+										<strong>{n.actor?.name || '@' + (n.actor?.handle || '익명')}</strong>님이 견적서를 수정했습니다.
+									</p>
 									<p class="mt-1 text-sm text-gray-600 break-words">
 										{n.payload?.title}
 									</p>
@@ -250,6 +268,48 @@
 										{#if n.payload?.payout}
 											<span class="text-blue-600">(+{n.payload.payout.toLocaleString()}원)</span>
 										{/if}
+									</p>
+								{:else if n.type === 'expert_request_completed'}
+									<p class="text-sm">전문가 요청이 완료되었습니다.</p>
+									<p class="mt-1 text-sm text-gray-600 break-words">
+										{n.payload?.title}
+									</p>
+								{:else if n.type === 'project.payment_approved' || n.type === 'payment_confirmed'}
+									<p class="text-sm">입금이 확인되었습니다.</p>
+									<p class="mt-1 text-sm text-gray-600 break-words">
+										{n.payload?.title}
+									</p>
+								{:else if n.type === 'project.payment_submitted' || n.type === 'payment_submitted'}
+									<p class="text-sm">결제가 신청되었습니다.</p>
+									<p class="mt-1 text-sm text-gray-600 break-words">
+										{n.payload?.title}
+									</p>
+								{:else if n.type === 'payment_rejected'}
+									<p class="text-sm">입금 확인에 실패했습니다.</p>
+									<p class="mt-1 text-sm text-gray-600 break-words">
+										{n.payload?.title}
+									</p>
+								{:else if n.type === 'completion_requested'}
+									<p class="text-sm">
+										<strong>{n.actor?.name || '@' + (n.actor?.handle || '익명')}</strong>님이 서비스 완료를 요청했습니다.
+									</p>
+									<p class="mt-1 text-sm text-gray-600 break-words">
+										{n.payload?.title}
+									</p>
+								{:else if n.type === 'proposal_completed'}
+									<p class="text-sm">서비스가 완료되었습니다.</p>
+									<p class="mt-1 text-sm text-gray-600 break-words">
+										{n.payload?.title}
+										{#if n.payload?.payout}
+											<span class="text-blue-600">(+{n.payload.payout.toLocaleString()}원)</span>
+										{/if}
+									</p>
+								{:else if n.type === 'work_request_review_created'}
+									<p class="text-sm">
+										<strong>{n.actor?.name || '@' + (n.actor?.handle || '익명')}</strong>님이 리뷰를 작성했습니다.
+									</p>
+									<p class="mt-1 text-sm text-gray-600 break-words">
+										{n.payload?.title}
 									</p>
 								{:else}
 									<p class="text-sm font-medium">{n.type}</p>

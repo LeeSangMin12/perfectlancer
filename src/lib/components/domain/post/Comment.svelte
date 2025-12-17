@@ -25,6 +25,7 @@
 	} from 'svelte-remixicon';
 
 	import GiftModal from '$lib/components/modals/GiftModal.svelte';
+	import ConfirmModal from '$lib/components/ui/ConfirmModal.svelte';
 	import Icon from '$lib/components/ui/Icon.svelte';
 	import Modal from '$lib/components/ui/Modal.svelte';
 
@@ -64,6 +65,7 @@
 	let is_editing = $state(false);
 	let edit_content = $state('');
 	let is_more_modal_open = $state(false);
+	let show_delete_modal = $state(false);
 
 	let textarea_ref = $state(null);
 	let edit_textarea_ref = $state(null);
@@ -182,8 +184,6 @@
 	};
 
 	const handle_delete_comment = async () => {
-		if (!confirm('정말 삭제하시겠습니까?')) return;
-
 		try {
 			await api.post_comments.delete(comment.id, me.id);
 
@@ -197,6 +197,8 @@
 		} catch (error) {
 			console.error('댓글 삭제 실패:', error);
 			show_toast('error', '댓글 삭제에 실패했습니다.');
+		} finally {
+			show_delete_modal = false;
 		}
 	};
 
@@ -284,7 +286,10 @@
 
 				<button
 					class="flex w-full items-center gap-3 px-4 py-4 active:bg-gray-50"
-					onclick={handle_delete_comment}
+					onclick={() => {
+						is_more_modal_open = false;
+						show_delete_modal = true;
+					}}
 					aria-label="댓글 삭제하기"
 				>
 					<RiDeleteBinLine size={20} class="text-red-500" />
@@ -496,3 +501,11 @@
 		{/if}
 	{/if}
 </div>
+
+<ConfirmModal
+	bind:is_open={show_delete_modal}
+	title="댓글을 삭제할까요?"
+	description="삭제된 댓글은 복구할 수 없습니다."
+	button_2_text="삭제"
+	button_2_action={handle_delete_comment}
+/>

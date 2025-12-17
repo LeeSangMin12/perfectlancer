@@ -32,7 +32,10 @@
 	let is_confirm_modal = $state(false);
 
 	const format_date = (date) => {
-		return `${date?.getFullYear() - 2000}년 ${date?.getMonth() + 1}월 ${date?.getDate()}일`;
+		if (!date) return '';
+		// 문자열인 경우 Date 객체로 변환
+		const d = typeof date === 'string' ? new Date(date) : date;
+		return `${d.getFullYear() - 2000}년 ${d.getMonth() + 1}월 ${d.getDate()}일`;
 	};
 
 	const TITLE = '외주 공고 등록';
@@ -100,6 +103,59 @@
 			if (matching_job_type) {
 				selected_job_type = matching_job_type;
 				request_form_data.job_type = job_type_param;
+			}
+		}
+
+		// 재등록 데이터 확인 및 적용
+		const reregister_data = sessionStorage.getItem('work_request_reregister');
+		if (reregister_data) {
+			try {
+				const data = JSON.parse(reregister_data);
+
+				// 날짜 문자열을 Date 객체로 변환하는 헬퍼 함수
+				const parse_date = (date_str) => date_str ? new Date(date_str) : null;
+
+				request_form_data = {
+					...request_form_data,
+					title: data.title || '',
+					category: data.category || '',
+					description: data.description || '',
+					reward_amount: data.reward_amount || '',
+					price_unit: data.price_unit || 'per_project',
+					posting_start_date: parse_date(data.posting_start_date),
+					posting_end_date: parse_date(data.posting_end_date),
+					work_start_date: parse_date(data.work_start_date),
+					work_end_date: parse_date(data.work_end_date),
+					max_applicants: data.max_applicants || 1,
+					work_location: data.work_location || '',
+					job_type: data.job_type || 'sidejob',
+				};
+
+				// 카테고리 선택 상태 업데이트
+				if (data.category) {
+					selected_category = categories.find((c) => c.value === data.category) || null;
+				}
+
+				// 가격 단위 선택 상태 업데이트
+				if (data.price_unit) {
+					selected_price_unit = price_unit_options.find((p) => p.value === data.price_unit) || price_unit_options[0];
+					if (data.price_unit === 'quote') {
+						price_type = 'quote';
+					}
+				}
+
+				// 직종 타입 업데이트
+				if (data.job_type) {
+					selected_job_type = job_types.find((jt) => jt.value === data.job_type) || job_types[0];
+				}
+
+				// 세션 스토리지 정리
+				sessionStorage.removeItem('work_request_reregister');
+
+				show_toast('info', '거절된 공고 내용을 불러왔습니다. 수정 후 재등록해주세요.');
+			} catch (e) {
+				console.error('Failed to parse reregister data:', e);
+				sessionStorage.removeItem('work_request_reregister');
 			}
 		}
 	});

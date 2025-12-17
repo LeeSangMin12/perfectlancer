@@ -4,6 +4,7 @@ import { create_post_images_api } from '$lib/supabase/bucket/posts/images';
 import { create_service_images_api } from '$lib/supabase/bucket/services/images';
 import { create_user_avatars_api } from '$lib/supabase/bucket/users/avatars';
 import { create_proposal_attachments_bucket_api } from '$lib/supabase/bucket/proposals/attachments';
+import { create_work_request_images_api } from '$lib/supabase/bucket/work_requests/images';
 
 // === Auth ===
 import { create_auth_api } from '$lib/supabase/auth';
@@ -38,6 +39,7 @@ import { create_quote_templates_api } from '$lib/supabase/service/quote_template
 // === Outsourcing APIs ===
 import { create_work_requests_api } from '$lib/supabase/outsourcing/work_requests';
 import { create_work_request_proposals_api } from '$lib/supabase/outsourcing/work_request_proposals';
+import { create_work_request_reviews_api } from '$lib/supabase/outsourcing/work_request_reviews';
 
 // === Community APIs ===
 import { create_communities_api } from '$lib/supabase/community/communities';
@@ -95,6 +97,7 @@ export const create_api = (supabase) => ({
 	// Outsourcing
 	work_requests: create_work_requests_api(supabase),
 	work_request_proposals: create_work_request_proposals_api(supabase),
+	work_request_reviews: create_work_request_reviews_api(supabase),
 
 	// Community
 	communities: create_communities_api(supabase),
@@ -124,4 +127,5 @@ export const create_api = (supabase) => ({
 	post_images: create_post_images_api(supabase),
 	service_images: create_service_images_api(supabase),
 	proposal_attachments_bucket: create_proposal_attachments_bucket_api(supabase),
+	work_request_images: create_work_request_images_api(supabase),
 });

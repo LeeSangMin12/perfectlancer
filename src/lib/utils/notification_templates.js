@@ -106,6 +106,49 @@ export const NOTIFICATION_TEMPLATES = {
 		body: '{recipient_name}님이 커피챗을 거절했습니다',
 		icon: '❌',
 		sound: 'default'
+	},
+	// 외주 관련 알림
+	'work_request_approved': {
+		title: '외주 공고가 승인되었습니다',
+		body: '{title} - 이제 전문가들의 견적을 받을 수 있습니다',
+		icon: '✅',
+		sound: 'default'
+	},
+	'proposal_received': {
+		title: '{expert_name}님이 견적을 제안했습니다',
+		body: '{title}',
+		icon: '📝',
+		sound: 'default'
+	},
+	'proposal_updated': {
+		title: '{expert_name}님이 견적서를 수정했습니다',
+		body: '{title}',
+		icon: '📝',
+		sound: 'default'
+	},
+	'payment_confirmed': {
+		title: '입금이 확인되었습니다',
+		body: '{title} - 작업을 시작해주세요',
+		icon: '💰',
+		sound: 'default'
+	},
+	'completion_requested': {
+		title: '{expert_name}님이 서비스 완료를 요청했습니다',
+		body: '{title} - 7일 내에 확인해주세요',
+		icon: '✅',
+		sound: 'default'
+	},
+	'proposal_completed': {
+		title: '서비스가 완료되었습니다',
+		body: '{title} - 정산 금액: {payout}원',
+		icon: '🎉',
+		sound: 'default'
+	},
+	'work_request_review_created': {
+		title: '{requester_name}님이 리뷰를 작성했습니다',
+		body: '{title} - 별점 {rating}점',
+		icon: '⭐',
+		sound: 'default'
 	}
 };
 

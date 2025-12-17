@@ -20,6 +20,7 @@ export const PROPOSAL_STATUS = {
 	PENDING: 'pending',
 	ACCEPTED: 'accepted',
 	REJECTED: 'rejected',
+	COMPLETED: 'completed',
 };
 
 // 요청 상태 표시 정보 반환
@@ -89,7 +90,7 @@ export const get_proposal_status_display = (status) => {
 			textColor: 'text-gray-600',
 		},
 		[PROPOSAL_STATUS.ACCEPTED]: {
-			text: '승인됨',
+			text: '수락됨',
 			bgColor: 'bg-emerald-50',
 			textColor: 'text-emerald-600',
 		},
@@ -97,6 +98,11 @@ export const get_proposal_status_display = (status) => {
 			text: '거절됨',
 			bgColor: 'bg-red-50',
 			textColor: 'text-red-600',
+		},
+		[PROPOSAL_STATUS.COMPLETED]: {
+			text: '완료',
+			bgColor: 'bg-blue-50',
+			textColor: 'text-blue-600',
 		},
 	};
 	return (
@@ -291,20 +297,11 @@ export const validate_proposal_data = (data) => {
 		errors.push('제안 메시지는 최대 1000글자까지 가능합니다.');
 	}
 
-	// 제안 예산 검사
-	if (data.proposed_budget) {
-		const budget = parseInt(data.proposed_budget);
-		if (isNaN(budget) || budget < 10000) {
-			errors.push('제안 예산은 최소 10,000원 이상이어야 합니다.');
-		}
-		if (budget > 100000000) {
-			errors.push('제안 예산은 1억원 이하여야 합니다.');
-		}
-	}
-
-	// 작업 기간 검사
-	if (data.proposed_timeline && data.proposed_timeline.trim().length > 100) {
-		errors.push('예상 작업 기간은 최대 100글자까지 가능합니다.');
+	// 견적서 검사
+	if (!data.quote_data) {
+		errors.push('견적서를 추가해주세요.');
+	} else if (!data.quote_data.price || data.quote_data.price < 10000) {
+		errors.push('견적 가격은 최소 10,000원 이상이어야 합니다.');
 	}
 
 	return errors;

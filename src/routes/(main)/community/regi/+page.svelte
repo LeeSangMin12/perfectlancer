@@ -1,22 +1,25 @@
 <script>
 	import { PUBLIC_SUPABASE_URL } from '$env/static/public';
+	import colors from '$lib/config/colors';
+	import {
+		get_api_context,
+		get_user_context,
+	} from '$lib/contexts/app_context.svelte.js';
+	import { show_toast } from '$lib/utils/common';
 	import { goto } from '$app/navigation';
 	import { RiArrowLeftSLine } from 'svelte-remixicon';
 
 	import Header from '$lib/components/ui/Header.svelte';
 	import Modal from '$lib/components/ui/Modal.svelte';
 
-	import colors from '$lib/config/colors';
-	import { show_toast } from '$lib/utils/common';
 	import { update_global_store } from '$lib/store/global_store.js';
-	import { get_user_context, get_api_context } from '$lib/contexts/app_context.svelte.js';
-
-	const me = get_user_context();
-	const api = get_api_context();
 
 	import SetAvatar from './_components/SetAvatar.svelte';
 	import SetContent from './_components/SetContent.svelte';
 	import SetTopic from './_components/SetTopic.svelte';
+
+	const me = get_user_context();
+	const api = get_api_context();
 
 	let { data } = $props();
 	let { topic_categories, community } = $derived(data);
@@ -36,7 +39,9 @@
 					slug: data.community.slug,
 					content: data.community.content,
 					avatar_url: data.community.avatar_url,
-					selected_topics: data.community.community_topics.map((ct) => ct.topics),
+					selected_topics: data.community.community_topics.map(
+						(ct) => ct.topics,
+					),
 				}
 			: {
 					id: null,
@@ -45,7 +50,7 @@
 					content: '',
 					avatar_url: '',
 					selected_topics: [],
-				}
+				},
 	);
 
 	/**
@@ -117,10 +122,7 @@
 				) {
 					const file_ext = form_data.avatar_url.name.split('.').pop();
 					const file_path = `${form_data.id}/${Date.now()}.${file_ext}`;
-					await api.community_avatars.upload(
-						file_path,
-						form_data.avatar_url,
-					);
+					await api.community_avatars.upload(file_path, form_data.avatar_url);
 
 					const img_url = `${PUBLIC_SUPABASE_URL}/storage/v1/object/public/communities/avatars/${file_path}`;
 					await api.communities.update(form_data.id, {
@@ -140,18 +142,12 @@
 					new_community.id,
 					form_data.selected_topics,
 				);
-				await api.community_members.insert(
-					new_community.id,
-					me.id,
-				);
+				await api.community_members.insert(new_community.id, me.id);
 
 				if (form_data.avatar_url) {
 					const file_ext = form_data.avatar_url.name.split('.').pop();
 					const file_path = `${new_community.id}/${Date.now()}.${file_ext}`;
-					await api.community_avatars.upload(
-						file_path,
-						form_data.avatar_url,
-					);
+					await api.community_avatars.upload(file_path, form_data.avatar_url);
 
 					const img_url = `${PUBLIC_SUPABASE_URL}/storage/v1/object/public/communities/avatars/${file_path}`;
 					await api.communities.update(new_community.id, {
@@ -242,24 +238,27 @@
 
 <Modal bind:is_modal_open={is_back_modal} modal_position="center">
 	<div in:scale={{ duration: 200, start: 0.95 }} out:fade={{ duration: 150 }}>
-		<div class="flex flex-col items-center justify-center py-10 font-semibold">
-			<p>다음에 {is_edit_mode ? '수정' : '생성'} 하시겠어요?</p>
+		<div class="flex flex-col gap-2 p-6">
+			<p class="text-lg font-bold">작성을 그만두시겠어요?</p>
+			<p class="text-sm text-gray-500">작성 중인 내용은 저장되지 않습니다.</p>
 		</div>
 
-		<div class="flex">
-			<button
-				onclick={() => (is_back_modal = false)}
-				class="btn w-1/3 rounded-none"
-			>
-				닫기
-			</button>
+		<div class="flex gap-3 px-6 pb-6">
 			<button
 				onclick={() => {
-					goto(is_edit_mode ? `/community/${form_data.slug}` : '/community', { replaceState: true });
+					goto(is_edit_mode ? `/community/${form_data.slug}` : '/community', {
+						replaceState: true,
+					});
 				}}
-				class="btn btn-error w-2/3 rounded-none text-white"
+				class="btn btn-gray flex-1"
 			>
-				다음에 할게요
+				나가기
+			</button>
+			<button
+				onclick={() => (is_back_modal = false)}
+				class="btn btn-primary flex-1"
+			>
+				계속하기
 			</button>
 		</div>
 	</div>

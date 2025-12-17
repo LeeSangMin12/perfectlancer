@@ -29,6 +29,7 @@
 
 	// Components
 	import CustomCarousel from '$lib/components/ui/Carousel.svelte';
+	import ConfirmModal from '$lib/components/ui/ConfirmModal.svelte';
 	import Header from '$lib/components/ui/Header.svelte';
 	import Icon from '$lib/components/ui/Icon.svelte';
 	import Modal from '$lib/components/ui/Modal.svelte';
@@ -56,6 +57,7 @@
 	let is_service_config_modal_open = $state(false); // 서비스 설정 모달
 	let is_submitting_review = $state(false);
 	let editing_review = $state(null);
+	let show_delete_modal = $state(false);
 
 	// Purchase Form Data
 	let selected_options = $state([]); // 선택된 옵션 IDs
@@ -428,8 +430,6 @@
 
 	// Service Management Handlers
 	const handle_delete_service = async () => {
-		if (!confirm('정말 이 서비스를 삭제하시겠습니까?')) return;
-
 		try {
 			await api.services.delete(service.id);
 			show_toast('success', '서비스가 삭제되었습니다.');
@@ -437,6 +437,8 @@
 		} catch (error) {
 			console.error('서비스 삭제 실패:', error);
 			show_toast('error', '서비스 삭제에 실패했습니다.');
+		} finally {
+			show_delete_modal = false;
 		}
 	};
 
@@ -886,6 +888,27 @@
 				<RiPencilLine size={20} class="text-gray-500" />
 				<span class="text-[15px] text-gray-900">수정하기</span>
 			</a>
+
+			<hr class="border-gray-100" />
+
+			<button
+				onclick={() => {
+					is_service_config_modal_open = false;
+					show_delete_modal = true;
+				}}
+				class="flex w-full items-center gap-3 px-4 py-4 active:bg-gray-50"
+			>
+				<RiDeleteBinLine size={20} class="text-red-500" />
+				<span class="text-[15px] text-red-500">삭제하기</span>
+			</button>
 		</div>
 	</div>
 </Modal>
+
+<ConfirmModal
+	bind:is_open={show_delete_modal}
+	title="서비스를 삭제할까요?"
+	description="삭제된 서비스는 복구할 수 없습니다."
+	button_2_text="삭제"
+	button_2_action={handle_delete_service}
+/>

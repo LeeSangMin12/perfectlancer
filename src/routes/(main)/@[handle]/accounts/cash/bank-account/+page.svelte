@@ -34,7 +34,6 @@
 		bank: '',
 		account_number: '',
 		account_holder: '',
-		resident_number: '',
 		business_number: '',
 	});
 
@@ -72,7 +71,6 @@
 			bank: '',
 			account_number: '',
 			account_holder: '',
-			resident_number: '',
 			business_number: '',
 		};
 		selected_bank = null;
@@ -91,9 +89,7 @@
 		selected_bank &&
 			form.account_number.length >= 10 &&
 			form.account_holder.length >= 2 &&
-			(form.account_type === 'individual'
-				? form.resident_number.length === 13
-				: form.business_number.length === 10),
+			(form.account_type === 'individual' || form.business_number.length === 10),
 	);
 
 	async function handle_submit() {
@@ -107,10 +103,6 @@
 				bank: selected_bank.value,
 				account_number: form.account_number.replace(/[^0-9]/g, ''),
 				account_holder: form.account_holder,
-				resident_number:
-					form.account_type === 'individual'
-						? form.resident_number.replace(/[^0-9]/g, '')
-						: null,
 				business_number:
 					form.account_type === 'business'
 						? form.business_number.replace(/[^0-9]/g, '')
@@ -167,12 +159,6 @@
 		}
 	}
 
-	function on_resident_input(e) {
-		let value = e.target.value.replace(/[^0-9]/g, '');
-		if (value.length > 13) value = value.slice(0, 13);
-		form.resident_number = value;
-	}
-
 	function on_business_input(e) {
 		let value = e.target.value.replace(/[^0-9]/g, '');
 		if (value.length > 10) value = value.slice(0, 10);
@@ -182,12 +168,6 @@
 	function on_account_input(e) {
 		form.account_number = e.target.value.replace(/[^0-9-]/g, '');
 	}
-
-	const display_resident = $derived(() => {
-		const num = form.resident_number;
-		if (num.length <= 6) return num;
-		return num.slice(0, 6) + '-' + num.slice(6);
-	});
 
 	const display_business = $derived(() => {
 		const num = form.business_number;
@@ -268,7 +248,6 @@
 	<section class="px-5 py-5">
 		<ul class="space-y-1.5 text-[12px] text-gray-400">
 			<li>• 본인 명의의 계좌만 등록할 수 있어요</li>
-			<li>• 주민등록번호는 원천징수 신고에 사용돼요</li>
 			<li>• 입력한 정보는 안전하게 암호화되어 저장돼요</li>
 		</ul>
 	</section>
@@ -361,23 +340,8 @@
 				/>
 			</div>
 
-			<!-- 주민등록번호 / 사업자등록번호 -->
-			{#if form.account_type === 'individual'}
-				<div class="mt-5">
-					<p class="text-[13px] text-gray-500">주민등록번호</p>
-					<input
-						type="text"
-						inputmode="numeric"
-						value={display_resident()}
-						oninput={on_resident_input}
-						placeholder="000000-0000000"
-						class="mt-2 w-full rounded-lg border border-gray-200 px-4 py-3 text-[15px] text-gray-900 placeholder-gray-400 focus:border-primary focus:outline-none"
-					/>
-					<p class="mt-2 text-[12px] text-gray-400">
-						원천징수 신고를 위해 필요해요
-					</p>
-				</div>
-			{:else}
+			<!-- 사업자등록번호 (사업자 계좌만) -->
+			{#if form.account_type === 'business'}
 				<div class="mt-5">
 					<p class="text-[13px] text-gray-500">사업자등록번호</p>
 					<input

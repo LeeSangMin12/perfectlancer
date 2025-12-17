@@ -40,7 +40,6 @@
 		account_type: 'individual',
 		account_number: '',
 		account_holder: '',
-		resident_number: '',
 		business_number: '',
 	});
 	let submitting = $state(false);
@@ -50,9 +49,7 @@
 		selected_bank &&
 			form.account_number.length >= 10 &&
 			form.account_holder.length >= 2 &&
-			(form.account_type === 'individual'
-				? form.resident_number.length === 13
-				: form.business_number.length === 10),
+			(form.account_type === 'individual' || form.business_number.length === 10),
 	);
 
 	// 계좌번호 입력 핸들러
@@ -60,21 +57,9 @@
 		form.account_number = e.target.value.replace(/[^0-9]/g, '');
 	};
 
-	// 주민번호 입력 핸들러
-	const on_resident_input = (e) => {
-		form.resident_number = e.target.value.replace(/[^0-9]/g, '').slice(0, 13);
-	};
-
 	// 사업자번호 입력 핸들러
 	const on_business_input = (e) => {
 		form.business_number = e.target.value.replace(/[^0-9]/g, '').slice(0, 10);
-	};
-
-	// 주민번호 표시 포맷
-	const display_resident = () => {
-		const num = form.resident_number;
-		if (num.length <= 6) return num;
-		return `${num.slice(0, 6)}-${num.slice(6)}`;
 	};
 
 	// 사업자번호 표시 포맷
@@ -92,7 +77,6 @@
 			account_type: 'individual',
 			account_number: '',
 			account_holder: '',
-			resident_number: '',
 			business_number: '',
 		};
 	};
@@ -109,8 +93,6 @@
 				account_number: form.account_number,
 				account_holder: form.account_holder,
 				account_type: form.account_type,
-				resident_number:
-					form.account_type === 'individual' ? form.resident_number : null,
 				business_number:
 					form.account_type === 'business' ? form.business_number : null,
 			});
@@ -204,23 +186,8 @@
 				/>
 			</div>
 
-			<!-- 주민등록번호 / 사업자등록번호 -->
-			{#if form.account_type === 'individual'}
-				<div class="mt-5">
-					<p class="text-[13px] text-gray-500">주민등록번호</p>
-					<input
-						type="text"
-						inputmode="numeric"
-						value={display_resident()}
-						oninput={on_resident_input}
-						placeholder="000000-0000000"
-						class="mt-2 w-full rounded-lg border border-gray-200 px-4 py-3 text-[15px] text-gray-900 placeholder-gray-400 focus:border-primary focus:outline-none"
-					/>
-					<p class="mt-2 text-[12px] text-gray-400">
-						원천징수 신고를 위해 필요해요
-					</p>
-				</div>
-			{:else}
+			<!-- 사업자등록번호 (사업자 계좌만) -->
+			{#if form.account_type === 'business'}
 				<div class="mt-5">
 					<p class="text-[13px] text-gray-500">사업자등록번호</p>
 					<input

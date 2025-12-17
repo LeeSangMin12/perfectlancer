@@ -42,7 +42,6 @@ export const create_user_bank_accounts_api = (supabase) => ({
 		bank,
 		account_number,
 		account_holder,
-		resident_number,
 		business_number,
 	}) {
 		// 기존 기본 계좌가 있으면 is_default를 false로 변경
@@ -61,7 +60,6 @@ export const create_user_bank_accounts_api = (supabase) => ({
 					bank,
 					account_number,
 					account_holder,
-					resident_number,
 					business_number,
 					is_default: true,
 				},
