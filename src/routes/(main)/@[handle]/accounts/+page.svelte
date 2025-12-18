@@ -30,7 +30,7 @@
 	<title>더보기 | 문</title>
 	<meta
 		name="description"
-		content="내 프로필, 문캐시, 구매 내역, 북마크 등을 관리할 수 있는 문의 더보기 페이지입니다."
+		content="내 프로필, 포인트, 구매 내역, 북마크 등을 관리할 수 있는 문의 더보기 페이지입니다."
 	/>
 </svelte:head>
 
@@ -66,18 +66,18 @@
 		</a>
 	</div>
 
-	<!-- 문캐시 -->
+	<!-- 포인트 -->
 	<a
-		href={`/@${me?.handle}/accounts/cash`}
+		href={`/@${me?.handle}/accounts/point`}
 		class="flex items-center justify-between px-4 py-4 transition hover:bg-gray-50"
 	>
 		<div class="flex items-center">
 			<RiWallet3Line size={22} color={colors.primary} class="mr-3" />
-			<span class="font-medium text-gray-900">문캐시</span>
+			<span class="font-medium text-gray-900">포인트</span>
 		</div>
 		<div class="flex items-center">
 			<span class="mr-1 font-semibold text-blue-600"
-				>{comma(me?.moon_cash || 0)}원</span
+				>{comma(me?.point || 0)}원</span
 			>
 			<RiArrowRightSLine size={20} color={colors.gray[400]} />
 		</div>

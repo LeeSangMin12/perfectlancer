@@ -6,7 +6,7 @@ export async function load({ parent, locals: { supabase } }) {
 
 	const [bank_account, pending_withdrawals] = await Promise.all([
 		api.user_bank_accounts.select_default_by_user_id(user.id),
-		api.cash_withdrawals.select_pending_by_user_id(user.id),
+		api.point_withdrawals.select_pending_by_user_id(user.id),
 	]);
 
 	return {

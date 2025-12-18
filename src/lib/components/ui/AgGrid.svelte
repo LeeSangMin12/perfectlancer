@@ -16,6 +16,7 @@
 		onGridReady = null,
 		getRowId = null,
 		rowSelection = 'single',
+		autoSizeStrategy = { type: 'fitGridWidth' },
 		class: className = '',
 	} = $props();
 
@@ -42,6 +43,7 @@
 			domLayout,
 			rowSelection,
 			getRowId,
+			autoSizeStrategy,
 			onGridReady: (params) => {
 				gridApi = params.api;
 				isReady = true;

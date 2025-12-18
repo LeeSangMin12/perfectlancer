@@ -1,10 +1,10 @@
-export const create_cash_transactions_api = (supabase) => ({
+export const create_point_transactions_api = (supabase) => ({
 	/**
 	 * 거래 내역 직접 삽입 (잔액 변경 없음, 기록용)
 	 */
 	async insert({ user_id, amount, type, description }) {
 		const { data, error } = await supabase
-			.from('cash_transactions')
+			.from('point_transactions')
 			.insert({
 				user_id,
 				amount,
@@ -15,16 +15,16 @@ export const create_cash_transactions_api = (supabase) => ({
 			.single();
 
 		if (error) {
-			throw new Error(`Failed to insert cash transaction: ${error.message}`);
+			throw new Error(`Failed to insert point transaction: ${error.message}`);
 		}
 		return data;
 	},
 
 	/**
-	 * 문캐시 차감 (RPC)
+	 * 포인트 차감 (RPC)
 	 */
 	async deduct({ user_id, amount, type, reference_type, reference_id, description }) {
-		const { data, error } = await supabase.rpc('deduct_cash', {
+		const { data, error } = await supabase.rpc('deduct_point', {
 			p_user_id: user_id,
 			p_amount: amount,
 			p_type: type,
@@ -34,16 +34,16 @@ export const create_cash_transactions_api = (supabase) => ({
 		});
 
 		if (error) {
-			throw new Error(`Failed to deduct cash: ${error.message}`);
+			throw new Error(`Failed to deduct point: ${error.message}`);
 		}
 		return data;
 	},
 
 	/**
-	 * 문캐시 적립 (RPC)
+	 * 포인트 적립 (RPC)
 	 */
 	async add({ user_id, amount, type, reference_type, reference_id, description }) {
-		const { data, error } = await supabase.rpc('add_cash', {
+		const { data, error } = await supabase.rpc('add_point', {
 			p_user_id: user_id,
 			p_amount: amount,
 			p_type: type,
@@ -53,7 +53,7 @@ export const create_cash_transactions_api = (supabase) => ({
 		});
 
 		if (error) {
-			throw new Error(`Failed to add cash: ${error.message}`);
+			throw new Error(`Failed to add point: ${error.message}`);
 		}
 		return data;
 	},
@@ -63,14 +63,14 @@ export const create_cash_transactions_api = (supabase) => ({
 	 */
 	async select_by_user_id(user_id, limit = 50) {
 		const { data, error } = await supabase
-			.from('cash_transactions')
+			.from('point_transactions')
 			.select('*')
 			.eq('user_id', user_id)
 			.order('created_at', { ascending: false })
 			.limit(limit);
 
 		if (error) {
-			throw new Error(`Failed to select cash transactions: ${error.message}`);
+			throw new Error(`Failed to select point transactions: ${error.message}`);
 		}
 		return data || [];
 	},
@@ -80,7 +80,7 @@ export const create_cash_transactions_api = (supabase) => ({
 	 */
 	async select_infinite_scroll(user_id, last_id, limit = 20) {
 		let query = supabase
-			.from('cash_transactions')
+			.from('point_transactions')
 			.select('*')
 			.eq('user_id', user_id)
 			.order('id', { ascending: false })
@@ -93,7 +93,7 @@ export const create_cash_transactions_api = (supabase) => ({
 		const { data, error } = await query;
 
 		if (error) {
-			throw new Error(`Failed to select cash transactions: ${error.message}`);
+			throw new Error(`Failed to select point transactions: ${error.message}`);
 		}
 		return data || [];
 	},
@@ -103,7 +103,7 @@ export const create_cash_transactions_api = (supabase) => ({
 	 */
 	async select_by_type(user_id, type, limit = 50) {
 		const { data, error } = await supabase
-			.from('cash_transactions')
+			.from('point_transactions')
 			.select('*')
 			.eq('user_id', user_id)
 			.eq('type', type)
@@ -111,7 +111,7 @@ export const create_cash_transactions_api = (supabase) => ({
 			.limit(limit);
 
 		if (error) {
-			throw new Error(`Failed to select cash transactions by type: ${error.message}`);
+			throw new Error(`Failed to select point transactions by type: ${error.message}`);
 		}
 		return data || [];
 	},

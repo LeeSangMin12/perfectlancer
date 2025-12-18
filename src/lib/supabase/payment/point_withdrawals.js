@@ -1,11 +1,18 @@
-export const create_cash_withdrawals_api = (supabase) => ({
+export const create_point_withdrawals_api = (supabase) => ({
 	/**
-	 * 출금 요청 생성
+	 * 출금 요청 생성 (계좌 정보 스냅샷 저장)
 	 */
-	async insert({ user_id, bank_account_id, amount }) {
+	async insert({ user_id, amount, bank, account_number, account_holder, account_type }) {
 		const { data, error } = await supabase
-			.from('cash_withdrawals')
-			.insert([{ user_id, bank_account_id, amount }])
+			.from('point_withdrawals')
+			.insert([{
+				user_id,
+				amount,
+				bank,
+				account_number,
+				account_holder,
+				account_type: account_type || 'individual',
+			}])
 			.select()
 			.single();
 
@@ -20,8 +27,8 @@ export const create_cash_withdrawals_api = (supabase) => ({
 	 */
 	async select_by_user_id(user_id, limit = 20) {
 		const { data, error } = await supabase
-			.from('cash_withdrawals')
-			.select('*, bank_account:bank_account_id(bank, account_number, account_holder)')
+			.from('point_withdrawals')
+			.select('*')
 			.eq('user_id', user_id)
 			.order('created_at', { ascending: false })
 			.limit(limit);
@@ -37,8 +44,8 @@ export const create_cash_withdrawals_api = (supabase) => ({
 	 */
 	async select_pending_by_user_id(user_id) {
 		const { data, error } = await supabase
-			.from('cash_withdrawals')
-			.select('*, bank_account:bank_account_id(bank, account_number, account_holder)')
+			.from('point_withdrawals')
+			.select('*')
 			.eq('user_id', user_id)
 			.eq('status', 'pending')
 			.order('created_at', { ascending: false });
@@ -56,12 +63,8 @@ export const create_cash_withdrawals_api = (supabase) => ({
 	 */
 	async select_all(status = null, limit = 50) {
 		let query = supabase
-			.from('cash_withdrawals')
-			.select(`
-				*,
-				users:user_id(id, name, handle, email),
-				bank_account:bank_account_id(bank, account_number, account_holder)
-			`)
+			.from('point_withdrawals')
+			.select('*, users:user_id(id, name, handle, email)')
 			.order('created_at', { ascending: false })
 			.limit(limit);
 
@@ -82,12 +85,8 @@ export const create_cash_withdrawals_api = (supabase) => ({
 	 */
 	async select_all_pending() {
 		const { data, error } = await supabase
-			.from('cash_withdrawals')
-			.select(`
-				*,
-				users:user_id(id, name, handle, email),
-				bank_account:bank_account_id(bank, account_number, account_holder)
-			`)
+			.from('point_withdrawals')
+			.select('*, users:user_id(id, name, handle, email)')
 			.eq('status', 'pending')
 			.order('created_at', { ascending: false });
 
@@ -101,7 +100,7 @@ export const create_cash_withdrawals_api = (supabase) => ({
 	 * 출금 승인 (관리자용 - RPC 사용)
 	 */
 	async approve(withdrawal_id, admin_id) {
-		const { data, error } = await supabase.rpc('approve_cash_withdrawal', {
+		const { data, error } = await supabase.rpc('approve_point_withdrawal', {
 			p_withdrawal_id: withdrawal_id,
 			p_admin_id: admin_id,
 		});
@@ -117,7 +116,7 @@ export const create_cash_withdrawals_api = (supabase) => ({
 	 */
 	async reject(withdrawal_id, admin_id, reject_reason = '') {
 		const { error } = await supabase
-			.from('cash_withdrawals')
+			.from('point_withdrawals')
 			.update({
 				status: 'rejected',
 				reject_reason,

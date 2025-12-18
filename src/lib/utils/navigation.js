@@ -32,12 +32,12 @@ export function smart_go_back(user = null) {
 			const isMainAccountsPage = pathname.match(/^\/@[^/]+\/accounts\/?$/);
 			if (isMainAccountsPage) {
 				goto(`/@${handle}`);
-			} else if (pathname.includes('/accounts/cash')) {
+			} else if (pathname.includes('/accounts/point')) {
 				// cash 관련 페이지: 브라우저 히스토리 사용 (여러 곳에서 접근 가능)
 				if (window.history.length > 1) {
 					window.history.back();
 				} else {
-					goto(`/@${handle}/accounts/cash`);
+					goto(`/@${handle}/accounts/point`);
 				}
 			} else {
 				// 기타 하위 페이지: 한 단계 위로 이동

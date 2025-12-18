@@ -50,12 +50,9 @@ import { create_topics_api } from '$lib/supabase/community/topics';
 
 // === Payment APIs ===
 import { create_payments_api } from '$lib/supabase/payment/payments';
-import { create_cash_charges_api } from '$lib/supabase/payment/cash_charges';
-import { create_cash_withdrawals_api } from '$lib/supabase/payment/cash_withdrawals';
-import { create_cash_transactions_api } from '$lib/supabase/payment/cash_transactions';
-import { create_moon_charges_api } from '$lib/supabase/payment/moon_charges';
-import { create_moon_withdrawals_api } from '$lib/supabase/payment/moon_withdrawals';
-import { create_moon_point_transactions_api } from '$lib/supabase/payment/moon_point_transactions';
+import { create_point_charges_api } from '$lib/supabase/payment/point_charges';
+import { create_point_withdrawals_api } from '$lib/supabase/payment/point_withdrawals';
+import { create_point_transactions_api } from '$lib/supabase/payment/point_transactions';
 import { create_seller_settlements_api } from '$lib/supabase/payment/seller_settlements';
 import { create_coupons_api } from '$lib/supabase/payment/coupons';
 
@@ -108,12 +105,9 @@ export const create_api = (supabase) => ({
 
 	// Payment
 	payments: create_payments_api(supabase),
-	cash_charges: create_cash_charges_api(supabase),
-	cash_withdrawals: create_cash_withdrawals_api(supabase),
-	cash_transactions: create_cash_transactions_api(supabase),
-	moon_charges: create_moon_charges_api(supabase),
-	moon_withdrawals: create_moon_withdrawals_api(supabase),
-	moon_point_transactions: create_moon_point_transactions_api(supabase),
+	point_charges: create_point_charges_api(supabase),
+	point_withdrawals: create_point_withdrawals_api(supabase),
+	point_transactions: create_point_transactions_api(supabase),
 	seller_settlements: create_seller_settlements_api(supabase),
 	coupons: create_coupons_api(supabase),
 

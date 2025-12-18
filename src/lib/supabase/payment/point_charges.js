@@ -1,11 +1,11 @@
-export const create_cash_charges_api = (supabase) => ({
+export const create_point_charges_api = (supabase) => ({
 	/**
 	 * 충전 요청 생성
 	 */
-	async insert({ user_id, amount, depositor_name }) {
+	async insert({ user_id, amount, depositor_name, bank, account_number }) {
 		const { data, error } = await supabase
-			.from('cash_charges')
-			.insert([{ user_id, amount, depositor_name }])
+			.from('point_charges')
+			.insert([{ user_id, amount, depositor_name, bank, account_number }])
 			.select()
 			.single();
 
@@ -20,7 +20,7 @@ export const create_cash_charges_api = (supabase) => ({
 	 */
 	async select_by_user_id(user_id, limit = 20) {
 		const { data, error } = await supabase
-			.from('cash_charges')
+			.from('point_charges')
 			.select('*')
 			.eq('user_id', user_id)
 			.order('created_at', { ascending: false })
@@ -37,7 +37,7 @@ export const create_cash_charges_api = (supabase) => ({
 	 */
 	async select_pending_by_user_id(user_id) {
 		const { data, error } = await supabase
-			.from('cash_charges')
+			.from('point_charges')
 			.select('*')
 			.eq('user_id', user_id)
 			.eq('status', 'pending')
@@ -56,7 +56,7 @@ export const create_cash_charges_api = (supabase) => ({
 	 */
 	async select_all(status = null, limit = 50) {
 		let query = supabase
-			.from('cash_charges')
+			.from('point_charges')
 			.select('*, users:user_id(id, name, handle, email)')
 			.order('created_at', { ascending: false })
 			.limit(limit);
@@ -78,7 +78,7 @@ export const create_cash_charges_api = (supabase) => ({
 	 */
 	async select_all_pending() {
 		const { data, error } = await supabase
-			.from('cash_charges')
+			.from('point_charges')
 			.select('*, users:user_id(id, name, handle, email)')
 			.eq('status', 'pending')
 			.order('created_at', { ascending: false });
@@ -93,7 +93,7 @@ export const create_cash_charges_api = (supabase) => ({
 	 * 충전 승인 (관리자용 - RPC 사용)
 	 */
 	async approve(charge_id, admin_id) {
-		const { data, error } = await supabase.rpc('approve_cash_charge', {
+		const { data, error } = await supabase.rpc('approve_point_charge', {
 			p_charge_id: charge_id,
 			p_admin_id: admin_id,
 		});
@@ -109,7 +109,7 @@ export const create_cash_charges_api = (supabase) => ({
 	 */
 	async reject(charge_id, admin_id, reject_reason = '') {
 		const { error } = await supabase
-			.from('cash_charges')
+			.from('point_charges')
 			.update({
 				status: 'rejected',
 				reject_reason,

@@ -113,13 +113,13 @@ export const create_users_api = (supabase) => ({
 	 * @returns {Promise<void>}
 	 * @throws {Error} RPC 호출 실패 시
 	 */
-	gift_moon: async (sender_id, receiver_id, amount) => {
-		const { error } = await supabase.rpc('gift_moon', {
+	gift_point: async (sender_id, receiver_id, amount) => {
+		const { error } = await supabase.rpc('gift_point', {
 			sender_id_in: sender_id,
 			receiver_id_in: receiver_id,
 			amount_in: amount,
 		});
 
-		if (error) throw new Error(`Failed to gift_moon: ${error.message}`);
+		if (error) throw new Error(`Failed to gift_point: ${error.message}`);
 	},
 });

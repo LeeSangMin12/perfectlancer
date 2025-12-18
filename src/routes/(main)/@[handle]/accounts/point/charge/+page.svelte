@@ -79,8 +79,11 @@
 	}
 
 	const display_amount = $derived(amount ? comma(Number(amount)) : '');
+	const selected_account = $derived(
+		bank_accounts.find((a) => a.id === selected_account_id),
+	);
 	const can_submit = $derived(
-		Number(amount) >= 1000 && selected_account_id !== null,
+		Number(amount) >= 1000 && selected_account !== null,
 	);
 
 	async function submit() {
@@ -88,10 +91,12 @@
 
 		submitting = true;
 		try {
-			const result = await api.cash_charges.insert({
+			const result = await api.point_charges.insert({
 				user_id: me.id,
 				amount: Number(amount),
 				depositor_name: depositor.trim(),
+				bank: selected_account.bank,
+				account_number: selected_account.account_number,
 			});
 			pending_charges = [result, ...pending_charges];
 			amount = '';

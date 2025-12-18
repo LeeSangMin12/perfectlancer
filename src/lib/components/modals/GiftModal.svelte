@@ -23,7 +23,7 @@
 	let submitting = $state(false);
 
 	const amounts = [1000, 5000, 10000, 50000];
-	const balance = $derived(me?.moon_cash || 0);
+	const balance = $derived(me?.point || 0);
 	const is_over = $derived(gift_amount > balance);
 	const can_submit = $derived(
 		gift_amount >= 100 && gift_amount <= balance && !submitting,
@@ -48,8 +48,8 @@
 
 		submitting = true;
 		try {
-			// gift_moon RPC가 잔액 이동 + 거래 기록 모두 처리
-			await api.users.gift_moon(me.id, receiver_id, gift_amount);
+			// gift_point RPC가 잔액 이동 + 거래 기록 모두 처리
+			await api.users.gift_point(me.id, receiver_id, gift_amount);
 
 			try {
 				await api.notifications.insert({
@@ -59,7 +59,7 @@
 					resource_type: 'user',
 					resource_id: String(receiver_id),
 					payload: { amount: gift_amount, post_id },
-					link_url: `/@${me.handle}/accounts/cash`,
+					link_url: `/@${me.handle}/accounts/point`,
 				});
 			} catch (e) {
 				console.error('Failed to insert notification:', e);
@@ -71,7 +71,7 @@
 				post_id,
 			});
 
-			me.moon_cash = me.moon_cash - gift_amount;
+			me.point = me.point - gift_amount;
 
 			is_modal_open = false;
 			gift_amount = 1000;
@@ -79,7 +79,7 @@
 
 			show_toast('success', '선물을 보냈어요');
 		} catch (e) {
-			// 에러 메시지에서 실제 메시지 추출 (예: "Failed to gift_moon: 보유 캐시가 부족합니다.")
+			// 에러 메시지에서 실제 메시지 추출 (예: "Failed to gift_point: 보유 캐시가 부족합니다.")
 			const msg = e.message?.includes(':')
 				? e.message.split(':').pop().trim()
 				: e.message;
@@ -168,7 +168,7 @@
 
 		<!-- 충전 링크 -->
 		<a
-			href={`/@${me?.handle}/accounts/cash/charge`}
+			href={`/@${me?.handle}/accounts/point/charge`}
 			onclick={close}
 			class="mt-4 block text-center text-[13px] text-blue-500"
 		>

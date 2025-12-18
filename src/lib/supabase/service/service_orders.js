@@ -202,7 +202,7 @@ export const create_service_orders_api = (supabase) => ({
 			p_user_id: order.seller_id,
 			p_amount: seller_payout,
 			p_type: 'service_payout',
-			p_reference_type: 'service_order',
+			p_reference_type: 'service_orders',
 			p_reference_id: order_id,
 			p_description: `서비스 판매: ${order.service_title || ''}`,
 		});

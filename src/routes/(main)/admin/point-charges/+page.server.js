@@ -4,8 +4,8 @@ export const load = async ({ locals: { supabase } }) => {
 	const api = create_api(supabase);
 
 	const [pending_charges, recent_charges] = await Promise.all([
-		api.cash_charges.select_all_pending(),
-		api.cash_charges.select_all(null, 30),
+		api.point_charges.select_all_pending(),
+		api.point_charges.select_all(null, 30),
 	]);
 
 	return {

@@ -21,7 +21,7 @@
 	let submitting = $state(false);
 
 	const amounts = [10000, 30000, 50000, 100000];
-	const balance = $derived(me?.moon_cash || 0);
+	const balance = $derived(me?.point || 0);
 
 	function set_amount(val) {
 		amount = String(Math.min(val, balance));
@@ -39,8 +39,9 @@
 	const num_amount = $derived(Number(amount) || 0);
 	const display_amount = $derived(amount ? comma(num_amount) : '');
 	const is_over = $derived(num_amount > balance);
+	const has_pending = $derived(pending_withdrawals.length > 0);
 	const can_submit = $derived(
-		num_amount >= 1000 && num_amount <= balance && bank_account,
+		num_amount >= 1000 && num_amount <= balance && bank_account && !has_pending,
 	);
 
 	async function submit() {
@@ -48,10 +49,13 @@
 
 		submitting = true;
 		try {
-			const result = await api.cash_withdrawals.insert({
+			const result = await api.point_withdrawals.insert({
 				user_id: me.id,
-				bank_account_id: bank_account.id,
 				amount: num_amount,
+				bank: bank_account.bank,
+				account_number: bank_account.account_number,
+				account_holder: bank_account.account_holder,
+				account_type: bank_account.account_type,
 			});
 			pending_withdrawals = [result, ...pending_withdrawals];
 			amount = '';
@@ -89,7 +93,7 @@
 	<!-- 출금 계좌 -->
 	<section class="mt-2 bg-white">
 		<a
-			href={`/@${me?.handle}/accounts/cash/bank-account`}
+			href={`/@${me?.handle}/accounts/point/bank-account`}
 			class="flex items-center justify-between px-5 py-4 active:bg-gray-50"
 		>
 			<div>
@@ -110,7 +114,32 @@
 		</a>
 	</section>
 
-	{#if bank_account}
+	<!-- 대기 중인 출금이 있으면 -->
+	{#if has_pending}
+		<section class="mt-2 bg-white px-5 py-5">
+			<div class="rounded-xl bg-orange-50 p-4 text-center">
+				<p class="text-[15px] font-medium text-orange-600">출금 대기 중</p>
+				<p class="mt-1 text-[13px] text-orange-500">
+					처리 완료 후 추가 출금이 가능해요
+				</p>
+			</div>
+			<ul class="mt-4 space-y-3">
+				{#each pending_withdrawals as w}
+					<li class="flex items-center justify-between rounded-lg bg-gray-50 px-4 py-3">
+						<div>
+							<p class="text-[15px] font-medium text-gray-900">
+								{comma(w.amount)}원
+							</p>
+							{#if w.bank}
+								<p class="text-[12px] text-gray-400">{w.bank} {w.account_number}</p>
+							{/if}
+						</div>
+						<span class="text-[13px] font-medium text-orange-500">처리 중</span>
+					</li>
+				{/each}
+			</ul>
+		</section>
+	{:else if bank_account}
 		<!-- 금액 입력 -->
 		<section class="mt-2 bg-white px-5 py-5">
 			<p class="text-[13px] text-gray-500">출금 금액</p>
@@ -160,28 +189,6 @@
 		</section>
 	{/if}
 
-	<!-- 대기 중 -->
-	{#if pending_withdrawals.length > 0}
-		<section class="mt-2 bg-white px-5 py-5">
-			<p class="text-[13px] text-gray-500">대기 중인 출금</p>
-			<ul class="mt-3 space-y-3">
-				{#each pending_withdrawals as w}
-					<li class="flex items-center justify-between py-2">
-						<div>
-							<p class="text-[15px] font-medium text-gray-900">
-								{comma(w.amount)}원
-							</p>
-							{#if w.bank_account}
-								<p class="text-[12px] text-gray-400">{w.bank_account.bank}</p>
-							{/if}
-						</div>
-						<span class="text-[13px] font-medium text-orange-500">처리 중</span>
-					</li>
-				{/each}
-			</ul>
-		</section>
-	{/if}
-
 	<!-- 안내 -->
 	<section class="px-5 py-5">
 		<ul class="space-y-1.5 text-[12px] text-gray-400">
@@ -198,10 +205,16 @@
 		<div class="pb-safe">
 			<button
 				onclick={submit}
-				disabled={!can_submit || submitting}
-				class="btn btn-primary w-full"
+				disabled={!can_submit || submitting || has_pending}
+				class="btn w-full {has_pending || submitting ? 'btn-gray' : 'btn-primary'}"
 			>
-				{submitting ? '처리 중...' : '출금 신청하기'}
+				{#if has_pending}
+					출금 대기중
+				{:else if submitting}
+					처리 중...
+				{:else}
+					출금 신청하기
+				{/if}
 			</button>
 		</div>
 	</div>
