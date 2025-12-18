@@ -89,21 +89,21 @@ export const NOTIFICATION_TEMPLATES = {
 		icon: '🎁',
 		sound: 'default'
 	},
-	'coffee_chat.requested': {
-		title: '{actor_name}님이 커피챗을 신청했습니다',
+	'inquiry.requested': {
+		title: '{actor_name}님이 문의를 보냈습니다',
 		body: '{subject}',
-		icon: '☕',
+		icon: '❓',
 		sound: 'default'
 	},
-	'coffee_chat.accepted': {
-		title: '커피챗이 수락되었습니다',
-		body: '{recipient_name}님이 커피챗을 수락했습니다',
+	'inquiry.accepted': {
+		title: '문의가 수락되었습니다',
+		body: '{recipient_name}님이 문의를 수락했습니다',
 		icon: '✅',
 		sound: 'default'
 	},
-	'coffee_chat.rejected': {
-		title: '커피챗이 거절되었습니다',
-		body: '{recipient_name}님이 커피챗을 거절했습니다',
+	'inquiry.rejected': {
+		title: '문의가 거절되었습니다',
+		body: '{recipient_name}님이 문의를 거절했습니다',
 		icon: '❌',
 		sound: 'default'
 	},

@@ -105,7 +105,7 @@
 		<div
 			class="mt-4 flex items-center justify-between rounded-lg bg-gray-50 px-4 py-3"
 		>
-			<span class="text-[13px] text-gray-500">내 캐시</span>
+			<span class="text-[13px] text-gray-500">내 포인트</span>
 			<span class="text-[15px] font-semibold text-gray-900"
 				>{comma(balance)}원</span
 			>

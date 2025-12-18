@@ -28,7 +28,7 @@ import { create_user_reports_api } from '$lib/supabase/user_reports';
 import { create_users_api } from '$lib/supabase/users';
 import { create_work_requests_api } from '$lib/supabase/outsourcing/work_requests';
 import { create_work_request_proposals_api } from '$lib/supabase/outsourcing/work_request_proposals';
-import { create_coffee_chats_api } from '$lib/supabase/coffee_chats';
+import { create_inquiries_api } from '$lib/supabase/user/inquiries';
 import { create_proposal_attachments_bucket_api } from '$lib/supabase/bucket/proposals/attachments';
 import { create_coupons_api } from '$lib/supabase/coupons';
 import { create_user_coupons_api } from '$lib/supabase/user_coupons';
@@ -68,7 +68,7 @@ export const create_api = (supabase) => ({
 	notifications: create_notifications_api(supabase), // 🔥 푸시 발송 포함
 	work_requests: create_work_requests_api(supabase),
 	work_request_proposals: create_work_request_proposals_api(supabase),
-	coffee_chats: create_coffee_chats_api(supabase),
+	inquiries: create_inquiries_api(supabase),
 	coupons: create_coupons_api(supabase),
 	user_coupons: create_user_coupons_api(supabase),
 	user_devices: create_user_devices_api(supabase),

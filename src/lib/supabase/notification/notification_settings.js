@@ -31,9 +31,9 @@ export function create_notification_settings_api(supabase) {
 						expert_review_created: true,
 						proposal_accepted: true,
 						gift_received: true,
-						coffee_chat_requested: true,
-						coffee_chat_accepted: true,
-						coffee_chat_rejected: true
+						inquiry_requested: true,
+						inquiry_accepted: true,
+						inquiry_rejected: true
 					};
 				}
 				console.error('Failed to fetch notification settings:', error);

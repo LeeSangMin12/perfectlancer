@@ -1,16 +1,16 @@
-export const create_coffee_chats_api = (supabase) => ({
+export const create_inquiries_api = (supabase) => ({
 	/**
-	 * 커피챗 요청 생성
+	 * 문의 생성
 	 */
-	async insert(coffee_chat_data) {
+	async insert(inquiry_data) {
 		const { data, error } = await supabase
-			.from('coffee_chats')
-			.insert([coffee_chat_data])
+			.from('inquiries')
+			.insert([inquiry_data])
 			.select('*')
 			.single();
 
 		if (error) {
-			console.error('Error creating coffee chat:', error);
+			console.error('Error creating inquiry:', error);
 			throw error;
 		}
 
@@ -18,11 +18,11 @@ export const create_coffee_chats_api = (supabase) => ({
 	},
 
 	/**
-	 * 특정 사용자가 받은 커피챗 요청 조회
+	 * 특정 사용자가 받은 문의 조회
 	 */
 	async select_received(user_id) {
 		const { data, error } = await supabase
-			.from('coffee_chats')
+			.from('inquiries')
 			.select(`
 				id, status, email, subject, content, created_at,
 				sender:sender_id(id, name, handle, avatar_url)
@@ -31,7 +31,7 @@ export const create_coffee_chats_api = (supabase) => ({
 			.order('id', { ascending: false });
 
 		if (error) {
-			console.error('Error fetching received coffee chats:', error);
+			console.error('Error fetching received inquiries:', error);
 			throw error;
 		}
 
@@ -39,11 +39,11 @@ export const create_coffee_chats_api = (supabase) => ({
 	},
 
 	/**
-	 * 특정 사용자가 보낸 커피챗 요청 조회
+	 * 특정 사용자가 보낸 문의 조회
 	 */
 	async select_sent(user_id) {
 		const { data, error } = await supabase
-			.from('coffee_chats')
+			.from('inquiries')
 			.select(`
 				id, status, email, subject, content, created_at,
 				recipient:recipient_id(id, name, handle, avatar_url)
@@ -52,7 +52,7 @@ export const create_coffee_chats_api = (supabase) => ({
 			.order('id', { ascending: false });
 
 		if (error) {
-			console.error('Error fetching sent coffee chats:', error);
+			console.error('Error fetching sent inquiries:', error);
 			throw error;
 		}
 
@@ -60,18 +60,18 @@ export const create_coffee_chats_api = (supabase) => ({
 	},
 
 	/**
-	 * 커피챗 상태 업데이트
+	 * 문의 상태 업데이트
 	 */
 	async update_status(id, status) {
 		const { data, error } = await supabase
-			.from('coffee_chats')
+			.from('inquiries')
 			.update({ status, updated_at: new Date().toISOString() })
 			.eq('id', id)
 			.select('*')
 			.single();
 
 		if (error) {
-			console.error('Error updating coffee chat status:', error);
+			console.error('Error updating inquiry status:', error);
 			throw error;
 		}
 
@@ -79,11 +79,11 @@ export const create_coffee_chats_api = (supabase) => ({
 	},
 
 	/**
-	 * 특정 커피챗 요청 조회
+	 * 특정 문의 조회
 	 */
 	async select_by_id(id) {
 		const { data, error } = await supabase
-			.from('coffee_chats')
+			.from('inquiries')
 			.select(`
 				*,
 				sender:sender_id(id, name, handle, avatar_url),
@@ -93,7 +93,7 @@ export const create_coffee_chats_api = (supabase) => ({
 			.single();
 
 		if (error) {
-			console.error('Error fetching coffee chat by id:', error);
+			console.error('Error fetching inquiry by id:', error);
 			throw error;
 		}
 
@@ -101,16 +101,16 @@ export const create_coffee_chats_api = (supabase) => ({
 	},
 
 	/**
-	 * 커피챗 요청 삭제
+	 * 문의 삭제
 	 */
 	async delete(id) {
 		const { error } = await supabase
-			.from('coffee_chats')
+			.from('inquiries')
 			.delete()
 			.eq('id', id);
 
 		if (error) {
-			console.error('Error deleting coffee chat:', error);
+			console.error('Error deleting inquiry:', error);
 			throw error;
 		}
 

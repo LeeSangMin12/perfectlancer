@@ -25,7 +25,7 @@ import { create_user_devices_api } from '$lib/supabase/user/user_devices';
 import { create_user_coupons_api } from '$lib/supabase/user/user_coupons';
 import { create_user_bank_accounts_api } from '$lib/supabase/user/user_bank_accounts';
 import { create_user_reports_api } from '$lib/supabase/user/user_reports';
-import { create_coffee_chats_api } from '$lib/supabase/user/coffee_chats';
+import { create_inquiries_api } from '$lib/supabase/user/inquiries';
 
 // === Service APIs ===
 import { create_services_api } from '$lib/supabase/service/services';
@@ -80,7 +80,7 @@ export const create_api = (supabase) => ({
 	user_coupons: create_user_coupons_api(supabase),
 	user_bank_accounts: create_user_bank_accounts_api(supabase),
 	user_reports: create_user_reports_api(supabase),
-	coffee_chats: create_coffee_chats_api(supabase),
+	inquiries: create_inquiries_api(supabase),
 
 	// Service
 	services: create_services_api(supabase),

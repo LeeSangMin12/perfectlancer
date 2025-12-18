@@ -19,7 +19,7 @@
 	import Post from '$lib/components/domain/post/Post.svelte';
 	import UserCard from '$lib/components/shared/Profile/UserCard.svelte';
 	import Service from '$lib/components/domain/service/Service.svelte';
-	import CoffeeChatModal from '$lib/components/modals/CoffeeChatModal.svelte';
+	import InquiryModal from '$lib/components/modals/InquiryModal.svelte';
 
 	import colors from '$lib/config/colors';
 	import { check_login, copy_to_clipboard, show_toast } from '$lib/utils/common';
@@ -103,7 +103,7 @@
 	let modal = $state({
 		user_config: false,
 		report: false,
-		coffee_chat: false,
+		inquiry: false,
 	});
 
 	let is_follow_modal_open = $state(false);
@@ -491,12 +491,12 @@
 				<button
 					onclick={() => {
 						if (!check_login(me)) return;
-						modal.coffee_chat = true;
+						modal.inquiry = true;
 					}}
 					class="btn flex h-9 flex-1 items-center justify-center border-none bg-gray-100"
-					aria-label="{user?.name}님에게 커피챗 신청하기"
+					aria-label="{user?.name}님에게 문의하기"
 				>
-					커피챗
+					문의하기
 				</button>
 				<button
 					onclick={() => {
@@ -879,5 +879,5 @@
 	</div>
 </Modal>
 
-<!-- 커피챗 모달 -->
-<CoffeeChatModal bind:is_open={modal.coffee_chat} recipient_user={user} />
+<!-- 문의하기 모달 -->
+<InquiryModal bind:is_open={modal.inquiry} recipient_user={user} />

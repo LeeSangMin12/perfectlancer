@@ -10,7 +10,7 @@
 		RiBookmarkLine,
 		RiBriefcaseLine,
 		RiContactsLine,
-		RiCupLine,
+		RiQuestionnaireLine,
 		RiCustomerService2Line,
 		RiFileList2Line,
 		RiGiftLine,
@@ -133,12 +133,12 @@
 		</a>
 
 		<a
-			href={`/@${me?.handle}/accounts/coffee-chat`}
+			href={`/@${me?.handle}/accounts/inquiries`}
 			class="flex items-center justify-between px-4 py-4 transition hover:bg-gray-50"
 		>
 			<div class="flex items-center">
-				<RiCupLine size={22} color={colors.gray[600]} class="mr-3" />
-				<span>커피챗</span>
+				<RiQuestionnaireLine size={22} color={colors.gray[600]} class="mr-3" />
+				<span>문의함</span>
 			</div>
 			<RiArrowRightSLine size={20} color={colors.gray[400]} />
 		</a>
