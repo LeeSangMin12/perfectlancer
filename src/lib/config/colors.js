@@ -3,6 +3,7 @@ const colors = {
 	secondary: '#E9F0FF',
 	warning: '#F82349',
 	yellow: '#F89C23',
+
 	gray: {
 		50: '#f9fafb',
 		100: '#f3f4f6',

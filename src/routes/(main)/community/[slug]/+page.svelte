@@ -125,6 +125,7 @@
 			show_toast('error', '신고 접수 중 오류가 발생했습니다.');
 		} finally {
 			is_report_modal_open = false;
+			is_menu_modal_open = false;
 			report_reason = '';
 			report_details = '';
 		}
@@ -376,14 +377,14 @@
 		<div class="mt-5 flex gap-2">
 			<button
 				onclick={() => (is_report_modal_open = false)}
-				class="flex-1 rounded-lg bg-gray-100 py-3 text-[14px] font-medium text-gray-700 active:bg-gray-200"
+				class="btn btn-gray flex-1"
 				aria-label="신고 취소"
 			>
 				취소
 			</button>
 			<button
 				onclick={handle_report_submit}
-				class="flex-1 rounded-lg bg-red-500 py-3 text-[14px] font-medium text-white active:bg-red-600"
+				class="btn btn-gray !text-error flex-1"
 				aria-label="신고 제출"
 			>
 				신고하기

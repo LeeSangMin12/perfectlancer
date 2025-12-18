@@ -56,6 +56,13 @@
 	</div>
 
 	<div class="mt-6">
+		<h2 class="mb-3 text-lg font-semibold text-gray-700">신고 관리</h2>
+		<div class="flex flex-col gap-2 rounded-lg bg-gray-50 p-4">
+			<a href="/admin/reports" class=" hover:underline">신고 내역 관리</a>
+		</div>
+	</div>
+
+	<div class="mt-6">
 		<h2 class="mb-3 text-lg font-semibold text-gray-700">
 			기존 시스템 (Deprecated)
 		</h2>

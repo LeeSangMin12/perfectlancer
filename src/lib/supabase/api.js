@@ -60,6 +60,9 @@ import { create_coupons_api } from '$lib/supabase/payment/coupons';
 import { create_notifications_api } from '$lib/supabase/notification/notifications';
 import { create_notification_settings_api } from '$lib/supabase/notification/notification_settings';
 
+// === Admin APIs ===
+import { create_admin_reports_api } from '$lib/supabase/admin/reports';
+
 export const create_api = (supabase) => ({
 	// Auth
 	auth: create_auth_api(supabase),
@@ -114,6 +117,9 @@ export const create_api = (supabase) => ({
 	// Notification
 	notifications: create_notifications_api(supabase),
 	notification_settings: create_notification_settings_api(supabase),
+
+	// Admin
+	admin_reports: create_admin_reports_api(supabase),
 
 	// Bucket (Storage)
 	community_avatars: create_community_avatars_api(supabase),
