@@ -1,15 +1,22 @@
 <script>
-	import { onMount } from 'svelte';
+	import colors from '$lib/config/colors';
+	import {
+		get_api_context,
+		get_user_context,
+	} from '$lib/contexts/app_context.svelte.js';
+	import { show_toast } from '$lib/utils/common';
+	import { optimize_avatar } from '$lib/utils/image';
 	import { goto } from '$app/navigation';
-	import { RiArrowLeftSLine, RiTimeLine, RiMailLine, RiQuestionnaireLine } from 'svelte-remixicon';
+	import { onMount } from 'svelte';
+	import {
+		RiArrowLeftSLine,
+		RiMailLine,
+		RiQuestionnaireLine,
+		RiTimeLine,
+	} from 'svelte-remixicon';
 
 	import Header from '$lib/components/ui/Header.svelte';
 	import TabSelector from '$lib/components/ui/TabSelector.svelte';
-
-	import colors from '$lib/config/colors';
-	import { get_user_context, get_api_context } from '$lib/contexts/app_context.svelte.js';
-	import { show_toast } from '$lib/utils/common';
-	import { optimize_avatar } from '$lib/utils/image';
 
 	const me = get_user_context();
 	const api = get_api_context();
@@ -33,7 +40,7 @@
 			if (me?.id) {
 				const [received, sent] = await Promise.all([
 					api.inquiries.select_received(me.id),
-					api.inquiries.select_sent(me.id)
+					api.inquiries.select_sent(me.id),
 				]);
 				received_inquiries = received;
 				sent_inquiries = sent;
@@ -48,7 +55,7 @@
 		const status_map = {
 			pending: '대기중',
 			accepted: '수락됨',
-			rejected: '거절됨'
+			rejected: '거절됨',
 		};
 		return status_map[status] || status;
 	};
@@ -57,7 +64,7 @@
 		const color_map = {
 			pending: 'text-yellow-600 bg-yellow-100',
 			accepted: 'text-green-600 bg-green-100',
-			rejected: 'text-red-600 bg-red-100'
+			rejected: 'text-red-600 bg-red-100',
 		};
 		return color_map[status] || 'text-gray-600 bg-gray-100';
 	};
@@ -68,7 +75,7 @@
 			month: 'short',
 			day: 'numeric',
 			hour: '2-digit',
-			minute: '2-digit'
+			minute: '2-digit',
 		});
 	};
 
@@ -87,7 +94,10 @@
 
 <Header>
 	{#snippet left()}
-		<button class="flex items-center" onclick={() => goto(`/@${me?.handle}/accounts`)}>
+		<button
+			class="flex items-center"
+			onclick={() => goto(`/@${me?.handle}/accounts`)}
+		>
 			<RiArrowLeftSLine size={24} color={colors.gray[600]} />
 		</button>
 	{/snippet}
@@ -105,7 +115,9 @@
 		<!-- 받은 문의 -->
 		<div class="px-4 pb-20">
 			{#if received_inquiries.length === 0}
-				<div class="flex flex-col items-center justify-center py-16 text-center">
+				<div
+					class="flex flex-col items-center justify-center py-16 text-center"
+				>
 					<div class="mb-4 rounded-full bg-gray-100 p-4">
 						<RiQuestionnaireLine size={48} color={colors.gray[400]} />
 					</div>
@@ -121,7 +133,7 @@
 					{#each received_inquiries as inquiry}
 						<div class="rounded-xl border border-gray-200 bg-white p-5">
 							<!-- 헤더: 보낸 사람 정보와 상태 -->
-							<div class="mb-4 flex items-center justify-between">
+							<div class="mb-4 flex items-start justify-between">
 								<button
 									class="flex items-center space-x-3"
 									onclick={() => go_to_profile(inquiry.sender.handle)}
@@ -135,23 +147,35 @@
 										height="40"
 									/>
 									<div class="text-left">
-										<p class="font-medium text-gray-900">{inquiry.sender.name}</p>
-										<p class="text-sm text-gray-500">@{inquiry.sender.handle}</p>
+										<p class="font-medium text-gray-900">
+											{inquiry.sender.name}
+										</p>
+										<p class="text-sm text-gray-500">
+											@{inquiry.sender.handle}
+										</p>
 									</div>
 								</button>
-								<span class={`rounded-full px-3 py-1 text-xs font-medium ${get_status_color(inquiry.status)}`}>
+								<span
+									class={`rounded-full px-3 py-1 text-xs font-medium whitespace-nowrap ${get_status_color(inquiry.status)}`}
+								>
 									{get_status_text(inquiry.status)}
 								</span>
 							</div>
 
 							<!-- 문의 내용 -->
 							<div class="mb-4">
-								<h3 class="mb-2 font-semibold text-gray-900">{inquiry.subject}</h3>
-								<p class="text-sm leading-relaxed text-gray-600">{inquiry.content}</p>
+								<h3 class="mb-2 font-semibold text-gray-900">
+									{inquiry.subject}
+								</h3>
+								<p class="text-sm leading-relaxed text-gray-600">
+									{inquiry.content}
+								</p>
 							</div>
 
 							<!-- 이메일 정보 -->
-							<div class="mb-4 flex items-center space-x-2 rounded-lg bg-gray-50 p-3">
+							<div
+								class="mb-4 flex items-center space-x-2 rounded-lg bg-gray-50 p-3"
+							>
 								<RiMailLine size={16} color={colors.gray[500]} />
 								<span class="text-sm text-gray-600">{inquiry.email}</span>
 							</div>
@@ -166,10 +190,13 @@
 								{#if inquiry.status === 'pending'}
 									<div class="flex space-x-2">
 										<button
-											class="rounded-lg bg-green-500 px-4 py-2 text-sm font-medium text-white hover:bg-green-600"
+											class="btn btn-primary"
 											onclick={async () => {
 												try {
-													await api.inquiries.update_status(inquiry.id, 'accepted');
+													await api.inquiries.update_status(
+														inquiry.id,
+														'accepted',
+													);
 
 													// 수락 알림 생성
 													try {
@@ -183,12 +210,15 @@
 																recipient_id: me.id,
 																recipient_name: me.name,
 																recipient_handle: me.handle,
-																subject: inquiry.subject
+																subject: inquiry.subject,
 															},
-															link_url: `/@${me.handle}/accounts/inquiries`
+															link_url: `/@${me.handle}/accounts/inquiries`,
 														});
 													} catch (notification_error) {
-														console.error('Failed to create acceptance notification:', notification_error);
+														console.error(
+															'Failed to create acceptance notification:',
+															notification_error,
+														);
 													}
 
 													await load_inquiries();
@@ -201,10 +231,13 @@
 											수락
 										</button>
 										<button
-											class="rounded-lg bg-red-500 px-4 py-2 text-sm font-medium text-white hover:bg-red-600"
+											class="btn btn-gray"
 											onclick={async () => {
 												try {
-													await api.inquiries.update_status(inquiry.id, 'rejected');
+													await api.inquiries.update_status(
+														inquiry.id,
+														'rejected',
+													);
 
 													// 거절 알림 생성
 													try {
@@ -218,12 +251,15 @@
 																recipient_id: me.id,
 																recipient_name: me.name,
 																recipient_handle: me.handle,
-																subject: inquiry.subject
+																subject: inquiry.subject,
 															},
-															link_url: `/@${me.handle}/accounts/inquiries`
+															link_url: `/@${me.handle}/accounts/inquiries`,
 														});
 													} catch (notification_error) {
-														console.error('Failed to create rejection notification:', notification_error);
+														console.error(
+															'Failed to create rejection notification:',
+															notification_error,
+														);
 													}
 
 													await load_inquiries();
@@ -247,23 +283,23 @@
 		<!-- 보낸 문의 -->
 		<div class="px-4 pb-20">
 			{#if sent_inquiries.length === 0}
-				<div class="flex flex-col items-center justify-center py-16 text-center">
+				<div
+					class="flex flex-col items-center justify-center py-16 text-center"
+				>
 					<div class="mb-4 rounded-full bg-gray-100 p-4">
 						<RiQuestionnaireLine size={48} color={colors.gray[400]} />
 					</div>
 					<h3 class="mb-2 text-lg font-semibold text-gray-900">
 						아직 보낸 문의가 없어요
 					</h3>
-					<p class="text-sm text-gray-500">
-						다른 사용자에게 문의해보세요!
-					</p>
+					<p class="text-sm text-gray-500">다른 사용자에게 문의해보세요!</p>
 				</div>
 			{:else}
 				<div class="space-y-4">
 					{#each sent_inquiries as inquiry}
 						<div class="rounded-xl border border-gray-200 bg-white p-5">
 							<!-- 헤더: 받는 사람 정보와 상태 -->
-							<div class="mb-4 flex items-center justify-between">
+							<div class="mb-4 flex items-start justify-between">
 								<button
 									class="flex items-center space-x-3"
 									onclick={() => go_to_profile(inquiry.recipient.handle)}
@@ -277,23 +313,35 @@
 										height="40"
 									/>
 									<div class="text-left">
-										<p class="font-medium text-gray-900">{inquiry.recipient.name}</p>
-										<p class="text-sm text-gray-500">@{inquiry.recipient.handle}</p>
+										<p class="font-medium text-gray-900">
+											{inquiry.recipient.name}
+										</p>
+										<p class="text-sm text-gray-500">
+											@{inquiry.recipient.handle}
+										</p>
 									</div>
 								</button>
-								<span class={`rounded-full px-3 py-1 text-xs font-medium ${get_status_color(inquiry.status)}`}>
+								<span
+									class={`rounded-full px-3 py-1 text-xs font-medium whitespace-nowrap ${get_status_color(inquiry.status)}`}
+								>
 									{get_status_text(inquiry.status)}
 								</span>
 							</div>
 
 							<!-- 문의 내용 -->
 							<div class="mb-4">
-								<h3 class="mb-2 font-semibold text-gray-900">{inquiry.subject}</h3>
-								<p class="text-sm leading-relaxed text-gray-600">{inquiry.content}</p>
+								<h3 class="mb-2 font-semibold text-gray-900">
+									{inquiry.subject}
+								</h3>
+								<p class="text-sm leading-relaxed text-gray-600">
+									{inquiry.content}
+								</p>
 							</div>
 
 							<!-- 이메일 정보 -->
-							<div class="mb-4 flex items-center space-x-2 rounded-lg bg-gray-50 p-3">
+							<div
+								class="mb-4 flex items-center space-x-2 rounded-lg bg-gray-50 p-3"
+							>
 								<RiMailLine size={16} color={colors.gray[500]} />
 								<span class="text-sm text-gray-600">{inquiry.email}</span>
 							</div>

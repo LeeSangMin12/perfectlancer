@@ -28,7 +28,7 @@ export const create_inquiries_api = (supabase) => ({
 				sender:sender_id(id, name, handle, avatar_url)
 			`)
 			.eq('recipient_id', user_id)
-			.order('id', { ascending: false });
+			.order('created_at', { ascending: false });
 
 		if (error) {
 			console.error('Error fetching received inquiries:', error);
@@ -49,7 +49,7 @@ export const create_inquiries_api = (supabase) => ({
 				recipient:recipient_id(id, name, handle, avatar_url)
 			`)
 			.eq('sender_id', user_id)
-			.order('id', { ascending: false });
+			.order('created_at', { ascending: false });
 
 		if (error) {
 			console.error('Error fetching sent inquiries:', error);

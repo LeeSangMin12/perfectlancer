@@ -1,9 +1,21 @@
 <script>
+	import { create_post_handlers } from '$lib/composables/use_post_handlers.svelte.js';
+	import colors from '$lib/config/colors';
+	import {
+		get_api_context,
+		get_user_context,
+	} from '$lib/contexts/app_context.svelte.js';
 	import profile_png from '$lib/img/common/user/profile.png';
+	import {
+		check_login,
+		copy_to_clipboard,
+		show_toast,
+	} from '$lib/utils/common';
+	import { optimize_avatar } from '$lib/utils/image';
+	import { smart_go_back } from '$lib/utils/navigation';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
 	import { onMount } from 'svelte';
-	import { smart_go_back } from '$lib/utils/navigation';
 	import {
 		RiArrowLeftSLine,
 		RiHeartFill,
@@ -17,16 +29,11 @@
 	import Modal from '$lib/components/ui/Modal.svelte';
 	import TabSelector from '$lib/components/ui/TabSelector.svelte';
 	import Post from '$lib/components/domain/post/Post.svelte';
-	import UserCard from '$lib/components/shared/Profile/UserCard.svelte';
 	import Service from '$lib/components/domain/service/Service.svelte';
 	import InquiryModal from '$lib/components/modals/InquiryModal.svelte';
+	import UserCard from '$lib/components/shared/Profile/UserCard.svelte';
 
-	import colors from '$lib/config/colors';
-	import { check_login, copy_to_clipboard, show_toast } from '$lib/utils/common';
-	import { get_user_context, get_api_context } from '$lib/contexts/app_context.svelte.js';
 	import { update_global_store } from '$lib/store/global_store.js';
-	import { create_post_handlers } from '$lib/composables/use_post_handlers.svelte.js';
-	import { optimize_avatar } from '$lib/utils/image';
 
 	const TITLE = '문';
 
@@ -112,10 +119,7 @@
 
 	onMount(async () => {
 		if (me?.id) {
-			is_following = await api.user_follows.is_following(
-				me.id,
-				user.id,
-			);
+			is_following = await api.user_follows.is_following(me.id, user.id);
 		}
 	});
 
@@ -254,7 +258,12 @@
 		load_tab_data(selected);
 	});
 
-	const handle_gift_comment_added = async ({ gift_content, gift_amount, parent_comment_id, post_id }) => {
+	const handle_gift_comment_added = async ({
+		gift_content,
+		gift_amount,
+		parent_comment_id,
+		post_id,
+	}) => {
 		// 실제 댓글 추가 (메인 페이지에서는 UI에 표시되지 않지만 DB에는 저장됨)
 		await api.post_comments.insert({
 			post_id,
@@ -271,7 +280,7 @@
 		(updated_posts) => {
 			tab_posts = updated_posts;
 		},
-		me
+		me,
 	);
 
 	// Service 좋아요 변경 핸들러
@@ -283,13 +292,9 @@
 		follow_modal_type = type;
 		is_follow_modal_open = true;
 		if (type === 'followers') {
-			follow_modal_users = await api.user_follows.select_followers(
-				user.id,
-			);
+			follow_modal_users = await api.user_follows.select_followers(user.id);
 		} else {
-			follow_modal_users = await api.user_follows.select_followings(
-				user.id,
-			);
+			follow_modal_users = await api.user_follows.select_followings(user.id);
 		}
 	};
 
@@ -307,7 +312,7 @@
 
 			// 팔로우 상태 업데이트
 			if (me?.id) {
-				api.user_follows.is_following(me.id, user.id).then(result => {
+				api.user_follows.is_following(me.id, user.id).then((result) => {
 					is_following = result;
 				});
 			}
@@ -381,7 +386,9 @@
 					goto(`/@${me?.handle}/accounts`);
 				}
 			}}
-			aria-label={$page.params.handle !== me?.handle ? '사용자 메뉴 열기' : '계정 설정 열기'}
+			aria-label={$page.params.handle !== me?.handle
+				? '사용자 메뉴 열기'
+				: '계정 설정 열기'}
 		>
 			<Icon attribute="menu" size={24} color={colors.gray[600]} />
 		</button>
@@ -424,7 +431,7 @@
 		<!-- 팔로워/팔로잉 정보 -->
 		<div class="mt-4 flex items-center space-x-4">
 			<button
-				class="cursor-pointer min-h-[44px] py-2"
+				class="min-h-[44px] cursor-pointer py-2"
 				onclick={() => open_follow_modal('followers')}
 				aria-label="{follower_count}명의 팔로워 보기"
 			>
@@ -432,7 +439,7 @@
 				<span class="text-sm text-gray-500"> 팔로워</span>
 			</button>
 			<button
-				class="cursor-pointer min-h-[44px] py-2"
+				class="min-h-[44px] cursor-pointer py-2"
 				onclick={() => open_follow_modal('followings')}
 				aria-label="{following_count}명의 팔로잉 보기"
 			>
@@ -450,7 +457,8 @@
 			<!-- 메시지와 팔로우 버튼 -->
 			<div class="mt-4 flex space-x-2">
 				<button
-					onclick={() => user?.handle && goto(`/@${user.handle}/accounts/profile/modify`)}
+					onclick={() =>
+						user?.handle && goto(`/@${user.handle}/accounts/profile/modify`)}
 					class="btn flex h-9 flex-1 items-center justify-center border-none bg-gray-100"
 					aria-label="프로필 편집 페이지로 이동"
 				>
@@ -473,7 +481,7 @@
 			<div class="mt-4 flex space-x-2">
 				{#if is_following}
 					<button
-						class="btn flex h-9 flex-1 items-center justify-center"
+						class="btn btn-gray flex-1"
 						onclick={toggle_follow}
 						aria-label="{user?.name}님 팔로우 취소"
 					>
@@ -481,7 +489,7 @@
 					</button>
 				{:else}
 					<button
-						class="btn btn-primary flex h-9 flex-1 items-center justify-center"
+						class="btn btn-primary flex-1"
 						onclick={toggle_follow}
 						aria-label="{user?.name}님 팔로우하기"
 					>
@@ -493,7 +501,7 @@
 						if (!check_login(me)) return;
 						modal.inquiry = true;
 					}}
-					class="btn flex h-9 flex-1 items-center justify-center border-none bg-gray-100"
+					class="btn btn-gray flex-1"
 					aria-label="{user?.name}님에게 문의하기"
 				>
 					문의하기
@@ -505,7 +513,7 @@
 							'링크가 복사되었습니다.',
 						);
 					}}
-					class="flex h-9 w-9 items-center justify-center rounded-lg bg-gray-100 min-w-[44px] min-h-[44px]"
+					class="flex h-8 min-h-[40px] w-8 min-w-[40px] items-center justify-center rounded-lg bg-gray-100"
 					aria-label="프로필 링크 공유하기"
 				>
 					<RiShareLine />
@@ -526,11 +534,11 @@
 		{#each selected_data.posts as post}
 			<div class="mt-4">
 				<Post
-				{post}
-				on_gift_comment_added={handle_gift_comment_added}
-				on_bookmark_changed={handle_bookmark_changed}
-				on_vote_changed={handle_vote_changed}
-			/>
+					{post}
+					on_gift_comment_added={handle_gift_comment_added}
+					on_bookmark_changed={handle_bookmark_changed}
+					on_vote_changed={handle_vote_changed}
+				/>
 			</div>
 		{/each}
 	{:else if selected === 1 && selected_data.post_comments.length > 0}
@@ -614,7 +622,11 @@
 		<!-- 서비스 탭 -->
 		<div class="mt-4 grid grid-cols-2 gap-4 px-4">
 			{#each selected_data.services as service (service.id)}
-				<Service {service} service_likes={selected_data.service_likes} on_like_changed={handle_service_like_changed} />
+				<Service
+					{service}
+					service_likes={selected_data.service_likes}
+					on_like_changed={handle_service_like_changed}
+				/>
 			{/each}
 		</div>
 	{:else if selected === 3 && (selected_data.service_reviews.length > 0 || selected_data.expert_request_reviews.length > 0)}
@@ -825,7 +837,9 @@
 
 		<div class="mt-4 space-y-2">
 			{#each REPORT_REASONS as reason}
-				<label class="flex cursor-pointer items-center rounded-lg px-3 py-2.5 active:bg-gray-50">
+				<label
+					class="flex cursor-pointer items-center rounded-lg px-3 py-2.5 active:bg-gray-50"
+				>
 					<input
 						type="radio"
 						name="report_reason"

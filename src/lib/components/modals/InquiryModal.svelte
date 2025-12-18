@@ -1,8 +1,11 @@
 <script>
-	import Modal from '$lib/components/ui/Modal.svelte';
-
+	import {
+		get_api_context,
+		get_user_context,
+	} from '$lib/contexts/app_context.svelte.js';
 	import { show_toast } from '$lib/utils/common';
-	import { get_user_context, get_api_context } from '$lib/contexts/app_context.svelte.js';
+
+	import Modal from '$lib/components/ui/Modal.svelte';
 
 	const me = get_user_context();
 	const api = get_api_context();
@@ -120,9 +123,6 @@
 					placeholder="your-email@example.com"
 					required
 				/>
-				<p class="mt-1 text-xs text-gray-500">
-					응답을 받을 이메일 주소를 입력해주세요.
-				</p>
 			</div>
 
 			<!-- 문의 제목 -->
@@ -167,23 +167,12 @@
 				</div>
 			</div>
 		</form>
-	</div>
 
-	<!-- 하단 버튼 -->
-	<div class="flex">
-		<button
-			type="button"
-			onclick={handle_close}
-			class="flex-1 py-3 text-gray-600 transition-colors hover:bg-gray-50"
-		>
-			취소
-		</button>
-		<button
-			type="button"
-			onclick={handle_submit}
-			class="flex-1 bg-blue-500 py-3 font-medium text-white transition-colors hover:bg-blue-600"
-		>
-			문의하기
-		</button>
+		<div class="mt-8 flex gap-3">
+			<button class="btn btn-gray flex-1" onclick={handle_close}> 취소</button>
+			<button class="btn btn-primary flex-1" onclick={handle_submit}
+				>문의하기</button
+			>
+		</div>
 	</div>
 </Modal>
