@@ -4,17 +4,27 @@
 	 * @component
 	 */
 	import { goto } from '$app/navigation';
-	import { comma } from '$lib/utils/common.js';
+	import { comma, check_login, show_toast } from '$lib/utils/common.js';
 	import { get_request_status_display } from '$lib/utils/expert_request_utils.js';
+	import { get_api_context, get_user_context } from '$lib/contexts/app_context.svelte.js';
+	import { RiBookmarkLine, RiBookmarkFill } from 'svelte-remixicon';
+	import colors from '$lib/config/colors';
 
 	/**
 	 * @typedef {Object} Props
 	 * @property {Object} request - 외주 공고 객체
 	 * @property {string} [href] - 링크 URL
 	 * @property {string} [class] - 추가 CSS 클래스
+	 * @property {boolean} [is_bookmarked] - 북마크 여부
+	 * @property {Function} [on_bookmark_changed] - 북마크 변경 콜백
 	 */
 
-	let { request, href, class: className = 'mb-4' } = $props();
+	let { request, href, class: className = 'mb-4', is_bookmarked = false, on_bookmark_changed } = $props();
+
+	const me = get_user_context();
+	const api = get_api_context();
+
+	let is_bookmarking = $state(false);
 
 	// 링크 URL
 	const resolved_href = $derived(href ?? `/work-request/${request?.id}`);
@@ -64,6 +74,36 @@
 	const location_text = $derived(request?.work_location || '재택/원격');
 
 	const handle_click = () => goto(resolved_href);
+
+	// 북마크 토글
+	async function toggle_bookmark(e) {
+		e.stopPropagation();
+		if (!check_login(me) || is_bookmarking) return;
+
+		is_bookmarking = true;
+		try {
+			if (is_bookmarked) {
+				await api.work_request_bookmarks.delete(request.id, me.id);
+				on_bookmark_changed?.({
+					work_request_id: request.id,
+					action: 'remove',
+					user_id: me.id,
+				});
+			} else {
+				await api.work_request_bookmarks.insert(request.id, me.id);
+				on_bookmark_changed?.({
+					work_request_id: request.id,
+					action: 'add',
+					user_id: me.id,
+				});
+			}
+		} catch (error) {
+			console.error('Bookmark toggle failed:', error);
+			show_toast('error', '북마크 처리 중 오류가 발생했습니다.');
+		} finally {
+			is_bookmarking = false;
+		}
+	}
 </script>
 
 {#if request}
@@ -92,11 +132,24 @@
 					{request.title}
 				</h3>
 			</div>
-			<span
-				class="ml-3 flex-shrink-0 rounded-md px-2.5 py-1 text-xs font-medium {status_display.bgColor} {status_display.textColor}"
-			>
-				{status_display.text}
-			</span>
+			<div class="ml-3 flex flex-shrink-0 items-center gap-2">
+				<span
+					class="rounded-md px-2.5 py-1 text-xs font-medium {status_display.bgColor} {status_display.textColor}"
+				>
+					{status_display.text}
+				</span>
+				<button
+					onclick={toggle_bookmark}
+					class="p-1"
+					aria-label={is_bookmarked ? '북마크 해제' : '북마크'}
+				>
+					{#if is_bookmarked}
+						<RiBookmarkFill size={18} color={colors.primary} />
+					{:else}
+						<RiBookmarkLine size={18} color={colors.gray[400]} />
+					{/if}
+				</button>
+			</div>
 		</div>
 
 		<!-- 메타 정보 및 보상금 -->

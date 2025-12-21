@@ -11,6 +11,7 @@
 	import Bottom_nav from '$lib/components/ui/Bottom_nav.svelte';
 	import Header from '$lib/components/ui/Header.svelte';
 	import TabSelector from '$lib/components/ui/TabSelector.svelte';
+	import Modal from '$lib/components/ui/Modal.svelte';
 
 	const me = get_user_context();
 	const api = get_api_context();
@@ -25,6 +26,12 @@
 
 	// 판매자 가이드 표시 여부
 	let show_seller_guide = $state(false);
+
+	// 취소 모달 상태
+	let show_cancel_modal = $state(false);
+	let cancel_order_id = $state(null);
+	let cancel_reason = $state('');
+	let is_cancelling = $state(false);
 
 	// 주문 상태 한글 변환
 	const get_status_text = (status) => {
@@ -138,28 +145,42 @@
 		}
 	};
 
-	// 주문 취소
-	const handle_cancel_order = async (order_id) => {
-		const reason = prompt('취소 사유를 입력해주세요.');
-		if (!reason) return;
+	// 취소 모달 열기
+	const open_cancel_modal = (order_id) => {
+		cancel_order_id = order_id;
+		cancel_reason = '';
+		show_cancel_modal = true;
+	};
 
+	// 취소 모달 닫기
+	const close_cancel_modal = () => {
+		show_cancel_modal = false;
+		cancel_order_id = null;
+		cancel_reason = '';
+	};
+
+	// 주문 취소 실행
+	const handle_cancel_order = async () => {
+		if (!cancel_order_id || is_cancelling) return;
+
+		is_cancelling = true;
 		try {
-			await api.service_orders.cancel(order_id, reason);
+			await api.service_orders.cancel(cancel_order_id, cancel_reason);
 			show_toast('success', '주문이 취소되었습니다.');
 
 			// 구매자/판매자 모두에게 알림
 			try {
 				const order =
 					selected_tab_index === 0
-						? my_orders.find((o) => o.id === order_id)
-						: my_sales.find((o) => o.id === order_id);
+						? my_orders.find((o) => o.id === cancel_order_id)
+						: my_sales.find((o) => o.id === cancel_order_id);
 				if (order?.buyer?.id) {
 					await api.notifications.insert({
 						recipient_id: order.buyer.id,
 						actor_id: me.id,
 						type: 'order.cancelled',
 						resource_type: 'order',
-						resource_id: String(order_id),
+						resource_id: String(cancel_order_id),
 						payload: {
 							service_title: order.service_title,
 							status: 'cancelled',
@@ -173,7 +194,7 @@
 						actor_id: me.id,
 						type: 'order.cancelled',
 						resource_type: 'order',
-						resource_id: String(order_id),
+						resource_id: String(cancel_order_id),
 						payload: {
 							service_title: order.service_title,
 							status: 'cancelled',
@@ -191,9 +212,13 @@
 			} else {
 				my_sales = await api.service_orders.select_by_seller_id(me.id);
 			}
+
+			close_cancel_modal();
 		} catch (error) {
 			console.error('주문 취소 실패:', error);
 			show_toast('error', '주문 취소에 실패했습니다.');
+		} finally {
+			is_cancelling = false;
 		}
 	};
 
@@ -362,3 +387,39 @@
 		{/if}
 	</section>
 </main>
+
+<!-- 주문 취소 모달 -->
+<Modal bind:is_modal_open={show_cancel_modal} modal_position="center">
+	<div class="p-5">
+		<h3 class="text-lg font-semibold text-gray-900">주문 취소</h3>
+		<p class="mt-1 text-sm text-gray-500">취소 사유를 입력해주세요.</p>
+
+		<textarea
+			bind:value={cancel_reason}
+			placeholder="취소 사유를 입력해주세요 (선택)"
+			rows="3"
+			class="mt-4 w-full resize-none rounded-lg border border-gray-200 p-3 text-sm focus:border-blue-500 focus:outline-none"
+		></textarea>
+
+		<div class="mt-5 flex gap-2">
+			<button
+				onclick={close_cancel_modal}
+				disabled={is_cancelling}
+				class="flex-1 rounded-lg bg-gray-100 py-3 text-sm font-medium text-gray-700"
+			>
+				닫기
+			</button>
+			<button
+				onclick={handle_cancel_order}
+				disabled={is_cancelling}
+				class="flex-1 rounded-lg bg-red-600 py-3 text-sm font-medium text-white"
+			>
+				{#if is_cancelling}
+					처리 중...
+				{:else}
+					주문 취소
+				{/if}
+			</button>
+		</div>
+	</div>
+</Modal>

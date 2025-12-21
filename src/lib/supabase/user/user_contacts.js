@@ -23,8 +23,6 @@ export const create_user_contacts_api = (supabase) => ({
 	 * @param {Object} contact_data - 연락처 데이터
 	 * @param {string} contact_data.contact_phone - 연락받을 전화번호 (필수)
 	 * @param {string} [contact_data.contact_email] - 연락받을 이메일 (선택)
-	 * @param {Object} [contact_data.payment_info] - 결제 정보 (선택)
-	 * @param {string} [contact_data.payment_info.business_name] - 사업자명/이름명
 	 * @returns {Promise<Object>} 생성/수정된 연락처 객체
 	 */
 	upsert: async (user_id, contact_data) => {
@@ -35,7 +33,6 @@ export const create_user_contacts_api = (supabase) => ({
 					user_id,
 					contact_phone: contact_data.contact_phone,
 					contact_email: contact_data.contact_email || null,
-					payment_info: contact_data.payment_info || null,
 					updated_at: new Date().toISOString(),
 				},
 				{ onConflict: 'user_id' }

@@ -10,11 +10,11 @@
 		RiBookmarkLine,
 		RiBriefcaseLine,
 		RiContactsLine,
-		RiQuestionnaireLine,
 		RiCustomerService2Line,
 		RiFileList2Line,
 		RiGiftLine,
 		RiHeartLine,
+		RiQuestionnaireLine,
 		RiSettings4Line,
 		RiShoppingBag3Line,
 		RiTeamLine,
@@ -111,23 +111,23 @@
 		</a>
 
 		<a
+			href="/expert/accounts"
+			class="flex items-center justify-between px-4 py-4 transition hover:bg-gray-50"
+		>
+			<div class="flex items-center">
+				<RiBriefcaseLine size={22} color={colors.gray[600]} class="mr-3" />
+				<span>외주 관리</span>
+			</div>
+			<RiArrowRightSLine size={20} color={colors.gray[400]} />
+		</a>
+
+		<a
 			href={`/@${me?.handle}/accounts/orders`}
 			class="flex items-center justify-between px-4 py-4 transition hover:bg-gray-50"
 		>
 			<div class="flex items-center">
 				<RiShoppingBag3Line size={22} color={colors.gray[600]} class="mr-3" />
 				<span>서비스 관리</span>
-			</div>
-			<RiArrowRightSLine size={20} color={colors.gray[400]} />
-		</a>
-
-		<a
-			href="/expert/accounts"
-			class="flex items-center justify-between px-4 py-4 transition hover:bg-gray-50"
-		>
-			<div class="flex items-center">
-				<RiBriefcaseLine size={22} color={colors.gray[600]} class="mr-3" />
-				<span>사이드·풀타임 잡</span>
 			</div>
 			<RiArrowRightSLine size={20} color={colors.gray[400]} />
 		</a>
@@ -150,12 +150,23 @@
 	</div>
 	<div>
 		<a
-			href={`/@${me?.handle}/accounts/bookmark`}
+			href={`/@${me?.handle}/accounts/bookmark?tab=post`}
 			class="flex items-center justify-between px-4 py-4 transition hover:bg-gray-50"
 		>
 			<div class="flex items-center">
 				<RiBookmarkLine size={22} color={colors.gray[600]} class="mr-3" />
-				<span>북마크</span>
+				<span>게시글 북마크</span>
+			</div>
+			<RiArrowRightSLine size={20} color={colors.gray[400]} />
+		</a>
+
+		<a
+			href={`/@${me?.handle}/accounts/bookmark?tab=work_request`}
+			class="flex items-center justify-between px-4 py-4 transition hover:bg-gray-50"
+		>
+			<div class="flex items-center">
+				<RiBookmarkLine size={22} color={colors.gray[600]} class="mr-3" />
+				<span>외주 북마크</span>
 			</div>
 			<RiArrowRightSLine size={20} color={colors.gray[400]} />
 		</a>

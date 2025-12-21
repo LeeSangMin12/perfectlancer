@@ -17,10 +17,12 @@
 	let { data } = $props();
 
 	let post_reports = $state(data.post_reports || []);
-	let community_reports = $state(data.community_reports || []);
+	let comment_reports = $state(data.comment_reports || []);
 	let user_reports = $state(data.user_reports || []);
+	let service_reports = $state(data.service_reports || []);
+	let community_reports = $state(data.community_reports || []);
 
-	// 탭 상태: 'post' | 'community' | 'user'
+	// 탭 상태: 'post' | 'comment' | 'user' | 'service' | 'community'
 	let active_tab = $state('post');
 	// 필터 상태: 'pending' | 'resolved' | 'all'
 	let filter = $state('pending');
@@ -44,28 +46,36 @@
 
 	// 필터된 데이터
 	const filter_data = (data) => {
-		if (filter === 'pending') return data.filter((r) => !r.is_resolved);
-		if (filter === 'resolved') return data.filter((r) => r.is_resolved);
+		if (filter === 'pending') return data.filter((r) => !r.resolved_at);
+		if (filter === 'resolved') return data.filter((r) => r.resolved_at);
 		return data;
 	};
 
 	let filtered_post_reports = $derived(filter_data(post_reports));
-	let filtered_community_reports = $derived(filter_data(community_reports));
+	let filtered_comment_reports = $derived(filter_data(comment_reports));
 	let filtered_user_reports = $derived(filter_data(user_reports));
+	let filtered_service_reports = $derived(filter_data(service_reports));
+	let filtered_community_reports = $derived(filter_data(community_reports));
 
 	// 미처리 개수
-	let pending_post_count = $derived(post_reports.filter((r) => !r.is_resolved).length);
-	let pending_community_count = $derived(community_reports.filter((r) => !r.is_resolved).length);
-	let pending_user_count = $derived(user_reports.filter((r) => !r.is_resolved).length);
-	let total_pending = $derived(pending_post_count + pending_community_count + pending_user_count);
+	let pending_post_count = $derived(post_reports.filter((r) => !r.resolved_at).length);
+	let pending_comment_count = $derived(comment_reports.filter((r) => !r.resolved_at).length);
+	let pending_user_count = $derived(user_reports.filter((r) => !r.resolved_at).length);
+	let pending_service_count = $derived(service_reports.filter((r) => !r.resolved_at).length);
+	let pending_community_count = $derived(community_reports.filter((r) => !r.resolved_at).length);
+	let total_pending = $derived(pending_post_count + pending_comment_count + pending_user_count + pending_service_count + pending_community_count);
 
 	// 현재 탭의 데이터
 	let current_data = $derived(
 		active_tab === 'post'
 			? filtered_post_reports
-			: active_tab === 'community'
-				? filtered_community_reports
-				: filtered_user_reports,
+			: active_tab === 'comment'
+				? filtered_comment_reports
+				: active_tab === 'user'
+					? filtered_user_reports
+					: active_tab === 'service'
+						? filtered_service_reports
+						: filtered_community_reports,
 	);
 
 	// 처리 모달 열기
@@ -80,20 +90,31 @@
 		if (!selected_report || !selected_type) return;
 
 		try {
+			const now = new Date().toISOString();
 			if (selected_type === 'post') {
 				await api.admin_reports.resolve_post_report(selected_report.id, me.id);
 				post_reports = post_reports.map((r) =>
-					r.id === selected_report.id ? { ...r, is_resolved: true, resolved_by: me.id } : r,
+					r.id === selected_report.id ? { ...r, resolved_at: now, resolved_by: me.id } : r,
 				);
-			} else if (selected_type === 'community') {
-				await api.admin_reports.resolve_community_report(selected_report.id, me.id);
-				community_reports = community_reports.map((r) =>
-					r.id === selected_report.id ? { ...r, is_resolved: true, resolved_by: me.id } : r,
+			} else if (selected_type === 'comment') {
+				await api.admin_reports.resolve_comment_report(selected_report.id, me.id);
+				comment_reports = comment_reports.map((r) =>
+					r.id === selected_report.id ? { ...r, resolved_at: now, resolved_by: me.id } : r,
 				);
 			} else if (selected_type === 'user') {
 				await api.admin_reports.resolve_user_report(selected_report.id, me.id);
 				user_reports = user_reports.map((r) =>
-					r.id === selected_report.id ? { ...r, is_resolved: true, resolved_by: me.id } : r,
+					r.id === selected_report.id ? { ...r, resolved_at: now, resolved_by: me.id } : r,
+				);
+			} else if (selected_type === 'service') {
+				await api.admin_reports.resolve_service_report(selected_report.id, me.id);
+				service_reports = service_reports.map((r) =>
+					r.id === selected_report.id ? { ...r, resolved_at: now, resolved_by: me.id } : r,
+				);
+			} else if (selected_type === 'community') {
+				await api.admin_reports.resolve_community_report(selected_report.id, me.id);
+				community_reports = community_reports.map((r) =>
+					r.id === selected_report.id ? { ...r, resolved_at: now, resolved_by: me.id } : r,
 				);
 			}
 
@@ -113,9 +134,9 @@
 
 		init(params) {
 			this.eGui = document.createElement('span');
-			const is_resolved = params.value;
+			const resolved_at = params.value;
 
-			if (is_resolved) {
+			if (resolved_at) {
 				this.eGui.className = 'px-2 py-0.5 text-xs rounded bg-green-50 text-green-700';
 				this.eGui.textContent = '처리완료';
 			} else {
@@ -249,6 +270,70 @@
 		}
 	}
 
+	// 댓글 렌더러
+	class CommentRenderer {
+		eGui;
+
+		init(params) {
+			this.eGui = document.createElement('div');
+			const comment = params.data.post_comments;
+			if (comment) {
+				this.eGui.innerHTML = `
+					<div class="text-sm">
+						<div class="font-medium text-gray-900 truncate max-w-[200px]">${comment.content?.substring(0, 50) || '댓글 내용'}...</div>
+						<a href="/post/${comment.post_id}" 
+							class="text-xs text-blue-600 hover:text-blue-800 hover:underline"
+							target="_blank">
+							게시물 보기 →
+						</a>
+					</div>
+				`;
+			} else {
+				this.eGui.innerHTML = `<span class="text-gray-400 text-sm">삭제된 댓글</span>`;
+			}
+		}
+
+		getGui() {
+			return this.eGui;
+		}
+
+		refresh() {
+			return false;
+		}
+	}
+
+	// 서비스 렌더러
+	class ServiceRenderer {
+		eGui;
+
+		init(params) {
+			this.eGui = document.createElement('div');
+			const service = params.data.services;
+			if (service) {
+				this.eGui.innerHTML = `
+					<div class="text-sm">
+						<div class="font-medium text-gray-900 truncate max-w-[200px]">${service.title || '서비스 제목'}</div>
+						<a href="/service/${service.id}" 
+							class="text-xs text-blue-600 hover:text-blue-800 hover:underline"
+							target="_blank">
+							서비스 보기 →
+						</a>
+					</div>
+				`;
+			} else {
+				this.eGui.innerHTML = `<span class="text-gray-400 text-sm">삭제된 서비스</span>`;
+			}
+		}
+
+		getGui() {
+			return this.eGui;
+		}
+
+		refresh() {
+			return false;
+		}
+	}
+
 	// 사유 렌더러
 	class ReasonRenderer {
 		eGui;
@@ -284,7 +369,7 @@
 				this.eGui = document.createElement('div');
 				this.eGui.className = 'flex items-center gap-2';
 
-				if (!params.data.is_resolved) {
+				if (!params.data.resolved_at) {
 					const resolveBtn = document.createElement('button');
 					resolveBtn.className =
 						'px-2 py-1 text-xs bg-gray-900 text-white rounded hover:bg-gray-700';
@@ -330,7 +415,7 @@
 		},
 		{
 			headerName: '상태',
-			field: 'is_resolved',
+			field: 'resolved_at',
 			cellRenderer: StatusRenderer,
 			width: 100,
 		},
@@ -370,7 +455,7 @@
 		},
 		{
 			headerName: '상태',
-			field: 'is_resolved',
+			field: 'resolved_at',
 			cellRenderer: StatusRenderer,
 			width: 100,
 		},
@@ -383,6 +468,46 @@
 		{
 			headerName: '',
 			cellRenderer: createActionRenderer('community'),
+			width: 100,
+			sortable: false,
+			filter: false,
+		},
+	];
+
+	// 댓글 신고 컬럼
+	const comment_column_defs = [
+		{
+			headerName: '신고자',
+			cellRenderer: ReporterRenderer,
+			width: 140,
+		},
+		{
+			headerName: '신고된 댓글',
+			cellRenderer: CommentRenderer,
+			flex: 1,
+			minWidth: 200,
+		},
+		{
+			headerName: '신고 사유',
+			cellRenderer: ReasonRenderer,
+			flex: 1,
+			minWidth: 200,
+		},
+		{
+			headerName: '상태',
+			field: 'resolved_at',
+			cellRenderer: StatusRenderer,
+			width: 100,
+		},
+		{
+			headerName: '신고일시',
+			field: 'created_at',
+			valueFormatter: (params) => format_date(params.value),
+			width: 140,
+		},
+		{
+			headerName: '',
+			cellRenderer: createActionRenderer('comment'),
 			width: 100,
 			sortable: false,
 			filter: false,
@@ -410,7 +535,7 @@
 		},
 		{
 			headerName: '상태',
-			field: 'is_resolved',
+			field: 'resolved_at',
 			cellRenderer: StatusRenderer,
 			width: 100,
 		},
@@ -429,13 +554,57 @@
 		},
 	];
 
+	// 서비스 신고 컬럼
+	const service_column_defs = [
+		{
+			headerName: '신고자',
+			cellRenderer: ReporterRenderer,
+			width: 140,
+		},
+		{
+			headerName: '신고된 서비스',
+			cellRenderer: ServiceRenderer,
+			flex: 1,
+			minWidth: 200,
+		},
+		{
+			headerName: '신고 사유',
+			cellRenderer: ReasonRenderer,
+			flex: 1,
+			minWidth: 200,
+		},
+		{
+			headerName: '상태',
+			field: 'resolved_at',
+			cellRenderer: StatusRenderer,
+			width: 100,
+		},
+		{
+			headerName: '신고일시',
+			field: 'created_at',
+			valueFormatter: (params) => format_date(params.value),
+			width: 140,
+		},
+		{
+			headerName: '',
+			cellRenderer: createActionRenderer('service'),
+			width: 100,
+			sortable: false,
+			filter: false,
+		},
+	];
+
 	// 현재 컬럼
 	let current_columns = $derived(
 		active_tab === 'post'
 			? post_column_defs
-			: active_tab === 'community'
-				? community_column_defs
-				: user_column_defs,
+			: active_tab === 'comment'
+				? comment_column_defs
+				: active_tab === 'user'
+					? user_column_defs
+					: active_tab === 'service'
+						? service_column_defs
+						: community_column_defs,
 	);
 </script>
 
@@ -456,7 +625,7 @@
 
 <main class="min-h-screen bg-white px-6 py-6">
 	<!-- 통계 -->
-	<div class="mb-6 flex gap-4">
+	<div class="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
 		<div class="rounded-lg border border-gray-200 bg-white px-4 py-3">
 			<p class="text-xs text-gray-500">전체 미처리</p>
 			<p class="text-xl font-semibold text-red-600">
@@ -470,9 +639,9 @@
 			</p>
 		</div>
 		<div class="rounded-lg border border-gray-200 bg-white px-4 py-3">
-			<p class="text-xs text-gray-500">커뮤니티 신고</p>
+			<p class="text-xs text-gray-500">댓글 신고</p>
 			<p class="text-xl font-semibold">
-				{pending_community_count}<span class="text-sm font-normal text-gray-400">건</span>
+				{pending_comment_count}<span class="text-sm font-normal text-gray-400">건</span>
 			</p>
 		</div>
 		<div class="rounded-lg border border-gray-200 bg-white px-4 py-3">
@@ -481,36 +650,66 @@
 				{pending_user_count}<span class="text-sm font-normal text-gray-400">건</span>
 			</p>
 		</div>
+		<div class="rounded-lg border border-gray-200 bg-white px-4 py-3">
+			<p class="text-xs text-gray-500">서비스 신고</p>
+			<p class="text-xl font-semibold">
+				{pending_service_count}<span class="text-sm font-normal text-gray-400">건</span>
+			</p>
+		</div>
+		<div class="rounded-lg border border-gray-200 bg-white px-4 py-3">
+			<p class="text-xs text-gray-500">커뮤니티 신고</p>
+			<p class="text-xl font-semibold">
+				{pending_community_count}<span class="text-sm font-normal text-gray-400">건</span>
+			</p>
+		</div>
 	</div>
 
 	<!-- 탭 -->
-	<div class="mb-4 flex gap-1 rounded-lg bg-gray-200 p-1">
+	<div class="mb-4 flex gap-1 rounded-lg bg-gray-200 p-1 overflow-x-auto">
 		<button
-			class="flex-1 rounded-md px-4 py-2 text-sm font-medium transition-colors {active_tab ===
+			class="flex-1 whitespace-nowrap rounded-md px-4 py-2 text-sm font-medium transition-colors {active_tab ===
 			'post'
 				? 'bg-white text-gray-900 shadow-sm'
 				: 'text-gray-600 hover:text-gray-900'}"
 			onclick={() => (active_tab = 'post')}
 		>
-			게시물 신고 ({pending_post_count})
+			게시물 ({pending_post_count})
 		</button>
 		<button
-			class="flex-1 rounded-md px-4 py-2 text-sm font-medium transition-colors {active_tab ===
-			'community'
+			class="flex-1 whitespace-nowrap rounded-md px-4 py-2 text-sm font-medium transition-colors {active_tab ===
+			'comment'
 				? 'bg-white text-gray-900 shadow-sm'
 				: 'text-gray-600 hover:text-gray-900'}"
-			onclick={() => (active_tab = 'community')}
+			onclick={() => (active_tab = 'comment')}
 		>
-			커뮤니티 신고 ({pending_community_count})
+			댓글 ({pending_comment_count})
 		</button>
 		<button
-			class="flex-1 rounded-md px-4 py-2 text-sm font-medium transition-colors {active_tab ===
+			class="flex-1 whitespace-nowrap rounded-md px-4 py-2 text-sm font-medium transition-colors {active_tab ===
 			'user'
 				? 'bg-white text-gray-900 shadow-sm'
 				: 'text-gray-600 hover:text-gray-900'}"
 			onclick={() => (active_tab = 'user')}
 		>
-			사용자 신고 ({pending_user_count})
+			사용자 ({pending_user_count})
+		</button>
+		<button
+			class="flex-1 whitespace-nowrap rounded-md px-4 py-2 text-sm font-medium transition-colors {active_tab ===
+			'service'
+				? 'bg-white text-gray-900 shadow-sm'
+				: 'text-gray-600 hover:text-gray-900'}"
+			onclick={() => (active_tab = 'service')}
+		>
+			서비스 ({pending_service_count})
+		</button>
+		<button
+			class="flex-1 whitespace-nowrap rounded-md px-4 py-2 text-sm font-medium transition-colors {active_tab ===
+			'community'
+				? 'bg-white text-gray-900 shadow-sm'
+				: 'text-gray-600 hover:text-gray-900'}"
+			onclick={() => (active_tab = 'community')}
+		>
+			커뮤니티 ({pending_community_count})
 		</button>
 	</div>
 

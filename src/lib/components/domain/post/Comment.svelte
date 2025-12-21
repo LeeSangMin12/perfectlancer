@@ -67,6 +67,12 @@
 	let is_more_modal_open = $state(false);
 	let show_delete_modal = $state(false);
 
+	// 신고 관련 상태
+	let show_report_modal = $state(false);
+	let report_reason = $state('');
+	let report_details = $state('');
+	let is_reporting = $state(false);
+
 	let textarea_ref = $state(null);
 	let edit_textarea_ref = $state(null);
 
@@ -77,22 +83,16 @@
 		const current_upvotes = local_votes.upvotes ?? comment.upvotes;
 		const current_downvotes = local_votes.downvotes ?? comment.downvotes;
 
-		// Optimistic update
-		if (current_vote === vote) {
-			// 투표 취소: DB에서 레코드 삭제
-			await api.post_comment_votes.delete(comment.id, me.id);
+		const result = await api.post_comment_votes.vote(me.id, comment.id, vote);
+		
+		// 결과에 따라 local_votes 업데이트
+		if (result.action === 'removed') {
 			local_votes.user_vote = 0;
 			if (vote === 1) local_votes.upvotes = current_upvotes - 1;
 			else local_votes.downvotes = current_downvotes - 1;
 		} else {
-			// 투표 추가 또는 변경
-			await api.post_comment_votes.upsert({
-				comment_id: comment.id,
-				user_id: me.id,
-				vote,
-			});
-			local_votes.user_vote = vote;
-			if (vote === 1) {
+			local_votes.user_vote = result.value;
+			if (result.value === 1) {
 				local_votes.upvotes = current_upvotes + 1;
 				if (current_vote === -1) local_votes.downvotes = current_downvotes - 1;
 			} else {
@@ -118,7 +118,7 @@
 			parent_comment_id: comment.id,
 		});
 
-		new_reply.post_comment_votes = [];
+		// 새 댓글 초기 투표 데이터
 		new_reply.upvotes = 0;
 		new_reply.downvotes = 0;
 		new_reply.user_vote = 0;
@@ -254,6 +254,36 @@
 
 	// 작성자인지 확인하는 computed property
 	const is_author = $derived(comment.users?.id === me.id);
+
+	// 댓글 신고 처리
+	const handle_report_comment = async () => {
+		if (!report_reason) {
+			show_toast('error', '신고 사유를 선택해주세요.');
+			return;
+		}
+
+		is_reporting = true;
+		try {
+			await api.post_comment_reports.create(
+				me.id,
+				comment.id,
+				report_reason,
+				report_details || null
+			);
+			show_toast('success', '신고가 접수되었습니다.');
+			show_report_modal = false;
+			report_reason = '';
+			report_details = '';
+		} catch (error) {
+			if (error.message?.includes('이미 신고한')) {
+				show_toast('error', '이미 신고한 댓글입니다.');
+			} else {
+				show_toast('error', '신고 접수에 실패했습니다.');
+			}
+		} finally {
+			is_reporting = false;
+		}
+	};
 </script>
 
 <GiftModal
@@ -265,14 +295,14 @@
 
 <!-- 더보기 모달 -->
 <Modal bind:is_modal_open={is_more_modal_open} modal_position="bottom">
-	<div class="pb-6">
+	<div>
 		<!-- 드래그 핸들 -->
 		<div class="flex justify-center py-3">
 			<div class="h-1 w-10 rounded-full bg-gray-300"></div>
 		</div>
 
-		<div>
-			{#if is_author}
+		{#if is_author}
+			<div>
 				<button
 					class="flex w-full items-center gap-3 px-4 py-4 active:bg-gray-50"
 					onclick={handle_edit_comment}
@@ -295,89 +325,90 @@
 					<RiDeleteBinLine size={20} class="text-red-500" />
 					<span class="text-[15px] text-red-500">삭제하기</span>
 				</button>
-			{:else}
+			</div>
+		{:else}
+			<div>
 				<button
 					class="flex w-full items-center gap-3 px-4 py-4 active:bg-gray-50"
 					onclick={() => {
-						show_toast('info', '신고 기능은 준비 중입니다.');
 						is_more_modal_open = false;
+						show_report_modal = true;
 					}}
 					aria-label="댓글 신고하기"
 				>
 					<Icon attribute="exclamation" size={20} color="#ef4444" />
 					<span class="text-[15px] text-red-500">신고하기</span>
 				</button>
-			{/if}
-		</div>
+			</div>
+		{/if}
 	</div>
 </Modal>
 
 <div class="flex flex-col">
-	<div class="flex w-full items-start justify-between">
-		<div class="flex gap-3">
-			<a
-				class="h-8 w-8 flex-shrink-0"
-				href={comment.users?.handle ? `/@${comment.users.handle}` : '#'}
+	{#if is_editing}
+		<!-- 수정 모드: 전체 너비 사용 -->
+		<div class="flex items-start gap-2">
+			<textarea
+				bind:this={edit_textarea_ref}
+				bind:value={edit_content}
+				rows="2"
+				oninput={auto_resize_edit}
+				placeholder="댓글을 입력해주세요"
+				class="min-w-0 flex-1 resize-none rounded-lg bg-gray-100 p-3 text-sm focus:outline-none"
+			></textarea>
+			<button
+				class="shrink-0 rounded-md bg-blue-500 px-3 py-2 text-xs text-white"
+				onclick={handle_save_edit}>저장</button
 			>
-				<img
-					src={comment.users?.avatar_url ?? profile_png}
-					alt="프로필"
-					class="block aspect-square h-full w-full rounded-full object-cover"
-					loading="lazy"
-				/>
-			</a>
-			<div class="w-full">
-				<div class="mb-0.5 flex items-center gap-2">
-					<a
-						class="text-sm font-medium text-black"
-						href={comment.users?.handle ? `/@${comment.users.handle}` : '#'}
-						>@{comment.users?.handle ?? '알 수 없음'}</a
-					>
-					<span class="text-xs text-gray-400"
-						>{get_time_past(new Date(comment.created_at))}</span
-					>
-					{#if (local_edit.updated_at ?? comment.updated_at) && (local_edit.updated_at ?? comment.updated_at) !== comment.created_at}
-						<span class="text-xs text-gray-400">(수정됨)</span>
-					{/if}
-				</div>
-
-				<div class="text-sm text-gray-800">
-					{#if comment.gift_amount}
-						<div
-							class="bg-primary mr-2 inline-block flex-col rounded px-2 py-0.5 text-xs text-white"
+			<button
+				class="shrink-0 rounded-md bg-gray-100 px-3 py-2 text-xs text-gray-600"
+				onclick={handle_cancel_edit}>취소</button
+			>
+		</div>
+	{:else}
+		<!-- 일반 모드 -->
+		<div class="flex w-full items-start justify-between">
+			<div class="flex gap-3">
+				<a
+					class="h-8 w-8 flex-shrink-0"
+					href={comment.users?.handle ? `/@${comment.users.handle}` : '#'}
+				>
+					<img
+						src={comment.users?.avatar_url || profile_png}
+						alt="프로필"
+						class="block aspect-square h-full w-full rounded-full object-cover"
+						loading="lazy"
+					/>
+				</a>
+				<div class="w-full">
+					<div class="mb-0.5 flex items-center gap-2">
+						<a
+							class="text-sm font-medium text-black"
+							href={comment.users?.handle ? `/@${comment.users.handle}` : '#'}
+							>@{comment.users?.handle ?? '알 수 없음'}</a
 						>
-							<span class="mr-0.2">￦</span>
-							{comma(comment.gift_amount)}원
-						</div>
-					{/if}
+						<span class="text-xs text-gray-400"
+							>{get_time_past(new Date(comment.created_at))}</span
+						>
+						{#if (local_edit.updated_at ?? comment.updated_at) && (local_edit.updated_at ?? comment.updated_at) !== comment.created_at}
+							<span class="text-xs text-gray-400">(수정됨)</span>
+						{/if}
+					</div>
 
-					{#if is_editing}
-						<div class="mt-1 flex items-start">
-							<textarea
-								bind:this={edit_textarea_ref}
-								bind:value={edit_content}
-								rows="1"
-								oninput={auto_resize_edit}
-								placeholder="댓글을 입력해주세요"
-								class="w-full flex-1 resize-none rounded-lg bg-gray-100 p-2 text-sm focus:outline-none"
-							></textarea>
-							<button
-								class="btn btn-sm ml-2 rounded-md bg-blue-500 px-3 py-2 text-xs text-white"
-								onclick={handle_save_edit}>저장</button
+					<div class="text-sm text-gray-800">
+						{#if comment.gift_amount}
+							<div
+								class="bg-primary mr-2 inline-block flex-col rounded px-2 py-0.5 text-xs text-white"
 							>
-							<button
-								class="btn btn-gray btn-sm ml-2 rounded-md px-3 py-2 text-xs"
-								onclick={handle_cancel_edit}>취소</button
-							>
-						</div>
-					{:else}
+								<span class="mr-0.2">￦</span>
+								{comma(comment.gift_amount)}원
+							</div>
+						{/if}
 						<p class="mt-1 whitespace-pre-wrap">
 							{local_edit.content ?? comment.content}
 						</p>
-					{/if}
-				</div>
+					</div>
 
-				{#if !is_editing}
 					<div
 						class="mt-2 flex items-center justify-between text-sm text-gray-400"
 					>
@@ -410,7 +441,6 @@
 									<RiThumbDownLine size={16} color={colors.gray[400]} />
 								{/if}
 							</button>
-							<!-- {#if comment.parent_comment_id === null} -->
 							<button
 								class="flex items-center gap-1"
 								onclick={() => (is_reply_open = !is_reply_open)}
@@ -431,22 +461,19 @@
 							>
 								<Icon attribute="gift" size={16} color={colors.gray[400]} />
 							</button>
-							<!-- {/if} -->
 						</div>
 					</div>
-				{/if}
+				</div>
 			</div>
-		</div>
 
-		{#if !is_editing}
 			<button
 				onclick={() => (is_more_modal_open = true)}
 				aria-label="댓글 메뉴 열기"
 			>
 				<RiMore2Fill size={16} color={colors.gray[500]} />
 			</button>
-		{/if}
-	</div>
+		</div>
+	{/if}
 
 	{#if is_reply_open && !is_editing}
 		<div class="mt-2 ml-10 flex items-start">
@@ -509,3 +536,65 @@
 	button_2_text="삭제"
 	button_2_action={handle_delete_comment}
 />
+
+<!-- 신고 모달 -->
+<Modal bind:is_modal_open={show_report_modal} modal_position="center">
+	<div class="p-5">
+		<h3 class="mb-4 text-lg font-semibold text-gray-900">댓글 신고</h3>
+
+		<div class="space-y-3">
+			<p class="text-sm text-gray-500">신고 사유를 선택해주세요</p>
+
+			<div class="space-y-2">
+				{#each [
+					{ value: 'spam', label: '스팸/광고' },
+					{ value: 'abuse', label: '욕설/비방' },
+					{ value: 'inappropriate', label: '부적절한 내용' },
+					{ value: 'other', label: '기타' }
+				] as option}
+					<label
+						class="flex cursor-pointer items-center gap-3 rounded-lg border p-3 transition {report_reason === option.value
+							? 'border-blue-500 bg-blue-50'
+							: 'border-gray-200'}"
+					>
+						<input
+							type="radio"
+							name="report_reason"
+							value={option.value}
+							bind:group={report_reason}
+							class="h-4 w-4 text-blue-500"
+						/>
+						<span class="text-sm text-gray-700">{option.label}</span>
+					</label>
+				{/each}
+			</div>
+
+			<textarea
+				bind:value={report_details}
+				placeholder="상세 내용을 입력해주세요 (선택)"
+				rows="3"
+				class="w-full rounded-lg border border-gray-200 p-3 text-sm focus:border-blue-500 focus:outline-none"
+			></textarea>
+		</div>
+
+		<div class="mt-4 flex gap-2">
+			<button
+				class="btn btn-secondary flex-1"
+				onclick={() => {
+					show_report_modal = false;
+					report_reason = '';
+					report_details = '';
+				}}
+			>
+				취소
+			</button>
+			<button
+				class="btn btn-primary flex-1"
+				onclick={handle_report_comment}
+				disabled={is_reporting}
+			>
+				{is_reporting ? '처리 중...' : '신고하기'}
+			</button>
+		</div>
+	</div>
+</Modal>

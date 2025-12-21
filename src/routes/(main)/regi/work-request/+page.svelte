@@ -21,6 +21,7 @@
 	import Header from '$lib/components/ui/Header.svelte';
 	import Modal from '$lib/components/ui/Modal.svelte';
 	import SimpleEditor from '$lib/components/shared/tiptap-templates/simple/simple-editor.svelte';
+	import PaymentInfoRequiredModal from '$lib/components/modals/PaymentInfoRequiredModal.svelte';
 
 	import { update_global_store } from '$lib/store/global_store.js';
 
@@ -30,6 +31,8 @@
 	let is_date_range_modal = $state(false);
 	let is_posting_date_modal = $state(false);
 	let is_confirm_modal = $state(false);
+	let show_payment_modal = $state(false);
+	let has_payment_info = $state(false);
 
 	const format_date = (date) => {
 		if (!date) return '';
@@ -87,11 +90,27 @@
 	let selected_category = $state(null);
 	let selected_job_type = $state(job_types[0]);
 
-	onMount(() => {
+	onMount(async () => {
 		// Check if user is logged in when page loads
 		if (!check_login(me)) {
 			goto('/login');
 			return;
+		}
+
+		// 결제 정보 확인
+		try {
+			const [contact, accounts] = await Promise.all([
+				api.user_contacts.select_by_user_id(me.id),
+				api.user_bank_accounts.select_by_user_id(me.id),
+			]);
+
+			has_payment_info = !!(contact?.contact_phone && accounts?.length > 0);
+
+			if (!has_payment_info) {
+				show_payment_modal = true;
+			}
+		} catch (e) {
+			console.error('Failed to check payment info:', e);
 		}
 
 		// URL 파라미터에서 job_type 읽기
@@ -255,6 +274,12 @@
 		try {
 			if (!me?.id) {
 				show_toast('error', '로그인이 필요합니다.');
+				return;
+			}
+
+			// 결제 정보 확인
+			if (!has_payment_info) {
+				show_payment_modal = true;
 				return;
 			}
 
@@ -723,3 +748,5 @@
 		</div>
 	</div>
 </Modal>
+
+<PaymentInfoRequiredModal bind:is_modal_open={show_payment_modal} />

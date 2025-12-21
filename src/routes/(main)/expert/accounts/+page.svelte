@@ -152,76 +152,84 @@
 				{#each my_proposals as proposal}
 					{@const request = proposal.work_requests}
 					{@const proposalStatus = get_proposal_status_display(proposal.status)}
-					<div class="mb-4 rounded-xl border border-gray-200 bg-white p-4">
-						<!-- 제안 상태 + 금액 -->
-						<div class="mb-3 flex items-center justify-between">
-							<span
-								class={`rounded-md px-2 py-0.5 text-xs font-medium ${proposalStatus.bgColor} ${proposalStatus.textColor}`}
-							>
-								{proposalStatus.text}
-							</span>
-							{#if proposal.proposed_amount}
-								<span class="text-lg font-bold text-blue-600">
-									₩{comma(proposal.proposed_amount)}
-								</span>
-							{/if}
-						</div>
-
-						<!-- 공고 정보 -->
-						{#if request}
-							<button
-								onclick={() => goto(`/work-request/${request.id}`)}
-								class="mb-3 w-full text-left"
-							>
-								<p class="text-xs text-gray-500">{request.category}</p>
-								<h3 class="font-medium text-gray-900">{request.title}</h3>
-							</button>
-						{/if}
-
-						<!-- 내 제안 메시지 -->
-						<div class="border-t border-gray-100 pt-3">
-							<p class="mb-1 text-xs font-medium text-gray-500">내 제안</p>
-							<p class="line-clamp-2 text-sm text-gray-700">
-								{proposal.message}
-							</p>
-						</div>
-
-						<!-- 견적서 정보 -->
-						{#if proposal.quote_data}
-							<div class="mt-3 rounded-lg bg-blue-50 p-3">
-								<div class="flex items-center justify-between">
-									<div>
-										<p class="text-xs font-medium text-gray-500">견적서</p>
-										<p class="font-medium text-gray-900">
-											{proposal.quote_data.title || '견적서'}
-										</p>
-									</div>
-									<span class="font-semibold text-blue-600">
-										₩{comma(proposal.quote_data.price || 0)}
-									</span>
+					{@const requestStatus = request
+						? get_request_status_display(request.status)
+						: null}
+					<div class="mb-4 cursor-pointer transition-all">
+						<button
+							onclick={() => request && goto(`/work-request/${request.id}`)}
+							class="w-full text-left"
+						>
+							<!-- 상단: 카테고리 칩과 제안 상태 -->
+							<div class="mb-1 flex items-start justify-between">
+								<div class="flex-1">
+									{#if request?.category}
+										<div class="mb-2">
+											<span
+												class="inline-flex items-center rounded-md bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600"
+											>
+												{request.category}
+											</span>
+										</div>
+									{/if}
+									<h3
+										class="mt-4 line-clamp-2 text-lg leading-tight font-medium text-gray-900"
+									>
+										{request?.title || '삭제된 공고'}
+									</h3>
 								</div>
-								{#if proposal.quote_data.duration}
-									<p class="mt-1 text-xs text-gray-500">
-										{proposal.quote_data.duration}
-									</p>
-								{/if}
-								{#if proposal.quote_data.revision_policy}
-									<p class="mt-1 text-xs text-gray-500">
-										{proposal.quote_data.revision_policy}
-									</p>
+								<span
+									class="ml-3 flex-shrink-0 rounded-md px-2.5 py-1 text-xs font-medium {proposalStatus.bgColor} {proposalStatus.textColor}"
+								>
+									{proposalStatus.text}
+								</span>
+							</div>
+
+							<!-- 메타 정보 및 제안 금액 -->
+							<div class="mb-3 flex items-center justify-between">
+								<div class="flex items-center gap-1 text-sm text-gray-500">
+									{#if request?.posting_end_date}
+										{@const deadline = new Date(request.posting_end_date)}
+										{@const diff = Math.ceil(
+											(deadline - new Date()) / (1000 * 60 * 60 * 24),
+										)}
+										<span>
+											{#if diff < 0}
+												마감됨
+											{:else if diff === 0}
+												오늘 마감
+											{:else if diff <= 7}
+												D-{diff}
+											{:else}
+												{deadline.toLocaleDateString('ko-KR', {
+													month: 'short',
+													day: 'numeric',
+												})}
+											{/if}
+										</span>
+										<span>•</span>
+									{/if}
+									<span>{request?.work_location || '재택/원격'}</span>
+								</div>
+								{#if proposal.proposed_amount}
+									<span class="text-base font-semibold text-blue-600">
+										₩{comma(proposal.proposed_amount)}
+									</span>
 								{/if}
 							</div>
-						{/if}
+						</button>
 
 						<!-- 수정 버튼 (pending 상태일 때만) -->
 						{#if proposal.status === 'pending'}
 							<button
 								onclick={() => open_edit_modal(proposal)}
-								class="mt-3 w-full rounded-lg border border-gray-200 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50"
+								class="mt-1 w-full rounded-lg border border-gray-200 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50"
 							>
 								제안 수정하기
 							</button>
 						{/if}
+
+						<div class=" h-0.5 w-full bg-gray-200"></div>
 					</div>
 				{/each}
 			{/if}

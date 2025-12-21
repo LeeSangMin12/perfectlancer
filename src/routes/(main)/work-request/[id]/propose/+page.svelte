@@ -21,15 +21,39 @@
 		RiRefund2Line,
 	} from 'svelte-remixicon';
 
+	import { onMount } from 'svelte';
+
 	import FixedBottomButton from '$lib/components/ui/FixedBottomButton.svelte';
 	import Header from '$lib/components/ui/Header.svelte';
 	import ServiceProposal from '$lib/components/domain/service/ServiceProposal.svelte';
 	import SimpleEditor from '$lib/components/shared/tiptap-templates/simple/simple-editor.svelte';
+	import PaymentInfoRequiredModal from '$lib/components/modals/PaymentInfoRequiredModal.svelte';
 
 	import { update_global_store } from '$lib/store/global_store.js';
 
 	const me = get_user_context();
 	const api = get_api_context();
+
+	let show_payment_modal = $state(false);
+	let has_payment_info = $state(false);
+
+	onMount(async () => {
+		// 결제 정보 확인
+		try {
+			const [contact, accounts] = await Promise.all([
+				api.user_contacts.select_by_user_id(me.id),
+				api.user_bank_accounts.select_by_user_id(me.id),
+			]);
+
+			has_payment_info = !!(contact?.contact_phone && accounts?.length > 0);
+
+			if (!has_payment_info) {
+				show_payment_modal = true;
+			}
+		} catch (e) {
+			console.error('Failed to check payment info:', e);
+		}
+	});
 
 	let { data } = $props();
 	let { work_request, my_templates, user } = $state(data);
@@ -194,6 +218,12 @@
 	// 제안 제출
 	const submit_proposal = async () => {
 		if (!validate() || is_submitting) return;
+
+		// 결제 정보 확인
+		if (!has_payment_info) {
+			show_payment_modal = true;
+			return;
+		}
 
 		is_submitting = true;
 		update_global_store('loading', true);
@@ -1069,3 +1099,5 @@
 		</button>
 	</FixedBottomButton>
 {/if}
+
+<PaymentInfoRequiredModal bind:is_modal_open={show_payment_modal} />

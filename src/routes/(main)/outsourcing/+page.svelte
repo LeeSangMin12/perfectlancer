@@ -1,7 +1,7 @@
 <script>
 	import { create_work_request_data } from '$lib/composables/use_work_request_data.svelte.js';
 	import { create_infinite_scroll } from '$lib/composables/use_infinite_scroll.svelte.js';
-	import { get_api_context } from '$lib/contexts/app_context.svelte.js';
+	import { get_api_context, get_user_context } from '$lib/contexts/app_context.svelte.js';
 	import five_thousand_coupon_png from '$lib/img/common/banner/5,000_coupon.png';
 	import leave_opinion_png from '$lib/img/common/banner/leave_opinion.png';
 
@@ -32,9 +32,13 @@
 
 	// ===== Context =====
 	const api = get_api_context();
+	const me = get_user_context();
 
 	// ===== Props =====
 	let { data } = $props();
+
+	// ===== Bookmark State =====
+	let bookmarked_ids = $state(data.bookmarked_ids || []);
 
 	// ===== State =====
 	let selected_tab = $state(0);
@@ -108,6 +112,15 @@
 			current.data.work_requests[current.data.work_requests.length - 1];
 		current.infinite_scroll.lastId = last_request?.id || '';
 	};
+
+	// 북마크 변경 핸들러
+	const handle_bookmark_changed = (event) => {
+		if (event.action === 'add') {
+			bookmarked_ids = [...bookmarked_ids, String(event.work_request_id)];
+		} else {
+			bookmarked_ids = bookmarked_ids.filter(id => id !== String(event.work_request_id));
+		}
+	};
 </script>
 
 <svelte:head>
@@ -141,6 +154,8 @@
 		work_request_data={current.data}
 		infinite_scroll={current.infinite_scroll}
 		job_type={current.job_type}
+		{bookmarked_ids}
+		on_bookmark_changed={handle_bookmark_changed}
 	/>
 </main>
 

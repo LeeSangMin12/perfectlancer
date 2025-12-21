@@ -112,17 +112,21 @@
 		}
 
 		try {
-			await api.community_reports.insert({
-				reporter_id: me.id,
-				community_id: community.id,
-				reason: report_reason,
-				details: report_details,
-			});
+			await api.community_reports.create(
+				me.id,
+				community.id,
+				report_reason,
+				report_details || null
+			);
 
 			show_toast('success', '신고가 정상적으로 접수되었습니다.');
 		} catch (error) {
 			console.error('Failed to submit report:', error);
-			show_toast('error', '신고 접수 중 오류가 발생했습니다.');
+			if (error.message?.includes('이미 신고한')) {
+				show_toast('error', '이미 신고한 커뮤니티입니다.');
+			} else {
+				show_toast('error', '신고 접수 중 오류가 발생했습니다.');
+			}
 		} finally {
 			is_report_modal_open = false;
 			is_menu_modal_open = false;
@@ -350,7 +354,7 @@
 			커뮤니티 가이드라인에 어긋나는 내용을 알려주세요.
 		</p>
 
-		<div class="mt-4 space-y-2">
+		<div class="mt-4">
 			{#each REPORT_REASONS as reason, index (index)}
 				<label
 					class="flex cursor-pointer items-center rounded-lg px-3 py-2.5 active:bg-gray-50"

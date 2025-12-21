@@ -4,7 +4,7 @@
 		get_api_context,
 		get_user_context,
 	} from '$lib/contexts/app_context.svelte.js';
-	import { comma, show_toast } from '$lib/utils/common';
+	import { comma, copy_to_clipboard, show_toast } from '$lib/utils/common';
 	import {
 		get_proposal_status_display,
 		get_request_status_display,
@@ -15,6 +15,8 @@
 	import {
 		RiAddLine,
 		RiArrowLeftSLine,
+		RiFileCopyLine,
+		RiStarFill,
 		RiTimeLine,
 		RiUser3Line,
 	} from 'svelte-remixicon';
@@ -22,9 +24,9 @@
 	import ConfirmModal from '$lib/components/ui/ConfirmModal.svelte';
 	import FixedBottomButton from '$lib/components/ui/FixedBottomButton.svelte';
 	import Header from '$lib/components/ui/Header.svelte';
+	import Modal from '$lib/components/ui/Modal.svelte';
 	import AddAdditionalRequestModal from '$lib/components/modals/AddAdditionalRequestModal.svelte';
 	import WorkRequestReviewModal from '$lib/components/modals/WorkRequestReviewModal.svelte';
-	import { RiStarFill } from 'svelte-remixicon';
 
 	const me = get_user_context();
 	const api = get_api_context();
@@ -42,7 +44,8 @@
 	};
 
 	let { data } = $props();
-	let { work_request, proposals, payment_statuses, reviews, user } = $state(data);
+	let { work_request, proposals, payment_statuses, reviews, user } =
+		$state(data);
 
 	// 내 제안 찾기
 	const my_proposal = $derived(
@@ -56,8 +59,21 @@
 	let show_proposal_complete_modal = $state(false);
 	let show_additional_request_modal = $state(false);
 	let show_review_modal = $state(false);
+	let show_deposit_info_modal = $state(false);
 	let selected_proposal_id = $state(null);
 	let selected_proposal_for_review = $state(null);
+
+	// 입금 계좌 정보
+	const deposit_info = {
+		bank: '부산은행',
+		number: '101-2094-2262-04',
+		holder: '퓨처밴스 이상민',
+	};
+
+	// 계좌번호 복사
+	const copy_deposit_account = async () => {
+		await copy_to_clipboard(deposit_info.number, '계좌번호가 복사되었습니다.');
+	};
 
 	// 추가 요청사항
 	const additional_requests = $derived(work_request.additional_requests || []);
@@ -245,11 +261,19 @@
 		if (!selected_proposal_id) return;
 
 		try {
-			await api.work_request_proposals.request_completion(selected_proposal_id, user.id);
-			show_toast('success', '완료 요청이 전송되었습니다. 의뢰인이 7일 내 응답하지 않으면 자동 완료됩니다.');
+			await api.work_request_proposals.request_completion(
+				selected_proposal_id,
+				user.id,
+			);
+			show_toast(
+				'success',
+				'완료 요청이 전송되었습니다. 의뢰인이 7일 내 응답하지 않으면 자동 완료됩니다.',
+			);
 
 			// 데이터 새로고침
-			proposals = await api.work_request_proposals.select_by_work_request_id(work_request.id);
+			proposals = await api.work_request_proposals.select_by_work_request_id(
+				work_request.id,
+			);
 		} catch (error) {
 			console.error('Completion request error:', error);
 			show_toast('error', error.message || '완료 요청에 실패했습니다.');
@@ -639,7 +663,8 @@
 										<p class="text-sm text-blue-700">
 											완료 요청됨 ·
 											{#if get_remaining_days(proposal.completion_requested_at) > 0}
-												{get_remaining_days(proposal.completion_requested_at)}일 후 자동 완료
+												{get_remaining_days(proposal.completion_requested_at)}일
+												후 자동 완료
 											{:else}
 												곧 자동 완료 예정
 											{/if}
@@ -675,12 +700,18 @@
 												서비스 완료
 											</button>
 										{:else if proposal.status === 'accepted' && payment_statuses[proposal.id] === 'pending'}
-											<span class="flex-1 rounded-lg bg-amber-50 py-2.5 text-center text-sm font-medium text-amber-600">
+											<button
+												onclick={() => (show_deposit_info_modal = true)}
+												class="flex-1 rounded-lg bg-amber-50 py-2.5 text-center text-sm font-medium text-amber-600"
+											>
 												입금 확인 중
-											</span>
+											</button>
 										{:else if proposal.status === 'accepted' && payment_statuses[proposal.id] === 'rejected'}
 											<button
-												onclick={() => goto(`/work-request/${work_request.id}/payment?proposal_id=${proposal.id}`)}
+												onclick={() =>
+													goto(
+														`/work-request/${work_request.id}/payment?proposal_id=${proposal.id}`,
+													)}
 												class="btn btn-primary flex-1"
 											>
 												다시 결제하기
@@ -845,3 +876,46 @@
 	button_2_text="요청"
 	button_2_action={handle_request_completion}
 />
+
+<!-- 입금 계좌 정보 모달 -->
+<Modal bind:is_modal_open={show_deposit_info_modal} modal_position="bottom">
+	<div class="p-5">
+		<div class="mx-auto h-1 w-10 self-center rounded-full bg-gray-300"></div>
+
+		<h3 class="mt-4 text-center text-[17px] font-semibold">입금 계좌 안내</h3>
+
+		<div class="mt-5 rounded-xl bg-gray-50 p-4">
+			<p class="text-[13px] text-gray-500">입금 계좌</p>
+			<div class="mt-2 flex items-center justify-between">
+				<div>
+					<p class="text-[15px] font-medium text-gray-900">
+						{deposit_info.bank}
+					</p>
+					<p class="mt-0.5 text-[18px] font-bold text-gray-900">
+						{deposit_info.number}
+					</p>
+					<p class="mt-0.5 text-[13px] text-gray-500">
+						예금주: {deposit_info.holder}
+					</p>
+				</div>
+				<button
+					onclick={copy_deposit_account}
+					class="flex h-10 w-10 items-center justify-center rounded-full bg-white active:bg-gray-100"
+				>
+					<RiFileCopyLine size={18} class="text-gray-600" />
+				</button>
+			</div>
+		</div>
+
+		<p class="mt-4 text-center text-[13px] text-gray-500">
+			입금 확인은 영업일 기준 하루 내 처리됩니다
+		</p>
+
+		<button
+			onclick={() => (show_deposit_info_modal = false)}
+			class="btn btn-primary pb-safe mt-5 w-full"
+		>
+			확인
+		</button>
+	</div>
+</Modal>

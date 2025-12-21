@@ -40,10 +40,8 @@
 	<div class="mt-6">
 		<h2 class="mb-3 text-lg font-semibold text-gray-700">서비스 관리</h2>
 		<div class="flex flex-col gap-2 rounded-lg bg-gray-50 p-4">
-			<a href="/admin/expert-requests" class=" hover:underline"
-				>사이드·풀타임 잡 관리</a
-			>
-			<a href="/admin/settlements" class=" hover:underline">판매자 정산 관리</a>
+			<a href="/admin/services" class=" hover:underline">서비스 공고 관리</a>
+			<a href="/admin/service-payments" class=" hover:underline">서비스 결제 관리</a>
 		</div>
 	</div>
 
@@ -62,17 +60,4 @@
 		</div>
 	</div>
 
-	<div class="mt-6">
-		<h2 class="mb-3 text-lg font-semibold text-gray-700">
-			기존 시스템 (Deprecated)
-		</h2>
-		<div class="flex flex-col gap-2 rounded-lg bg-gray-100 p-4 opacity-60">
-			<a href="/admin/moon-charges" class="text-gray-500 hover:underline"
-				>문 충전 관리 (구)</a
-			>
-			<a href="/admin/withdrawals" class="text-gray-500 hover:underline"
-				>출금 관리 (구)</a
-			>
-		</div>
-	</div>
 </div>

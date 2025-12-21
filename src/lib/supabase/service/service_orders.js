@@ -197,8 +197,8 @@ export const create_service_orders_api = (supabase) => ({
 		const commission_amount = Math.floor(total_amount * commission_rate);
 		const seller_payout = total_amount - commission_amount;
 
-		// 4. 판매자에게 캐시 적립
-		const { error: cashError } = await supabase.rpc('add_cash', {
+		// 4. 판매자에게 포인트 적립
+		const { error: pointError } = await supabase.rpc('add_point', {
 			p_user_id: order.seller_id,
 			p_amount: seller_payout,
 			p_type: 'service_payout',
@@ -207,8 +207,8 @@ export const create_service_orders_api = (supabase) => ({
 			p_description: `서비스 판매: ${order.service_title || ''}`,
 		});
 
-		if (cashError) {
-			console.error('캐시 적립 실패:', cashError);
+		if (pointError) {
+			console.error('포인트 적립 실패:', pointError);
 		}
 
 		// 5. 판매자에게 알림 전송
@@ -216,7 +216,7 @@ export const create_service_orders_api = (supabase) => ({
 			recipient_id: order.seller_id,
 			type: 'service_order_completed',
 			resource_type: 'service_order',
-			resource_id: order_id,
+			resource_id_bigint: order_id,
 			payload: {
 				title: order.service_title,
 				payout: seller_payout,

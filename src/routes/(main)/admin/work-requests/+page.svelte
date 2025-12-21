@@ -17,9 +17,10 @@
 	let { data } = $props();
 	let all_requests = $state(data.all_requests || []);
 	let pending_requests = $state(data.pending_requests || []);
+	let completion_requests = $state(data.completion_requests || []);
 
 	// 현재 보기 모드
-	let view_mode = $state('pending'); // 'pending' | 'all'
+	let view_mode = $state('pending'); // 'pending' | 'all' | 'completion'
 
 	// 거절 모달
 	let is_reject_modal_open = $state(false);
@@ -311,9 +312,146 @@
 		},
 	];
 
+	// 완료 처리 핸들러
+	const handle_complete = async (proposal_id) => {
+		if (!confirm('이 제안을 완료 처리하시겠습니까?')) return;
+
+		try {
+			await api.work_request_proposals.admin_complete(proposal_id);
+			show_toast('완료 처리되었습니다.', 'success');
+
+			// 목록에서 제거
+			completion_requests = completion_requests.filter((r) => r.id !== proposal_id);
+		} catch (err) {
+			console.error('Complete error:', err);
+			show_toast('완료 처리 중 오류가 발생했습니다.', 'error');
+		}
+	};
+
+	// 경과 일수 계산
+	const get_days_since = (date_string) => {
+		if (!date_string) return 0;
+		const requested = new Date(date_string);
+		const now = new Date();
+		const diff = Math.floor((now - requested) / (1000 * 60 * 60 * 24));
+		return diff;
+	};
+
+	// 완료 액션 렌더러 (컬럼 정의 전에 선언)
+	const createCompletionActionRenderer = () => {
+		return class CompletionActionRenderer {
+			eGui;
+			params;
+
+			init(params) {
+				this.params = params;
+				this.eGui = document.createElement('div');
+				this.eGui.className = 'flex items-center gap-2';
+
+				// 상세보기 버튼
+				const viewBtn = document.createElement('button');
+				viewBtn.className =
+					'px-2 py-1 text-xs text-gray-600 hover:text-gray-900 hover:underline';
+				viewBtn.textContent = '상세';
+				viewBtn.onclick = () => goto(`/work-request/${params.data.work_requests?.id}`);
+
+				// 완료 버튼
+				const completeBtn = document.createElement('button');
+				completeBtn.className =
+					'px-2 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700';
+				completeBtn.textContent = '완료 처리';
+				completeBtn.onclick = () => handle_complete(params.data.id);
+
+				this.eGui.appendChild(viewBtn);
+				this.eGui.appendChild(completeBtn);
+			}
+
+			getGui() {
+				return this.eGui;
+			}
+
+			refresh() {
+				return false;
+			}
+		};
+	};
+
+	// 완료 요청 컬럼 정의
+	const completion_column_defs = [
+		{
+			headerName: '공고',
+			valueGetter: (params) => params.data.work_requests?.title || '-',
+			flex: 2,
+			minWidth: 180,
+		},
+		{
+			headerName: '전문가',
+			valueGetter: (params) => params.data.users?.name || params.data.users?.handle || '-',
+			width: 100,
+		},
+		{
+			headerName: '의뢰인',
+			valueGetter: (params) =>
+				params.data.work_requests?.users?.name ||
+				params.data.work_requests?.users?.handle ||
+				'-',
+			width: 100,
+		},
+		{
+			headerName: '의뢰인 연락처',
+			valueGetter: (params) => params.data.work_requests?.users?.phone || '-',
+			width: 120,
+		},
+		{
+			headerName: '금액',
+			valueGetter: (params) =>
+				params.data.proposed_amount ? `₩${comma(params.data.proposed_amount)}` : '-',
+			width: 100,
+		},
+		{
+			headerName: '요청일',
+			field: 'completion_requested_at',
+			valueFormatter: (params) => format_date(params.value),
+			width: 100,
+		},
+		{
+			headerName: '경과',
+			valueGetter: (params) => {
+				const days = get_days_since(params.data.completion_requested_at);
+				return `${days}일`;
+			},
+			width: 70,
+			cellStyle: (params) => {
+				const days = get_days_since(params.data.completion_requested_at);
+				if (days >= 7) return { color: '#dc2626', fontWeight: '600' };
+				if (days >= 5) return { color: '#d97706' };
+				return {};
+			},
+		},
+		{
+			headerName: '',
+			cellRenderer: createCompletionActionRenderer(),
+			width: 150,
+			sortable: false,
+			filter: false,
+		},
+	];
+
 	// 현재 데이터 및 컬럼
-	let current_data = $derived(view_mode === 'pending' ? pending_requests : all_requests);
-	let current_columns = $derived(view_mode === 'pending' ? pending_column_defs : all_column_defs);
+	let current_data = $derived(
+		view_mode === 'pending'
+			? pending_requests
+			: view_mode === 'completion'
+				? completion_requests
+				: all_requests,
+	);
+	let current_columns = $derived(
+		view_mode === 'pending'
+			? pending_column_defs
+			: view_mode === 'completion'
+				? completion_column_defs
+				: all_column_defs,
+	);
 </script>
 
 <svelte:head>
@@ -333,10 +471,14 @@
 
 <main class="min-h-screen bg-white px-6 py-6">
 	<!-- 통계 -->
-	<div class="mb-6 flex gap-4">
+	<div class="mb-6 flex flex-wrap gap-4">
 		<div class="rounded-lg border border-gray-200 bg-white px-4 py-3">
 			<p class="text-xs text-gray-500">승인 대기</p>
 			<p class="text-xl font-semibold">{pending_requests.length}<span class="text-sm font-normal text-gray-400">건</span></p>
+		</div>
+		<div class="rounded-lg border border-gray-200 bg-white px-4 py-3">
+			<p class="text-xs text-gray-500">완료 요청</p>
+			<p class="text-xl font-semibold">{completion_requests.length}<span class="text-sm font-normal text-gray-400">건</span></p>
 		</div>
 		<div class="rounded-lg border border-gray-200 bg-white px-4 py-3">
 			<p class="text-xs text-gray-500">전체 공고</p>
@@ -359,6 +501,14 @@
 			승인 대기 ({pending_requests.length})
 		</button>
 		<button
+			class="flex-1 rounded-md px-4 py-2 text-sm font-medium transition-colors {view_mode === 'completion'
+				? 'bg-white text-gray-900 shadow-sm'
+				: 'text-gray-600 hover:text-gray-900'}"
+			onclick={() => (view_mode = 'completion')}
+		>
+			완료 요청 ({completion_requests.length})
+		</button>
+		<button
 			class="flex-1 rounded-md px-4 py-2 text-sm font-medium transition-colors {view_mode === 'all'
 				? 'bg-white text-gray-900 shadow-sm'
 				: 'text-gray-600 hover:text-gray-900'}"
@@ -372,7 +522,13 @@
 	<div class="rounded-lg border border-gray-200 bg-white">
 		{#if current_data.length === 0}
 			<div class="py-16 text-center text-gray-400">
-				{view_mode === 'pending' ? '승인 대기 중인 공고가 없습니다.' : '등록된 공고가 없습니다.'}
+				{#if view_mode === 'pending'}
+					승인 대기 중인 공고가 없습니다.
+				{:else if view_mode === 'completion'}
+					완료 요청 중인 제안이 없습니다.
+				{:else}
+					등록된 공고가 없습니다.
+				{/if}
 			</div>
 		{:else}
 			{#key view_mode}

@@ -8,6 +8,7 @@
 
 	import Header from '$lib/components/ui/Header.svelte';
 	import SimpleEditor from '$lib/components/shared/tiptap-templates/simple/simple-editor.svelte';
+	import PaymentInfoRequiredModal from '$lib/components/modals/PaymentInfoRequiredModal.svelte';
 
 	import colors from '$lib/config/colors';
 	import { check_login, show_toast } from '$lib/utils/common';
@@ -25,16 +26,34 @@
 		title: '',
 		content: '',
 		price: 0,
-		contact_info: '',
 		images: [],
 		options: [], // 옵션 배열 추가
 	});
 
-	onMount(() => {
+	let show_payment_modal = $state(false);
+	let has_payment_info = $state(false);
+
+	onMount(async () => {
 		// Check if user is logged in when page loads
 		if (!check_login(me)) {
 			goto('/login');
 			return;
+		}
+
+		// 결제 정보 확인
+		try {
+			const [contact, accounts] = await Promise.all([
+				api.user_contacts.select_by_user_id(me.id),
+				api.user_bank_accounts.select_by_user_id(me.id),
+			]);
+
+			has_payment_info = !!(contact?.contact_phone && accounts?.length > 0);
+
+			if (!has_payment_info) {
+				show_payment_modal = true;
+			}
+		} catch (e) {
+			console.error('Failed to check payment info:', e);
 		}
 	});
 
@@ -117,12 +136,17 @@
 				return;
 			}
 
+			// 결제 정보 확인
+			if (!has_payment_info) {
+				show_payment_modal = true;
+				return;
+			}
+
 			const new_service = await api.services.insert({
 				author_id: me.id,
 				title: service_form_data.title,
 				content: service_form_data.content,
 				price: service_form_data.price,
-				contact_info: service_form_data.contact_info,
 			});
 
 			if (service_form_data.images.length > 0) {
@@ -348,22 +372,6 @@
 		</div>
 	</div>
 
-	<div class="mt-4">
-		<p class="ml-1 text-sm font-medium">문의 연락처</p>
-		<p class="mt-1 ml-1 text-xs text-gray-500">
-			고객이 서비스 문의 시 연락할 수 있는 연락처를 입력해주세요
-		</p>
-
-		<div class="mt-2">
-			<input
-				bind:value={service_form_data.contact_info}
-				type="text"
-				placeholder="예: 010-1234-5678, 카카오톡 링크, 인스타그램 링크"
-				class="input input-bordered focus:border-primary h-[52px] w-full focus:outline-none"
-			/>
-		</div>
-	</div>
-
 	<div class="mt-4 flex flex-col">
 		<p class="ml-1 text-sm font-medium">서비스 내용</p>
 
@@ -379,7 +387,6 @@
 			disabled={service_form_data.title.length === 0 ||
 				service_form_data.content.length === 0 ||
 				service_form_data.price === 0 ||
-				service_form_data.contact_info.length === 0 ||
 				service_form_data.images.length === 0}
 			class="btn btn-primary flex flex-1 items-center justify-center"
 			onclick={save_service}
@@ -388,3 +395,5 @@
 		</button>
 	</div>
 </div>
+
+<PaymentInfoRequiredModal bind:is_modal_open={show_payment_modal} />

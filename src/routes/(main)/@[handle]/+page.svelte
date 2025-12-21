@@ -90,6 +90,9 @@
 	let tab_service_reviews = $state([]);
 	let tab_expert_request_reviews = $state([]);
 
+	// 각 탭별 로드 완료 여부 (tab 0은 서버에서 이미 로드됨)
+	let tab_loaded = $state([true, false, false, false]);
+
 	// selected_data는 $derived로 계산
 	let selected_data = $derived({
 		posts: tab_posts,
@@ -224,11 +227,12 @@
 	const load_tab_data = async (tab_index) => {
 		if (!api?.posts) return;
 
+		// 이미 로드된 탭은 다시 로드하지 않음
+		if (tab_loaded[tab_index]) return;
+
 		is_tab_loading = true;
 		try {
 			if (tab_index === 0) {
-				// 게시글 탭 - 이미 로드된 데이터가 있으면 재사용 (중복 쿼리 방지)
-				if (tab_posts.length > 0) return;
 				const loaded_posts = await api.posts.select_by_user_id(user.id);
 				tab_posts = await attach_user_interactions(loaded_posts);
 			} else if (tab_index === 1) {
@@ -248,6 +252,7 @@
 				tab_expert_request_reviews = expert_reviews;
 			}
 		} finally {
+			tab_loaded[tab_index] = true;
 			is_tab_loading = false;
 		}
 	};
@@ -306,9 +311,17 @@
 		if (user?.id && user.id !== prev_user_id) {
 			prev_user_id = user.id;
 
-			// 탭을 게시글로 리셋하고 데이터 로드
+			// 탭 데이터와 로드 상태 리셋 (tab 0은 서버에서 새로 로드됨)
+			tab_posts = data.posts || [];
+			tab_post_comments = [];
+			tab_services = [];
+			tab_service_likes = [];
+			tab_service_reviews = [];
+			tab_expert_request_reviews = [];
+			tab_loaded = [true, false, false, false];
+
+			// 탭을 게시글로 리셋
 			selected = 0;
-			load_tab_data(0);
 
 			// 팔로우 상태 업데이트
 			if (me?.id) {
@@ -835,7 +848,7 @@
 			커뮤니티 가이드라인에 어긋나는 내용을 알려주세요.
 		</p>
 
-		<div class="mt-4 space-y-2">
+		<div class="mt-4">
 			{#each REPORT_REASONS as reason}
 				<label
 					class="flex cursor-pointer items-center rounded-lg px-3 py-2.5 active:bg-gray-50"

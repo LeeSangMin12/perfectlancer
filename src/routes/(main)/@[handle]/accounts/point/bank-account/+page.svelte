@@ -89,7 +89,8 @@
 		selected_bank &&
 			form.account_number.length >= 10 &&
 			form.account_holder.length >= 2 &&
-			(form.account_type === 'individual' || form.business_number.length === 10),
+			(form.account_type === 'individual' ||
+				form.business_number.length === 10),
 	);
 
 	async function handle_submit() {
@@ -148,7 +149,9 @@
 
 		try {
 			await api.user_bank_accounts.delete(account_to_delete.id);
-			bank_accounts = bank_accounts.filter((a) => a.id !== account_to_delete.id);
+			bank_accounts = bank_accounts.filter(
+				(a) => a.id !== account_to_delete.id,
+			);
 			show_toast('success', '계좌가 삭제되었어요');
 		} catch (err) {
 			console.error('Delete account error:', err);
@@ -325,7 +328,7 @@
 					value={form.account_number}
 					oninput={on_account_input}
 					placeholder="- 없이 숫자만 입력"
-					class="mt-2 w-full rounded-lg border border-gray-200 px-4 py-3 text-[15px] text-gray-900 placeholder-gray-400 focus:border-primary focus:outline-none"
+					class="focus:border-primary mt-2 w-full rounded-lg border border-gray-200 px-4 py-3 text-[15px] text-gray-900 placeholder-gray-400 focus:outline-none"
 				/>
 			</div>
 
@@ -336,7 +339,7 @@
 					type="text"
 					bind:value={form.account_holder}
 					placeholder="예금주명 입력"
-					class="mt-2 w-full rounded-lg border border-gray-200 px-4 py-3 text-[15px] text-gray-900 placeholder-gray-400 focus:border-primary focus:outline-none"
+					class="focus:border-primary mt-2 w-full rounded-lg border border-gray-200 px-4 py-3 text-[15px] text-gray-900 placeholder-gray-400 focus:outline-none"
 				/>
 			</div>
 
@@ -350,7 +353,7 @@
 						value={display_business()}
 						oninput={on_business_input}
 						placeholder="000-00-00000"
-						class="mt-2 w-full rounded-lg border border-gray-200 px-4 py-3 text-[15px] text-gray-900 placeholder-gray-400 focus:border-primary focus:outline-none"
+						class="focus:border-primary mt-2 w-full rounded-lg border border-gray-200 px-4 py-3 text-[15px] text-gray-900 placeholder-gray-400 focus:outline-none"
 					/>
 				</div>
 			{/if}
@@ -370,9 +373,7 @@
 <!-- 삭제 확인 모달 -->
 <Modal bind:is_modal_open={show_delete_modal} modal_position="center">
 	<div class="p-5">
-		<p class="text-[16px] font-semibold text-gray-900">
-			계좌를 삭제할까요?
-		</p>
+		<p class="text-[16px] font-semibold text-gray-900">계좌를 삭제할까요?</p>
 
 		<div class="mt-5 flex gap-2">
 			<button

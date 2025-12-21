@@ -12,10 +12,11 @@ export async function load({ params, url, parent, locals: { supabase } }) {
 		: [];
 
 	// 병렬로 데이터 가져오기
-	const [service, service_options, bank_accounts] = await Promise.all([
+	const [service, service_options, bank_accounts, user_contact] = await Promise.all([
 		api.services.select_by_id(params.id),
 		api.service_options.select_by_service_id(params.id),
 		user ? api.user_bank_accounts.select_by_user_id(user.id) : [],
+		user ? api.user_contacts.select_by_user_id(user.id) : null,
 	]);
 
 	const selected_options = service_options.filter(opt => selected_option_ids.includes(opt.id));
@@ -25,5 +26,6 @@ export async function load({ params, url, parent, locals: { supabase } }) {
 		quantity,
 		selected_options,
 		bank_accounts,
+		user_contact,
 	};
 }

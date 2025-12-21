@@ -9,12 +9,22 @@
 	import { RiArrowLeftSLine } from 'svelte-remixicon';
 
 	import Header from '$lib/components/ui/Header.svelte';
+	import Modal from '$lib/components/ui/Modal.svelte';
 
 	const me = get_user_context();
 	const api = get_api_context();
 
 	let { data } = $props();
 	let { order, order_options, is_buyer, is_seller } = $state(data);
+
+	// 취소 모달 상태
+	let show_cancel_modal = $state(false);
+	let cancel_reason = $state('');
+	let is_cancelling = $state(false);
+
+	// 완료 확인 모달 상태
+	let show_complete_modal = $state(false);
+	let is_completing = $state(false);
 
 	// 주문 상태 한글 변환
 	const get_status_text = (status) => {
@@ -51,39 +61,16 @@
 		});
 	};
 
-	// 주문 승인 (판매자용)
-	const handle_approve_order = async () => {
-		try {
-			await api.service_orders.approve(order.id);
-			show_toast('success', '주문이 승인되었습니다.');
-
-			// 구매자에게 알림
-			try {
-				if (order.buyer?.id) {
-					await api.notifications.insert({
-						recipient_id: order.buyer.id,
-						actor_id: me.id,
-						type: 'order.approved',
-						resource_type: 'order',
-						resource_id: String(order.id),
-						payload: { service_title: order.service_title, status: 'paid' },
-						link_url: `/@${order.buyer.handle}/accounts/orders/${order.id}`,
-					});
-				}
-			} catch (e) {
-				console.error('Failed to insert notification (order.approved):', e);
-			}
-
-			// 주문 상태 업데이트
-			order.status = 'paid';
-		} catch (error) {
-			console.error('주문 승인 실패:', error);
-			show_toast('error', '주문 승인에 실패했습니다.');
-		}
+	// 완료 모달 열기
+	const open_complete_modal = () => {
+		show_complete_modal = true;
 	};
 
 	// 주문 완료 (판매자용)
 	const handle_complete_order = async () => {
+		if (is_completing) return;
+
+		is_completing = true;
 		try {
 			await api.service_orders.complete(order.id);
 			show_toast('success', '서비스가 완료되었습니다.');
@@ -110,19 +97,28 @@
 
 			// 주문 상태 업데이트
 			order.status = 'completed';
+			show_complete_modal = false;
 		} catch (error) {
 			console.error('주문 완료 실패:', error);
 			show_toast('error', '주문 완료에 실패했습니다.');
+		} finally {
+			is_completing = false;
 		}
+	};
+
+	// 취소 모달 열기
+	const open_cancel_modal = () => {
+		cancel_reason = '';
+		show_cancel_modal = true;
 	};
 
 	// 주문 취소
 	const handle_cancel_order = async () => {
-		const reason = prompt('취소 사유를 입력해주세요.');
-		if (!reason) return;
+		if (is_cancelling) return;
 
+		is_cancelling = true;
 		try {
-			await api.service_orders.cancel(order.id, reason);
+			await api.service_orders.cancel(order.id, cancel_reason);
 			show_toast('success', '주문이 취소되었습니다.');
 
 			// 상대방에게 알림
@@ -152,9 +148,12 @@
 
 			// 주문 상태 업데이트
 			order.status = 'cancelled';
+			show_cancel_modal = false;
 		} catch (error) {
 			console.error('주문 취소 실패:', error);
 			show_toast('error', '주문 취소에 실패했습니다.');
+		} finally {
+			is_cancelling = false;
 		}
 	};
 </script>
@@ -349,26 +348,26 @@
 		{#if is_seller}
 			{#if order.status === 'pending'}
 				<button
-					onclick={handle_approve_order}
-					class="btn-primary btn flex-1 rounded-lg px-4 py-3 text-sm font-semibold"
+					onclick={() => goto(`/service/${order.service_id}`)}
+					class="flex-1 rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50"
 				>
-					결제 승인
+					서비스 보기
 				</button>
 				<button
-					onclick={handle_cancel_order}
+					onclick={open_cancel_modal}
 					class="btn-gray btn rounded-lg px-4 py-3 text-sm font-semibold"
 				>
 					취소
 				</button>
 			{:else if order.status === 'paid'}
 				<button
-					onclick={handle_complete_order}
+					onclick={open_complete_modal}
 					class="btn-primary btn flex-1 rounded-lg px-4 py-3 text-sm font-semibold"
 				>
 					서비스 완료
 				</button>
 				<button
-					onclick={handle_cancel_order}
+					onclick={open_cancel_modal}
 					class="btn-gray btn rounded-lg px-4 py-3 text-sm font-semibold"
 				>
 					취소
@@ -392,8 +391,8 @@
 
 			{#if order.status === 'pending'}
 				<button
-					onclick={handle_cancel_order}
-					class="btn btn-outline btn-error rounded-lg px-4 py-3 text-sm font-semibold"
+					onclick={open_cancel_modal}
+					class="btn btn-gray px-4 py-3 text-sm font-semibold"
 				>
 					주문 취소
 				</button>
@@ -410,3 +409,73 @@
 		{/if}
 	</div>
 </div>
+
+<!-- 서비스 완료 확인 모달 -->
+<Modal bind:is_modal_open={show_complete_modal} modal_position="center">
+	<div class="p-5">
+		<h3 class="text-lg font-semibold text-gray-900">서비스 완료</h3>
+		<p class="mt-2 text-sm text-gray-600">
+			서비스를 완료 처리하시겠습니까?
+		</p>
+		<p class="mt-1 text-sm text-gray-500">
+			완료 처리 시 정산 금액이 포인트로 적립됩니다.
+		</p>
+
+		<div class="mt-5 flex gap-2">
+			<button
+				onclick={() => (show_complete_modal = false)}
+				disabled={is_completing}
+				class="flex-1 rounded-lg bg-gray-100 py-3 text-sm font-medium text-gray-700"
+			>
+				취소
+			</button>
+			<button
+				onclick={handle_complete_order}
+				disabled={is_completing}
+				class="btn-primary flex-1 rounded-lg py-3 text-sm font-medium"
+			>
+				{#if is_completing}
+					처리 중...
+				{:else}
+					완료 처리
+				{/if}
+			</button>
+		</div>
+	</div>
+</Modal>
+
+<!-- 취소 사유 입력 모달 -->
+<Modal bind:is_modal_open={show_cancel_modal} modal_position="center">
+	<div class="p-5">
+		<h3 class="text-lg font-semibold text-gray-900">주문 취소</h3>
+		<p class="mt-1 text-sm text-gray-500">취소 사유를 입력해주세요.</p>
+
+		<textarea
+			bind:value={cancel_reason}
+			placeholder="사유를 입력해주세요 (선택)"
+			rows="3"
+			class="mt-4 w-full resize-none rounded-lg border border-gray-200 p-3 text-sm focus:border-blue-500 focus:outline-none"
+		></textarea>
+
+		<div class="mt-5 flex gap-2">
+			<button
+				onclick={() => (show_cancel_modal = false)}
+				disabled={is_cancelling}
+				class="flex-1 rounded-lg bg-gray-100 py-3 text-sm font-medium text-gray-700"
+			>
+				닫기
+			</button>
+			<button
+				onclick={handle_cancel_order}
+				disabled={is_cancelling}
+				class="flex-1 rounded-lg bg-gray-600 py-3 text-sm font-medium text-white"
+			>
+				{#if is_cancelling}
+					처리 중...
+				{:else}
+					주문 취소
+				{/if}
+			</button>
+		</div>
+	</div>
+</Modal>

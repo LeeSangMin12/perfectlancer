@@ -71,7 +71,8 @@
 				post_id,
 			});
 
-			me.point = me.point - gift_amount;
+			// 잔액 갱신
+			me.point = await api.point_transactions.select_balance(me.id);
 
 			is_modal_open = false;
 			gift_amount = 1000;

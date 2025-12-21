@@ -24,10 +24,10 @@
 	let is_loading = $state(false);
 
 	/** @type {Set<string>} Liked service IDs for O(1) lookup */
-	let liked_service_ids = $derived(new Set(service_likes.map((s) => s.service_id)));
+	let liked_service_ids = $derived(new Set((service_likes || []).map((s) => s.service_id?.toString())));
 
 	/** @type {boolean} Current like status */
-	let is_liked = $derived(liked_service_ids.has(service.id));
+	let is_liked = $derived(liked_service_ids.has(service.id?.toString()));
 
 	/**
 	 * Toggles like status for the service
@@ -44,15 +44,17 @@
 			? '서비스 좋아요를 취소했어요!'
 			: '서비스 좋아요를 눌렀어요!';
 
+		const service_id_str = service_id?.toString();
+
 		try {
-			await api.service_likes[action](service_id, me.id);
+			await api.service_likes[action](service_id_str, me.id);
 			show_toast('success', success_message);
 
 			const updated_likes = current_status
-				? service_likes.filter((s) => s.service_id !== service_id)
-				: [...service_likes, { service_id }];
+				? service_likes.filter((s) => s.service_id?.toString() !== service_id_str)
+				: [...service_likes, { service_id: service_id_str }];
 
-			on_like_changed?.({ service_id, likes: updated_likes });
+			on_like_changed?.({ service_id: service_id_str, likes: updated_likes });
 		} catch (error) {
 			console.error(`Failed to ${action} service like:`, error);
 			show_toast('error', '좋아요 처리에 실패했어요.');

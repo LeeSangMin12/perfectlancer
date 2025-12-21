@@ -23,7 +23,6 @@
 	let form = $state({
 		contact_phone: '',
 		contact_email: '',
-		business_name: '',
 	});
 
 	let phone_error = $state('');
@@ -53,7 +52,6 @@
 			if (contact) {
 				form.contact_phone = format_to_display(contact.contact_phone);
 				form.contact_email = contact.contact_email || '';
-				form.business_name = contact.payment_info?.business_name || '';
 			}
 
 			bank_accounts = accounts || [];
@@ -134,6 +132,11 @@
 			return;
 		}
 
+		if (bank_accounts.length === 0) {
+			show_toast('error', '정산 계좌를 등록해주세요.');
+			return;
+		}
+
 		is_submitting = true;
 		try {
 			const contact_phone = form.contact_phone.replace(/-/g, '');
@@ -141,9 +144,6 @@
 			const saved_contact = await api.user_contacts.upsert(me.id, {
 				contact_phone,
 				contact_email: form.contact_email || null,
-				payment_info: {
-					business_name: form.business_name || null,
-				},
 			});
 
 			Object.assign(me, { user_contact: saved_contact });
@@ -238,20 +238,6 @@
 			</p>
 		</div>
 
-		<!-- 사업자명/이름명 -->
-		<div class="mt-6">
-			<p class="ml-1 font-semibold">사업자명 (이름명)</p>
-
-			<div class="mt-2">
-				<input
-					type="text"
-					placeholder="사업자명 또는 이름을 입력해주세요"
-					bind:value={form.business_name}
-					class="input input-bordered focus:border-primary h-[52px] w-full focus:outline-none"
-				/>
-			</div>
-		</div>
-
 		<!-- 전화번호 -->
 		<div class="mt-6">
 			<div class="flex items-center gap-1">
@@ -302,7 +288,10 @@
 		<!-- 계좌 관리 섹션 -->
 		<div>
 			<div class="flex items-center justify-between">
-				<h2 class="ml-1 font-semibold">정산 계좌</h2>
+				<div class="flex items-center gap-1">
+					<h2 class="ml-1 font-semibold">정산 계좌</h2>
+					<span class="text-red-500">*</span>
+				</div>
 				<button
 					onclick={() => (show_account_modal = true)}
 					class="text-primary flex items-center gap-1 text-sm"

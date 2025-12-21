@@ -1,5 +1,23 @@
 export const create_point_transactions_api = (supabase) => ({
 	/**
+	 * 사용자의 현재 잔액 조회 (가장 최근 거래의 balance_after)
+	 */
+	async select_balance(user_id) {
+		const { data, error } = await supabase
+			.from('point_transactions')
+			.select('balance_after')
+			.eq('user_id', user_id)
+			.order('created_at', { ascending: false })
+			.limit(1)
+			.maybeSingle();
+
+		if (error) {
+			throw new Error(`Failed to select balance: ${error.message}`);
+		}
+		return data?.balance_after || 0;
+	},
+
+	/**
 	 * 거래 내역 직접 삽입 (잔액 변경 없음, 기록용)
 	 */
 	async insert({ user_id, amount, type, description }) {

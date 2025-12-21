@@ -331,7 +331,7 @@
 	bind:is_open={show_cancel_modal}
 	title="결제를 취소할까요?"
 	description="결제하지 않고 이전 페이지로 돌아갑니다."
-	button_2_text="취소"
+	button_2_text="돌아가기"
 	button_2_action={handle_cancel}
 />
 

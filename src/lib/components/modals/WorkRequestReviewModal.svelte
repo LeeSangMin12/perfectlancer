@@ -1,8 +1,9 @@
 <script>
-	import Modal from '$lib/components/ui/Modal.svelte';
 	import { get_api_context } from '$lib/contexts/app_context.svelte.js';
 	import { show_toast } from '$lib/utils/common';
 	import { RiStarFill, RiStarLine } from 'svelte-remixicon';
+
+	import Modal from '$lib/components/ui/Modal.svelte';
 
 	let {
 		is_open = $bindable(false),
@@ -74,7 +75,7 @@
 		<!-- 별점 선택 -->
 		<div class="mt-6">
 			<p class="mb-2 text-sm font-medium text-gray-700">별점</p>
-			<div class="flex gap-1">
+			<div class="flex">
 				{#each [1, 2, 3, 4, 5] as star (star)}
 					<button
 						type="button"
@@ -82,9 +83,9 @@
 						class="p-1 transition hover:scale-110"
 					>
 						{#if star <= rating}
-							<RiStarFill size={32} class="text-yellow-400" />
+							<RiStarFill size={28} class="text-primary" />
 						{:else}
-							<RiStarLine size={32} class="text-gray-300" />
+							<RiStarLine size={28} class="text-gray-300" />
 						{/if}
 					</button>
 				{/each}
@@ -104,7 +105,11 @@
 	</div>
 
 	<div class="flex gap-3 px-6 pb-6">
-		<button onclick={close} class="btn btn-gray flex-1" disabled={is_submitting}>
+		<button
+			onclick={close}
+			class="btn btn-gray flex-1"
+			disabled={is_submitting}
+		>
 			취소
 		</button>
 		<button

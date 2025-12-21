@@ -523,7 +523,7 @@
 			커뮤니티 가이드라인에 어긋나는 내용을 알려주세요.
 		</p>
 
-		<div class="mt-4 space-y-2">
+		<div class="mt-4">
 			{#each REPORT_REASONS as reason}
 				<label
 					class="flex cursor-pointer items-center rounded-lg px-3 py-2.5 active:bg-gray-50"

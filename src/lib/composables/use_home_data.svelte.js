@@ -115,19 +115,17 @@ export function create_home_data(api, me, initial_posts = []) {
 		}
 
 		try {
-			const [all_votes, all_bookmarks] = await Promise.all([
-				api.post_votes.select_by_user_id(me.id),
-				api.post_bookmarks.select_by_user_id_lightweight(me.id),
-			]);
+			const post_ids = post_list.map((p) => p.id);
 
-			const post_ids = new Set(post_list.map((p) => p.id));
-			const votes = all_votes.filter((v) => post_ids.has(v.post_id));
-			const bookmarks = all_bookmarks.filter((b) => post_ids.has(b.post_id));
+			const [votes, bookmarks] = await Promise.all([
+				api.post_votes.select_by_post_ids(me.id, post_ids),
+				api.post_bookmarks.select_by_post_ids(me.id, post_ids),
+			]);
 
 			return post_list.map((post) => ({
 				...post,
-				post_votes: votes.filter((v) => v.post_id === post.id),
-				post_bookmarks: bookmarks.filter((b) => b.post_id === post.id),
+				post_votes: votes.filter((v) => v.post_id === post.id.toString()),
+				post_bookmarks: bookmarks.filter((b) => b.post_id === post.id.toString()),
 			}));
 		} catch (error) {
 			console.error('Failed to attach user interactions:', error);

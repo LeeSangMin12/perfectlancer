@@ -27,7 +27,6 @@
 		title: service.title || '',
 		content: service.content || '',
 		price: service.price || 0,
-		contact_info: service.contact_info || '',
 		images: service.images || [],
 		options: service_options || [],
 	});
@@ -116,7 +115,6 @@
 				title: service_form_data.title,
 				content: service_form_data.content,
 				price: service_form_data.price,
-				contact_info: service_form_data.contact_info,
 			});
 
 			// 이미지 처리
@@ -353,22 +351,6 @@
 		</div>
 	</div>
 
-	<div class="mt-4">
-		<p class="ml-1 text-sm font-medium">문의 연락처</p>
-		<p class="mt-1 ml-1 text-xs text-gray-500">
-			고객이 서비스 문의 시 연락할 수 있는 연락처를 입력해주세요
-		</p>
-
-		<div class="mt-2">
-			<input
-				bind:value={service_form_data.contact_info}
-				type="text"
-				placeholder="예: 010-1234-5678, 카카오톡 링크, 인스타그램 링크"
-				class="input input-bordered focus:border-primary h-[52px] w-full focus:outline-none"
-			/>
-		</div>
-	</div>
-
 	<div class="mt-4 flex flex-col">
 		<p class="ml-1 text-sm font-medium">서비스 내용</p>
 
@@ -384,7 +366,6 @@
 			disabled={service_form_data.title.length === 0 ||
 				service_form_data.content.length === 0 ||
 				service_form_data.price === 0 ||
-				service_form_data.contact_info.length === 0 ||
 				service_form_data.images.length === 0}
 			class="btn btn-primary flex flex-1 items-center justify-center"
 			onclick={save_service}

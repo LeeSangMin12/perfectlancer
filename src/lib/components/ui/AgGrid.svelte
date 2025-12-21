@@ -13,8 +13,8 @@
 		pagination = true,
 		paginationPageSize = 20,
 		domLayout = 'autoHeight',
-		onGridReady = null,
-		getRowId = null,
+		onGridReady = undefined,
+		getRowId = undefined,
 		rowSelection = 'single',
 		autoSizeStrategy = { type: 'fitGridWidth' },
 		class: className = '',
@@ -42,7 +42,6 @@
 			paginationPageSize,
 			domLayout,
 			rowSelection,
-			getRowId,
 			autoSizeStrategy,
 			onGridReady: (params) => {
 				gridApi = params.api;
@@ -52,6 +51,11 @@
 				}
 			},
 		};
+
+		// getRowId가 정의된 경우에만 추가
+		if (getRowId) {
+			gridOptions.getRowId = getRowId;
+		}
 
 		createGrid(gridDiv, gridOptions);
 	});

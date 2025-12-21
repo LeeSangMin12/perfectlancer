@@ -60,13 +60,14 @@
 	 */
 	async function load_authenticated_user(user_id) {
 		try {
-			const [user_data, user_contact] = await Promise.all([
+			const [user_data, user_contact, point] = await Promise.all([
 				api.users.select(user_id),
 				api.user_contacts.select_by_user_id(user_id),
+				api.point_transactions.select_balance(user_id),
 			]);
 
 			if (user_data?.handle) {
-				Object.assign(me, user_data, { user_contact });
+				Object.assign(me, user_data, { user_contact, point });
 				load_follow_data(user_data.id);
 
 				// 로그인 후 FCM 토큰 등록 (네이티브 앱 전용)

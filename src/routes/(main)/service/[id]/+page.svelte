@@ -41,7 +41,7 @@
 
 	// Props & Data
 	let { data } = $props();
-	let { service, service_options } = $state(data);
+	let { service, service_options, seller_contact } = $state(data);
 
 	// 클라이언트에서 lazy load할 데이터
 	let service_likes = $state([]);
@@ -744,10 +744,14 @@
 				</button>
 				<button
 					onclick={() => {
-						copy_to_clipboard(
-							service.contact_info,
-							'문의 링크가 복사되었습니다.',
-						);
+						if (seller_contact?.contact_phone) {
+							copy_to_clipboard(
+								seller_contact.contact_phone,
+								'판매자 연락처가 복사되었습니다.',
+							);
+						} else {
+							show_toast('info', '판매자 연락처가 등록되어 있지 않습니다.');
+						}
 					}}
 					class="btn flex h-9 flex-1 items-center justify-center border-none bg-gray-100"
 				>

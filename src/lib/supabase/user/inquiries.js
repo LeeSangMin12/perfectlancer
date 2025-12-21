@@ -4,7 +4,7 @@ export const create_inquiries_api = (supabase) => ({
 	 */
 	async insert(inquiry_data) {
 		const { data, error } = await supabase
-			.from('inquiries')
+			.from('user_inquiries')
 			.insert([inquiry_data])
 			.select('*')
 			.single();
@@ -22,7 +22,7 @@ export const create_inquiries_api = (supabase) => ({
 	 */
 	async select_received(user_id) {
 		const { data, error } = await supabase
-			.from('inquiries')
+			.from('user_inquiries')
 			.select(`
 				id, status, email, subject, content, created_at,
 				sender:sender_id(id, name, handle, avatar_url)
@@ -43,7 +43,7 @@ export const create_inquiries_api = (supabase) => ({
 	 */
 	async select_sent(user_id) {
 		const { data, error } = await supabase
-			.from('inquiries')
+			.from('user_inquiries')
 			.select(`
 				id, status, email, subject, content, created_at,
 				recipient:recipient_id(id, name, handle, avatar_url)
@@ -64,7 +64,7 @@ export const create_inquiries_api = (supabase) => ({
 	 */
 	async update_status(id, status) {
 		const { data, error } = await supabase
-			.from('inquiries')
+			.from('user_inquiries')
 			.update({ status, updated_at: new Date().toISOString() })
 			.eq('id', id)
 			.select('*')
@@ -83,7 +83,7 @@ export const create_inquiries_api = (supabase) => ({
 	 */
 	async select_by_id(id) {
 		const { data, error } = await supabase
-			.from('inquiries')
+			.from('user_inquiries')
 			.select(`
 				*,
 				sender:sender_id(id, name, handle, avatar_url),
@@ -105,7 +105,7 @@ export const create_inquiries_api = (supabase) => ({
 	 */
 	async delete(id) {
 		const { error } = await supabase
-			.from('inquiries')
+			.from('user_inquiries')
 			.delete()
 			.eq('id', id);
 

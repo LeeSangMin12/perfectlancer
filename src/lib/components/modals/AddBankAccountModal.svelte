@@ -1,8 +1,12 @@
 <script>
-	import Select from 'svelte-select';
-	import Modal from '$lib/components/ui/Modal.svelte';
-	import { get_api_context, get_user_context } from '$lib/contexts/app_context.svelte.js';
+	import {
+		get_api_context,
+		get_user_context,
+	} from '$lib/contexts/app_context.svelte.js';
 	import { show_toast } from '$lib/utils/common';
+	import Select from 'svelte-select';
+
+	import Modal from '$lib/components/ui/Modal.svelte';
 
 	let { is_modal_open = $bindable(false), on_success } = $props();
 
@@ -46,10 +50,11 @@
 
 	// 유효성 검사
 	const is_valid = $derived(
-		selected_bank &&
-			form.account_number.length >= 10 &&
+		!!selected_bank &&
+			form.account_number.length >= 8 &&
 			form.account_holder.length >= 2 &&
-			(form.account_type === 'individual' || form.business_number.length === 10),
+			(form.account_type === 'individual' ||
+				form.business_number.length === 10),
 	);
 
 	// 계좌번호 입력 핸들러
@@ -171,7 +176,7 @@
 					value={form.account_number}
 					oninput={on_account_input}
 					placeholder="- 없이 숫자만 입력"
-					class="mt-2 w-full rounded-lg border border-gray-200 px-4 py-3 text-[15px] text-gray-900 placeholder-gray-400 focus:border-primary focus:outline-none"
+					class="focus:border-primary mt-2 w-full rounded-lg border border-gray-200 px-4 py-3 text-[15px] text-gray-900 placeholder-gray-400 focus:outline-none"
 				/>
 			</div>
 
@@ -182,7 +187,7 @@
 					type="text"
 					bind:value={form.account_holder}
 					placeholder="예금주명 입력"
-					class="mt-2 w-full rounded-lg border border-gray-200 px-4 py-3 text-[15px] text-gray-900 placeholder-gray-400 focus:border-primary focus:outline-none"
+					class="focus:border-primary mt-2 w-full rounded-lg border border-gray-200 px-4 py-3 text-[15px] text-gray-900 placeholder-gray-400 focus:outline-none"
 				/>
 			</div>
 
@@ -196,7 +201,7 @@
 						value={display_business()}
 						oninput={on_business_input}
 						placeholder="000-00-00000"
-						class="mt-2 w-full rounded-lg border border-gray-200 px-4 py-3 text-[15px] text-gray-900 placeholder-gray-400 focus:border-primary focus:outline-none"
+						class="focus:border-primary mt-2 w-full rounded-lg border border-gray-200 px-4 py-3 text-[15px] text-gray-900 placeholder-gray-400 focus:outline-none"
 					/>
 				</div>
 			{/if}

@@ -13,9 +13,11 @@
 	 * @property {Object} work_request_data - 외주 공고 데이터 객체
 	 * @property {Object} infinite_scroll - 무한 스크롤 객체
 	 * @property {string} job_type - 작업 유형 ('sidejob' | 'fulltime')
+	 * @property {Array<string>} bookmarked_ids - 북마크된 외주 공고 ID 목록
+	 * @property {Function} on_bookmark_changed - 북마크 변경 콜백
 	 */
 
-	let { work_request_data, infinite_scroll, job_type } = $props();
+	let { work_request_data, infinite_scroll, job_type, bookmarked_ids = [], on_bookmark_changed } = $props();
 
 	/**
 	 * 무한 스크롤 초기화 및 옵저버 설정
@@ -32,7 +34,11 @@
 		{#if work_request_data.work_requests.length > 0}
 			<div class="mt-8 space-y-4">
 				{#each work_request_data.work_requests as request (request.id)}
-					<WorkRequestCard {request} />
+					<WorkRequestCard
+						{request}
+						is_bookmarked={bookmarked_ids.includes(String(request.id))}
+						{on_bookmark_changed}
+					/>
 				{/each}
 			</div>
 		{:else}

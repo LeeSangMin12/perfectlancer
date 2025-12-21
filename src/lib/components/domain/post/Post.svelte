@@ -28,9 +28,9 @@
 	} from 'svelte-remixicon';
 
 	import CustomCarousel from '$lib/components/ui/Carousel.svelte';
-	import GiftModal from '$lib/components/modals/GiftModal.svelte';
 	import Icon from '$lib/components/ui/Icon.svelte';
 	import Modal from '$lib/components/ui/Modal.svelte';
+	import GiftModal from '$lib/components/modals/GiftModal.svelte';
 
 	// ===== Context =====
 	const me = get_user_context();
@@ -94,7 +94,8 @@
 	 */
 
 	/** @type {{ post: Post, on_bookmark_changed?: BookmarkCallback, on_vote_changed?: VoteCallback, on_gift_comment_added?: GiftCallback }} */
-	let { post, on_bookmark_changed, on_vote_changed, on_gift_comment_added } = $props();
+	let { post, on_bookmark_changed, on_vote_changed, on_gift_comment_added } =
+		$props();
 
 	// ===== State: Vote =====
 	let like_count = $state(post.like_count ?? 0);
@@ -359,18 +360,27 @@
 		}
 
 		try {
-			await api.post_reports.insert({
-				reporter_id: me.id,
-				post_id: post.id,
-				reason: report_reason,
-				details: report_details,
-			});
+			await api.post_reports.create(
+				me.id,
+				post.id,
+				report_reason,
+				report_details,
+			);
 
 			show_toast('success', '신고가 정상적으로 접수되었습니다.');
+			modal.report = false;
+			modal.post_config = false;
 			reset_report_form();
 		} catch (error) {
-			console.error('Failed to submit report:', error);
-			show_toast('error', '신고 접수 중 오류가 발생했습니다.');
+			if (error.message === '이미 신고한 게시물입니다') {
+				show_toast('info', '이미 신고한 게시물입니다.');
+				modal.report = false;
+				modal.post_config = false;
+				reset_report_form();
+			} else {
+				console.error('Failed to submit report:', error);
+				show_toast('error', '신고 접수 중 오류가 발생했습니다.');
+			}
 		}
 	}
 
@@ -739,7 +749,7 @@
 			커뮤니티 가이드라인에 어긋나는 내용을 알려주세요.
 		</p>
 
-		<div class="mt-4 space-y-2">
+		<div class="mt-4">
 			{#each REPORT_REASONS as reason}
 				<label
 					class="flex cursor-pointer items-center rounded-lg px-3 py-2.5 active:bg-gray-50"
@@ -764,16 +774,10 @@
 		></textarea>
 
 		<div class="mt-5 flex gap-2">
-			<button
-				onclick={reset_report_form}
-				class="flex-1 rounded-lg bg-gray-100 py-3 text-[14px] font-medium text-gray-700 active:bg-gray-200"
-			>
+			<button onclick={reset_report_form} class="btn btn-gray flex-1">
 				취소
 			</button>
-			<button
-				onclick={submit_report}
-				class="flex-1 rounded-lg bg-red-500 py-3 text-[14px] font-medium text-white active:bg-red-600"
-			>
+			<button onclick={submit_report} class="btn btn-gray !text-error flex-1">
 				신고하기
 			</button>
 		</div>

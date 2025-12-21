@@ -3,6 +3,7 @@
 	import { comma } from '$lib/utils/common';
 	import { smart_go_back } from '$lib/utils/navigation';
 	import { RiArrowLeftSLine, RiArrowRightSLine } from 'svelte-remixicon';
+	import { onMount } from 'svelte';
 
 	import Header from '$lib/components/ui/Header.svelte';
 
@@ -11,6 +12,11 @@
 	let { data } = $props();
 	let { transactions, bank_account, pending_charges, pending_withdrawals, point } =
 		$derived(data);
+
+	// 페이지 진입 시 최신 포인트를 me context에 동기화
+	onMount(() => {
+		if (point !== undefined) me.point = point;
+	});
 
 	const has_pending = $derived(
 		pending_charges?.length > 0 || pending_withdrawals?.length > 0,

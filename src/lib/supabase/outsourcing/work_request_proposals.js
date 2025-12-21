@@ -151,7 +151,7 @@ export const create_work_request_proposals_api = (supabase) => ({
 			actor_id: user_id,
 			type: 'proposal_received',
 			resource_type: 'work_request',
-			resource_id: proposal_data.work_request_id,
+			resource_id_bigint: proposal_data.work_request_id,
 			payload: { title: request_info.title },
 			link_url: `/work-request/${proposal_data.work_request_id}`,
 		});
@@ -337,7 +337,7 @@ export const create_work_request_proposals_api = (supabase) => ({
 				recipient_id: proposal.expert_id,
 				type: 'proposal_accepted',
 				resource_type: 'work_request',
-				resource_id: work_request_id,
+				resource_id_bigint: work_request_id,
 				payload: { title: request.title },
 				link_url: `/work-request/${work_request_id}`,
 			});
@@ -465,7 +465,7 @@ export const create_work_request_proposals_api = (supabase) => ({
 				actor_id: user_id,
 				type: 'proposal_completed',
 				resource_type: 'work_request',
-				resource_id: work_request_id,
+				resource_id_bigint: work_request_id,
 				payload: { title: request.title },
 				link_url: `/work-request/${work_request_id}`,
 			});
@@ -530,13 +530,110 @@ export const create_work_request_proposals_api = (supabase) => ({
 				actor_id: user_id,
 				type: 'completion_requested',
 				resource_type: 'work_request',
-				resource_id: proposal.work_requests.id,
+				resource_id_bigint: proposal.work_requests.id,
 				payload: { title: proposal.work_requests.title },
 				link_url: `/work-request/${proposal.work_requests.id}`,
 			});
 		}
 
 		return data;
+	},
+
+	/**
+	 * 완료 요청된 제안 목록 조회 (관리자용)
+	 */
+	select_completion_requests: async () => {
+		const { data, error } = await supabase
+			.from('work_request_proposals')
+			.select(`
+				id, expert_id, message, proposed_amount, status, created_at,
+				completion_requested_at, completed_at,
+				${EXPERT_SELECT},
+				work_requests:work_request_id(
+					id, title, requester_id,
+					users:requester_id(id, handle, name, avatar_url, phone)
+				)
+			`)
+			.eq('status', 'accepted')
+			.not('completion_requested_at', 'is', null)
+			.order('completion_requested_at', { ascending: true });
+
+		if (error) {
+			throw new Error(`Failed to select completion requests: ${error.message}`);
+		}
+		return data || [];
+	},
+
+	/**
+	 * 관리자 완료 처리
+	 */
+	admin_complete: async (proposal_id) => {
+		// 제안서 정보 조회
+		const { data: proposal, error: check_error } = await supabase
+			.from('work_request_proposals')
+			.select(`
+				expert_id, status, work_request_id,
+				work_requests:work_request_id(requester_id, title)
+			`)
+			.eq('id', proposal_id)
+			.single();
+
+		if (check_error || !proposal) {
+			throw new Error('제안서를 찾을 수 없습니다.');
+		}
+
+		if (proposal.status !== 'accepted') {
+			throw new Error('수락된 제안서만 완료 처리할 수 있습니다.');
+		}
+
+		// proposal 상태를 completed로 변경
+		const { error: update_error } = await supabase
+			.from('work_request_proposals')
+			.update({
+				status: 'completed',
+				completed_at: new Date().toISOString(),
+				updated_at: new Date().toISOString(),
+			})
+			.eq('id', proposal_id);
+
+		if (update_error) {
+			throw new Error(`완료 처리 실패: ${update_error.message}`);
+		}
+
+		// 모든 accepted proposal이 completed인지 확인
+		const { data: remaining_accepted } = await supabase
+			.from('work_request_proposals')
+			.select('id')
+			.eq('work_request_id', proposal.work_request_id)
+			.eq('status', 'accepted');
+
+		// 남은 accepted가 없으면 work_request도 completed
+		if (!remaining_accepted || remaining_accepted.length === 0) {
+			await supabase
+				.from('work_requests')
+				.update({
+					status: 'completed',
+					updated_at: new Date().toISOString(),
+				})
+				.eq('id', proposal.work_request_id);
+		}
+
+		// 전문가에게 알림 전송
+		if (proposal.expert_id) {
+			await supabase.from('notifications').insert({
+				recipient_id: proposal.expert_id,
+				type: 'proposal_completed',
+				resource_type: 'work_request',
+				resource_id_bigint: proposal.work_request_id,
+				payload: {
+					title: proposal.work_requests?.title,
+					admin_completed: true,
+				},
+				link_url: `/work-request/${proposal.work_request_id}`,
+			});
+		}
+
+		return { success: true };
 	},
 
 	/**
@@ -588,7 +685,7 @@ export const create_work_request_proposals_api = (supabase) => ({
 					recipient_id: proposal.expert_id,
 					type: 'proposal_completed',
 					resource_type: 'work_request',
-					resource_id: work_request_id,
+					resource_id_bigint: work_request_id,
 					payload: {
 						title: request?.title,
 						auto_completed: true

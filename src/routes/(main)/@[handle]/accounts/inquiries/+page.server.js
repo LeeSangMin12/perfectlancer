@@ -11,7 +11,7 @@ export async function load({ locals: { supabase, session } }) {
 		// 받은 문의와 보낸 문의를 병렬로 조회
 		const [received_result, sent_result] = await Promise.all([
 			supabase
-				.from('inquiries')
+				.from('user_inquiries')
 				.select(`
 					*,
 					sender:sender_id(id, name, handle, avatar_url)
@@ -20,7 +20,7 @@ export async function load({ locals: { supabase, session } }) {
 				.order('created_at', { ascending: false }),
 
 			supabase
-				.from('inquiries')
+				.from('user_inquiries')
 				.select(`
 					*,
 					recipient:recipient_id(id, name, handle, avatar_url)
