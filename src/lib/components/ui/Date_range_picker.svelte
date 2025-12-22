@@ -1,22 +1,15 @@
 <script>
-	export let start_date;
-	export let end_date;
+	let { start_date = $bindable(null), end_date = $bindable(null) } = $props();
 
 	let current_date = new Date();
 	current_date.setHours(0, 0, 0, 0);
 
-	let selected_month = current_date.getMonth();
-	let selected_year = current_date.getFullYear();
+	let selected_month = $state(current_date.getMonth());
+	let selected_year = $state(current_date.getFullYear());
 
-	let view_mode = 'days'; // 'days', 'months', 'years'
+	let view_mode = $state('days'); // 'days', 'months', 'years'
 
-	$: calendar_days = generate_calendar(selected_month, selected_year);
-
-	$: {
-		if (start_date || end_date) {
-			calendar_days = generate_calendar(selected_month, selected_year);
-		}
-	}
+	let calendar_days = $derived(generate_calendar(selected_month, selected_year));
 
 	const days_of_week = ['일', '월', '화', '수', '목', '금', '토'];
 	const months = [
@@ -64,8 +57,6 @@
 			end_date = start_date;
 			start_date = date;
 		}
-
-		calendar_days = generate_calendar(selected_month, selected_year);
 	}
 
 	function change_month(delta) {

@@ -11,7 +11,7 @@
 	import { RiArrowLeftSLine } from 'svelte-remixicon';
 
 	import Header from '$lib/components/ui/Header.svelte';
-	import SimpleEditor from '$lib/components/tiptap-templates/simple/simple-editor.svelte';
+	import SimpleEditor from '$lib/components/shared/tiptap-templates/simple/simple-editor.svelte';
 
 	import { update_global_store } from '$lib/store/global_store.js';
 
@@ -27,7 +27,6 @@
 		title: service.title || '',
 		content: service.content || '',
 		price: service.price || 0,
-		contact_info: service.contact_info || '',
 		images: service.images || [],
 		options: service_options || [],
 	});
@@ -62,7 +61,7 @@
 		}
 
 		if (images_copy.length > 7) {
-			alert('이미지 개수는 7개를 초과할 수 없습니다.');
+			show_toast('error', '이미지 개수는 7개를 초과할 수 없습니다.');
 			return;
 		}
 
@@ -116,7 +115,6 @@
 				title: service_form_data.title,
 				content: service_form_data.content,
 				price: service_form_data.price,
-				contact_info: service_form_data.contact_info,
 			});
 
 			// 이미지 처리
@@ -187,11 +185,14 @@
 </svelte:head>
 
 <Header>
-	<button slot="left" class="flex items-center" onclick={smart_go_back}>
-		<RiArrowLeftSLine size={26} color={colors.gray[600]} />
-	</button>
-
-	<h1 slot="center" class="font-semibold">{TITLE}</h1>
+	{#snippet left()}
+		<button class="flex items-center" onclick={smart_go_back}>
+			<RiArrowLeftSLine size={26} color={colors.gray[600]} />
+		</button>
+	{/snippet}
+	{#snippet center()}
+		<h1 class="font-semibold">{TITLE}</h1>
+	{/snippet}
 </Header>
 
 <main class="mx-4">
@@ -350,22 +351,6 @@
 		</div>
 	</div>
 
-	<div class="mt-4">
-		<p class="ml-1 text-sm font-medium">문의 연락처</p>
-		<p class="mt-1 ml-1 text-xs text-gray-500">
-			고객이 서비스 문의 시 연락할 수 있는 연락처를 입력해주세요
-		</p>
-
-		<div class="mt-2">
-			<input
-				bind:value={service_form_data.contact_info}
-				type="text"
-				placeholder="예: 010-1234-5678, 카카오톡 링크, 인스타그램 링크"
-				class="input input-bordered focus:border-primary h-[52px] w-full focus:outline-none"
-			/>
-		</div>
-	</div>
-
 	<div class="mt-4 flex flex-col">
 		<p class="ml-1 text-sm font-medium">서비스 내용</p>
 
@@ -381,7 +366,6 @@
 			disabled={service_form_data.title.length === 0 ||
 				service_form_data.content.length === 0 ||
 				service_form_data.price === 0 ||
-				service_form_data.contact_info.length === 0 ||
 				service_form_data.images.length === 0}
 			class="btn btn-primary flex flex-1 items-center justify-center"
 			onclick={save_service}

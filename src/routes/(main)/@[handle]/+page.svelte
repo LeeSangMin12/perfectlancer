@@ -1,9 +1,21 @@
 <script>
+	import { create_post_handlers } from '$lib/composables/use_post_handlers.svelte.js';
+	import colors from '$lib/config/colors';
+	import {
+		get_api_context,
+		get_user_context,
+	} from '$lib/contexts/app_context.svelte.js';
 	import profile_png from '$lib/img/common/user/profile.png';
+	import {
+		check_login,
+		copy_to_clipboard,
+		show_toast,
+	} from '$lib/utils/common';
+	import { optimize_avatar } from '$lib/utils/image';
+	import { smart_go_back } from '$lib/utils/navigation';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
 	import { onMount } from 'svelte';
-	import { smart_go_back } from '$lib/utils/navigation';
 	import {
 		RiArrowLeftSLine,
 		RiHeartFill,
@@ -16,17 +28,12 @@
 	import Icon from '$lib/components/ui/Icon.svelte';
 	import Modal from '$lib/components/ui/Modal.svelte';
 	import TabSelector from '$lib/components/ui/TabSelector.svelte';
-	import Post from '$lib/components/Post.svelte';
-	import UserCard from '$lib/components/Profile/UserCard.svelte';
-	import Service from '$lib/components/Service.svelte';
-	import CoffeeChatModal from '$lib/components/CoffeeChatModal.svelte';
+	import Post from '$lib/components/domain/post/Post.svelte';
+	import Service from '$lib/components/domain/service/Service.svelte';
+	import InquiryModal from '$lib/components/modals/InquiryModal.svelte';
+	import UserCard from '$lib/components/shared/Profile/UserCard.svelte';
 
-	import colors from '$lib/config/colors';
-	import { check_login, copy_to_clipboard, show_toast } from '$lib/utils/common';
-	import { get_user_context, get_api_context } from '$lib/contexts/app_context.svelte.js';
 	import { update_global_store } from '$lib/store/global_store.js';
-	import { create_post_handlers } from '$lib/composables/use_post_handlers.svelte.js';
-	import { optimize_avatar } from '$lib/utils/image';
 
 	const TITLE = '문';
 
@@ -75,13 +82,16 @@
 	let selected = $state(0);
 	let is_tab_loading = $state(false);
 
-	// 각 탭별 데이터를 개별 state로 관리
-	let tab_posts = $state([]);
+	// 각 탭별 데이터를 개별 state로 관리 (서버 데이터로 초기화)
+	let tab_posts = $state(data.posts || []);
 	let tab_post_comments = $state([]);
 	let tab_services = $state([]);
 	let tab_service_likes = $state([]);
 	let tab_service_reviews = $state([]);
 	let tab_expert_request_reviews = $state([]);
+
+	// 각 탭별 로드 완료 여부 (tab 0은 서버에서 이미 로드됨)
+	let tab_loaded = $state([true, false, false, false]);
 
 	// selected_data는 $derived로 계산
 	let selected_data = $derived({
@@ -91,13 +101,6 @@
 		service_likes: tab_service_likes,
 		service_reviews: tab_service_reviews,
 		expert_request_reviews: tab_expert_request_reviews,
-	});
-
-	// posts가 로드되면 tab_posts 초기화
-	$effect(() => {
-		if (posts && posts.length > 0) {
-			tab_posts = posts;
-		}
 	});
 
 	let is_following = $state(false);
@@ -110,7 +113,7 @@
 	let modal = $state({
 		user_config: false,
 		report: false,
-		coffee_chat: false,
+		inquiry: false,
 	});
 
 	let is_follow_modal_open = $state(false);
@@ -119,10 +122,7 @@
 
 	onMount(async () => {
 		if (me?.id) {
-			is_following = await api.user_follows.is_following(
-				me.id,
-				user.id,
-			);
+			is_following = await api.user_follows.is_following(me.id, user.id);
 		}
 	});
 
@@ -227,11 +227,12 @@
 	const load_tab_data = async (tab_index) => {
 		if (!api?.posts) return;
 
+		// 이미 로드된 탭은 다시 로드하지 않음
+		if (tab_loaded[tab_index]) return;
+
 		is_tab_loading = true;
 		try {
 			if (tab_index === 0) {
-				// 게시글 탭 - 이미 로드된 데이터가 있으면 재사용 (중복 쿼리 방지)
-				if (tab_posts.length > 0) return;
 				const loaded_posts = await api.posts.select_by_user_id(user.id);
 				tab_posts = await attach_user_interactions(loaded_posts);
 			} else if (tab_index === 1) {
@@ -245,12 +246,13 @@
 				// 받은리뷰 탭 - 서비스 리뷰와 전문가 리뷰 모두 조회
 				const [service_reviews, expert_reviews] = await Promise.all([
 					api.service_reviews.select_by_service_author_id(user.id),
-					api.expert_request_reviews.select_by_expert_id(user.id),
+					api.work_request_reviews.select_by_expert_id(user.id),
 				]);
 				tab_service_reviews = service_reviews;
 				tab_expert_request_reviews = expert_reviews;
 			}
 		} finally {
+			tab_loaded[tab_index] = true;
 			is_tab_loading = false;
 		}
 	};
@@ -261,7 +263,12 @@
 		load_tab_data(selected);
 	});
 
-	const handle_gift_comment_added = async ({ gift_content, gift_amount, parent_comment_id, post_id }) => {
+	const handle_gift_comment_added = async ({
+		gift_content,
+		gift_amount,
+		parent_comment_id,
+		post_id,
+	}) => {
 		// 실제 댓글 추가 (메인 페이지에서는 UI에 표시되지 않지만 DB에는 저장됨)
 		await api.post_comments.insert({
 			post_id,
@@ -278,7 +285,7 @@
 		(updated_posts) => {
 			tab_posts = updated_posts;
 		},
-		me
+		me,
 	);
 
 	// Service 좋아요 변경 핸들러
@@ -290,13 +297,9 @@
 		follow_modal_type = type;
 		is_follow_modal_open = true;
 		if (type === 'followers') {
-			follow_modal_users = await api.user_follows.select_followers(
-				user.id,
-			);
+			follow_modal_users = await api.user_follows.select_followers(user.id);
 		} else {
-			follow_modal_users = await api.user_follows.select_followings(
-				user.id,
-			);
+			follow_modal_users = await api.user_follows.select_followings(user.id);
 		}
 	};
 
@@ -308,13 +311,21 @@
 		if (user?.id && user.id !== prev_user_id) {
 			prev_user_id = user.id;
 
-			// 탭을 게시글로 리셋하고 데이터 로드
+			// 탭 데이터와 로드 상태 리셋 (tab 0은 서버에서 새로 로드됨)
+			tab_posts = data.posts || [];
+			tab_post_comments = [];
+			tab_services = [];
+			tab_service_likes = [];
+			tab_service_reviews = [];
+			tab_expert_request_reviews = [];
+			tab_loaded = [true, false, false, false];
+
+			// 탭을 게시글로 리셋
 			selected = 0;
-			load_tab_data(0);
 
 			// 팔로우 상태 업데이트
 			if (me?.id) {
-				api.user_follows.is_following(me.id, user.id).then(result => {
+				api.user_follows.is_following(me.id, user.id).then((result) => {
 					is_following = result;
 				});
 			}
@@ -365,7 +376,7 @@
 </svelte:head>
 
 <Header>
-	<div slot="left">
+	{#snippet left()}
 		{#if $page.params.handle !== me?.handle}
 			<button
 				class="flex items-center"
@@ -375,9 +386,8 @@
 				<RiArrowLeftSLine size={28} color={colors.gray[600]} />
 			</button>
 		{/if}
-	</div>
-
-	<div slot="right">
+	{/snippet}
+	{#snippet right()}
 		<button
 			class="flex items-center"
 			onclick={() => {
@@ -389,11 +399,13 @@
 					goto(`/@${me?.handle}/accounts`);
 				}
 			}}
-			aria-label={$page.params.handle !== me?.handle ? '사용자 메뉴 열기' : '계정 설정 열기'}
+			aria-label={$page.params.handle !== me?.handle
+				? '사용자 메뉴 열기'
+				: '계정 설정 열기'}
 		>
 			<Icon attribute="menu" size={24} color={colors.gray[600]} />
 		</button>
-	</div>
+	{/snippet}
 </Header>
 
 <main>
@@ -432,7 +444,7 @@
 		<!-- 팔로워/팔로잉 정보 -->
 		<div class="mt-4 flex items-center space-x-4">
 			<button
-				class="cursor-pointer min-h-[44px] py-2"
+				class="min-h-[44px] cursor-pointer py-2"
 				onclick={() => open_follow_modal('followers')}
 				aria-label="{follower_count}명의 팔로워 보기"
 			>
@@ -440,7 +452,7 @@
 				<span class="text-sm text-gray-500"> 팔로워</span>
 			</button>
 			<button
-				class="cursor-pointer min-h-[44px] py-2"
+				class="min-h-[44px] cursor-pointer py-2"
 				onclick={() => open_follow_modal('followings')}
 				aria-label="{following_count}명의 팔로잉 보기"
 			>
@@ -458,7 +470,8 @@
 			<!-- 메시지와 팔로우 버튼 -->
 			<div class="mt-4 flex space-x-2">
 				<button
-					onclick={() => user?.handle && goto(`/@${user.handle}/accounts/profile/modify`)}
+					onclick={() =>
+						user?.handle && goto(`/@${user.handle}/accounts/profile/modify`)}
 					class="btn flex h-9 flex-1 items-center justify-center border-none bg-gray-100"
 					aria-label="프로필 편집 페이지로 이동"
 				>
@@ -481,7 +494,7 @@
 			<div class="mt-4 flex space-x-2">
 				{#if is_following}
 					<button
-						class="btn flex h-9 flex-1 items-center justify-center"
+						class="btn btn-gray flex-1"
 						onclick={toggle_follow}
 						aria-label="{user?.name}님 팔로우 취소"
 					>
@@ -489,7 +502,7 @@
 					</button>
 				{:else}
 					<button
-						class="btn btn-primary flex h-9 flex-1 items-center justify-center"
+						class="btn btn-primary flex-1"
 						onclick={toggle_follow}
 						aria-label="{user?.name}님 팔로우하기"
 					>
@@ -499,12 +512,12 @@
 				<button
 					onclick={() => {
 						if (!check_login(me)) return;
-						modal.coffee_chat = true;
+						modal.inquiry = true;
 					}}
-					class="btn flex h-9 flex-1 items-center justify-center border-none bg-gray-100"
-					aria-label="{user?.name}님에게 커피챗 신청하기"
+					class="btn btn-gray flex-1"
+					aria-label="{user?.name}님에게 문의하기"
 				>
-					커피챗
+					문의하기
 				</button>
 				<button
 					onclick={() => {
@@ -513,7 +526,7 @@
 							'링크가 복사되었습니다.',
 						);
 					}}
-					class="flex h-9 w-9 items-center justify-center rounded-lg bg-gray-100 min-w-[44px] min-h-[44px]"
+					class="flex h-8 min-h-[40px] w-8 min-w-[40px] items-center justify-center rounded-lg bg-gray-100"
 					aria-label="프로필 링크 공유하기"
 				>
 					<RiShareLine />
@@ -534,11 +547,11 @@
 		{#each selected_data.posts as post}
 			<div class="mt-4">
 				<Post
-				{post}
-				onGiftCommentAdded={handle_gift_comment_added}
-				onBookmarkChanged={handle_bookmark_changed}
-				onVoteChanged={handle_vote_changed}
-			/>
+					{post}
+					on_gift_comment_added={handle_gift_comment_added}
+					on_bookmark_changed={handle_bookmark_changed}
+					on_vote_changed={handle_vote_changed}
+				/>
 			</div>
 		{/each}
 	{:else if selected === 1 && selected_data.post_comments.length > 0}
@@ -622,7 +635,11 @@
 		<!-- 서비스 탭 -->
 		<div class="mt-4 grid grid-cols-2 gap-4 px-4">
 			{#each selected_data.services as service (service.id)}
-				<Service {service} service_likes={selected_data.service_likes} onLikeChanged={handle_service_like_changed} />
+				<Service
+					{service}
+					service_likes={selected_data.service_likes}
+					on_like_changed={handle_service_like_changed}
+				/>
 			{/each}
 		</div>
 	{:else if selected === 3 && (selected_data.service_reviews.length > 0 || selected_data.expert_request_reviews.length > 0)}
@@ -631,15 +648,15 @@
 			<!-- 전문가 요청 리뷰 -->
 			{#each selected_data.expert_request_reviews as review}
 				<div class="rounded-lg border border-gray-200 bg-white p-4">
-					<!-- 리뷰받은 전문가 요청 정보 -->
-					{#if review.request}
+					<!-- 리뷰받은 외주 요청 정보 -->
+					{#if review.work_request}
 						<div class="mb-3 rounded bg-emerald-50 p-3">
-							<p class="mb-1 text-xs text-emerald-700">전문가 요청 리뷰</p>
+							<p class="mb-1 text-xs text-emerald-700">외주 요청 리뷰</p>
 							<p class="text-sm font-medium text-gray-900">
-								{review.request.title || '제목 없음'}
+								{review.work_request.title || '제목 없음'}
 							</p>
 							<button
-								onclick={() => goto(`/expert-request/${review.request.id}`)}
+								onclick={() => goto(`/work-request/${review.work_request.id}`)}
 								class="mt-1 text-xs text-emerald-600 hover:underline"
 								aria-label="전문가 요청 상세보기"
 							>
@@ -831,9 +848,11 @@
 			커뮤니티 가이드라인에 어긋나는 내용을 알려주세요.
 		</p>
 
-		<div class="mt-4 space-y-2">
+		<div class="mt-4">
 			{#each REPORT_REASONS as reason}
-				<label class="flex cursor-pointer items-center rounded-lg px-3 py-2.5 active:bg-gray-50">
+				<label
+					class="flex cursor-pointer items-center rounded-lg px-3 py-2.5 active:bg-gray-50"
+				>
 					<input
 						type="radio"
 						name="report_reason"
@@ -887,5 +906,5 @@
 	</div>
 </Modal>
 
-<!-- 커피챗 모달 -->
-<CoffeeChatModal bind:isOpen={modal.coffee_chat} recipientUser={user} />
+<!-- 문의하기 모달 -->
+<InquiryModal bind:is_open={modal.inquiry} recipient_user={user} />

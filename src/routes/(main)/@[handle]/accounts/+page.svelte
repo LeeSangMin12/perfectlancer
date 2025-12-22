@@ -10,10 +10,11 @@
 		RiBookmarkLine,
 		RiBriefcaseLine,
 		RiContactsLine,
-		RiCupLine,
 		RiCustomerService2Line,
+		RiFileList2Line,
 		RiGiftLine,
 		RiHeartLine,
+		RiQuestionnaireLine,
 		RiSettings4Line,
 		RiShoppingBag3Line,
 		RiTeamLine,
@@ -29,15 +30,19 @@
 	<title>더보기 | 문</title>
 	<meta
 		name="description"
-		content="내 프로필, 문캐시, 구매 내역, 북마크 등을 관리할 수 있는 문의 더보기 페이지입니다."
+		content="내 프로필, 포인트, 구매 내역, 북마크 등을 관리할 수 있는 문의 더보기 페이지입니다."
 	/>
 </svelte:head>
 
 <Header>
-	<button slot="left" class="flex items-center" onclick={smart_go_back}>
-		<RiArrowLeftSLine size={24} color={colors.gray[600]} />
-	</button>
-	<h1 slot="center" class="font-semibold">더보기</h1>
+	{#snippet left()}
+		<button class="flex items-center" onclick={smart_go_back}>
+			<RiArrowLeftSLine size={24} color={colors.gray[600]} />
+		</button>
+	{/snippet}
+	{#snippet center()}
+		<h1 class="font-semibold">더보기</h1>
+	{/snippet}
 </Header>
 
 <main class="min-h-screen pb-20">
@@ -61,18 +66,18 @@
 		</a>
 	</div>
 
-	<!-- 문캐시 -->
+	<!-- 포인트 -->
 	<a
-		href={`/@${me?.handle}/accounts/cash`}
+		href={`/@${me?.handle}/accounts/point`}
 		class="flex items-center justify-between px-4 py-4 transition hover:bg-gray-50"
 	>
 		<div class="flex items-center">
 			<RiWallet3Line size={22} color={colors.primary} class="mr-3" />
-			<span class="font-medium text-gray-900">문캐시</span>
+			<span class="font-medium text-gray-900">포인트</span>
 		</div>
 		<div class="flex items-center">
 			<span class="mr-1 font-semibold text-blue-600"
-				>{comma(me?.moon_cash || 0)}원</span
+				>{comma(me?.point || 0)}원</span
 			>
 			<RiArrowRightSLine size={20} color={colors.gray[400]} />
 		</div>
@@ -89,7 +94,29 @@
 		>
 			<div class="flex items-center">
 				<RiContactsLine size={22} color={colors.gray[600]} class="mr-3" />
-				<span>연락처 관리</span>
+				<span>결제 정보 관리</span>
+			</div>
+			<RiArrowRightSLine size={20} color={colors.gray[400]} />
+		</a>
+
+		<a
+			href={`/@${me?.handle}/accounts/quote-templates`}
+			class="flex items-center justify-between px-4 py-4 transition hover:bg-gray-50"
+		>
+			<div class="flex items-center">
+				<RiFileList2Line size={22} color={colors.gray[600]} class="mr-3" />
+				<span>견적서 템플릿</span>
+			</div>
+			<RiArrowRightSLine size={20} color={colors.gray[400]} />
+		</a>
+
+		<a
+			href="/expert/accounts"
+			class="flex items-center justify-between px-4 py-4 transition hover:bg-gray-50"
+		>
+			<div class="flex items-center">
+				<RiBriefcaseLine size={22} color={colors.gray[600]} class="mr-3" />
+				<span>외주 관리</span>
 			</div>
 			<RiArrowRightSLine size={20} color={colors.gray[400]} />
 		</a>
@@ -106,23 +133,12 @@
 		</a>
 
 		<a
-			href="/expert/accounts"
+			href={`/@${me?.handle}/accounts/inquiries`}
 			class="flex items-center justify-between px-4 py-4 transition hover:bg-gray-50"
 		>
 			<div class="flex items-center">
-				<RiBriefcaseLine size={22} color={colors.gray[600]} class="mr-3" />
-				<span>사이드·풀타임 잡</span>
-			</div>
-			<RiArrowRightSLine size={20} color={colors.gray[400]} />
-		</a>
-
-		<a
-			href={`/@${me?.handle}/accounts/coffee-chat`}
-			class="flex items-center justify-between px-4 py-4 transition hover:bg-gray-50"
-		>
-			<div class="flex items-center">
-				<RiCupLine size={22} color={colors.gray[600]} class="mr-3" />
-				<span>커피챗</span>
+				<RiQuestionnaireLine size={22} color={colors.gray[600]} class="mr-3" />
+				<span>문의함</span>
 			</div>
 			<RiArrowRightSLine size={20} color={colors.gray[400]} />
 		</a>
@@ -134,12 +150,23 @@
 	</div>
 	<div>
 		<a
-			href={`/@${me?.handle}/accounts/bookmark`}
+			href={`/@${me?.handle}/accounts/bookmark?tab=post`}
 			class="flex items-center justify-between px-4 py-4 transition hover:bg-gray-50"
 		>
 			<div class="flex items-center">
 				<RiBookmarkLine size={22} color={colors.gray[600]} class="mr-3" />
-				<span>북마크</span>
+				<span>게시글 북마크</span>
+			</div>
+			<RiArrowRightSLine size={20} color={colors.gray[400]} />
+		</a>
+
+		<a
+			href={`/@${me?.handle}/accounts/bookmark?tab=work_request`}
+			class="flex items-center justify-between px-4 py-4 transition hover:bg-gray-50"
+		>
+			<div class="flex items-center">
+				<RiBookmarkLine size={22} color={colors.gray[600]} class="mr-3" />
+				<span>외주 북마크</span>
 			</div>
 			<RiArrowRightSLine size={20} color={colors.gray[400]} />
 		</a>

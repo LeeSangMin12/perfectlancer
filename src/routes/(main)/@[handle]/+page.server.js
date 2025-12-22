@@ -26,21 +26,18 @@ export async function load({ params, parent, locals: { supabase } }) {
 	let posts_with_interactions = posts;
 
 	if (current_user?.id && posts.length > 0) {
-		const [all_votes, all_bookmarks] = await Promise.all([
-			api.post_votes.select_by_user_id(current_user.id),
-			api.post_bookmarks.select_by_user_id_lightweight(current_user.id),
-		]);
+		const post_ids = posts.map((p) => p.id);
 
-		// 현재 페이지의 게시물 ID만 필터링
-		const post_ids = new Set(posts.map((p) => p.id));
-		const votes = all_votes.filter((v) => post_ids.has(v.post_id));
-		const bookmarks = all_bookmarks.filter((b) => post_ids.has(b.post_id));
+		const [votes, bookmarks] = await Promise.all([
+			api.post_votes.select_by_post_ids(current_user.id, post_ids),
+			api.post_bookmarks.select_by_post_ids(current_user.id, post_ids),
+		]);
 
 		// 게시물에 사용자 상호작용 데이터 병합
 		posts_with_interactions = posts.map((post) => ({
 			...post,
-			post_votes: votes.filter((v) => v.post_id === post.id),
-			post_bookmarks: bookmarks.filter((b) => b.post_id === post.id),
+			post_votes: votes.filter((v) => v.post_id === post.id.toString()),
+			post_bookmarks: bookmarks.filter((b) => b.post_id === post.id.toString()),
 		}));
 	}
 

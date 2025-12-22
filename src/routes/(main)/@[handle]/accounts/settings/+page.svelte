@@ -21,10 +21,14 @@
 </svelte:head>
 
 <Header>
-	<button slot="left" class="flex items-center" onclick={() => history.back()}>
-		<RiArrowLeftSLine size={24} color={colors.gray[600]} />
-	</button>
-	<h1 slot="center" class="text-lg font-semibold">설정</h1>
+	{#snippet left()}
+		<button class="flex items-center" onclick={() => history.back()}>
+			<RiArrowLeftSLine size={24} color={colors.gray[600]} />
+		</button>
+	{/snippet}
+	{#snippet center()}
+		<h1 class="text-lg font-semibold">설정</h1>
+	{/snippet}
 </Header>
 
 <main class="min-h-screen bg-gray-50 pb-20">

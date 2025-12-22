@@ -1,13 +1,13 @@
 <script>
 	import { RiArrowUpLine } from 'svelte-remixicon';
 
-	let { placeholder = '댓글을 입력해주세요', onLeaveComment } = $props();
+	let { placeholder = '댓글을 입력해주세요', on_leave_comment } = $props();
 
 	let content = $state('');
 	let textarea_ref;
 
 	const leave_comment = () => {
-		onLeaveComment?.({ content });
+		on_leave_comment?.({ content });
 		content = '';
 	};
 

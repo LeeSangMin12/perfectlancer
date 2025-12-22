@@ -20,15 +20,17 @@
 </svelte:head>
 
 <Header>
-	<div slot="left">
+	{#snippet left()}
 		<a
 			class="flex items-center"
 			href={me.handle === '비회원' ? '/' : `/@${me?.handle}/accounts`}
 		>
 			<RiArrowLeftSLine size={24} color={colors.gray[600]} />
 		</a>
-	</div>
-	<h1 slot="center" class="font-semibold">{TITLE}</h1>
+	{/snippet}
+	{#snippet center()}
+		<h1 class="font-semibold">{TITLE}</h1>
+	{/snippet}
 </Header>
 
 <svelte:window bind:innerWidth={screen_size} />

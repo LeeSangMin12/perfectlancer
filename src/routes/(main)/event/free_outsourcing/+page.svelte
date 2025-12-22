@@ -2,6 +2,7 @@
 	import colors from '$lib/config/colors';
 	import { copy_to_clipboard } from '$lib/utils/common';
 	import { goto } from '$app/navigation';
+	import { onMount } from 'svelte';
 	import { RiArrowLeftSLine } from 'svelte-remixicon';
 
 	import Header from '$lib/components/ui/Header.svelte';
@@ -11,11 +12,9 @@
 	// 개발 모드 토글 (URL에 ?dev=true 추가하면 버튼 위치 확인 가능)
 	let dev_mode = $state(false);
 
-	$effect(() => {
-		if (typeof window !== 'undefined') {
-			const params = new URLSearchParams(window.location.search);
-			dev_mode = params.get('dev') === 'true';
-		}
+	onMount(() => {
+		const params = new URLSearchParams(window.location.search);
+		dev_mode = params.get('dev') === 'true';
 	});
 
 	const copy_coupon = () => {
@@ -33,10 +32,14 @@
 </svelte:head>
 
 <Header>
-	<button slot="left" onclick={() => goto('/event')}>
-		<RiArrowLeftSLine size={26} color={colors.gray[600]} />
-	</button>
-	<h1 slot="center" class="font-semibold">문 외주 무료 등록 쿠폰 이벤트</h1>
+	{#snippet left()}
+		<button onclick={() => goto('/event')}>
+			<RiArrowLeftSLine size={26} color={colors.gray[600]} />
+		</button>
+	{/snippet}
+	{#snippet center()}
+		<h1 class="font-semibold">문 외주 무료 등록 쿠폰 이벤트</h1>
+	{/snippet}
 </Header>
 
 <div class="relative mx-auto max-w-screen-md bg-white">

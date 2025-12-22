@@ -7,7 +7,7 @@
 	import { RiArrowLeftSLine } from 'svelte-remixicon';
 
 	import Header from '$lib/components/ui/Header.svelte';
-	import Service from '$lib/components/Service.svelte';
+	import Service from '$lib/components/domain/service/Service.svelte';
 
 	import colors from '$lib/config/colors';
 	import { get_user_context } from '$lib/contexts/app_context.svelte.js';
@@ -38,15 +38,17 @@
 </svelte:head>
 
 <Header>
-	<div slot="left">
+	{#snippet left()}
 		<button
 			onclick={() => goto(`/@${me.handle}/accounts`)}
 			aria-label="계정 설정으로 돌아가기"
 		>
 			<RiArrowLeftSLine size={24} color={colors.gray[800]} />
 		</button>
-	</div>
-	<h1 slot="center" class="font-semibold">{TITLE}</h1>
+	{/snippet}
+	{#snippet center()}
+		<h1 class="font-semibold">{TITLE}</h1>
+	{/snippet}
 </Header>
 
 <main>
@@ -56,7 +58,7 @@
 				<Service
 					service={service.services}
 					{service_likes}
-					onLikeChanged={handle_like_changed}
+					on_like_changed={handle_like_changed}
 				/>
 			{/if}
 		{/each}

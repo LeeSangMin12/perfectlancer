@@ -11,10 +11,10 @@
 	import Bottom_nav from '$lib/components/ui/Bottom_nav.svelte';
 	import Icon from '$lib/components/ui/Icon.svelte';
 	import TabSelector from '$lib/components/ui/TabSelector.svelte';
-	import Community from '$lib/components/Community.svelte';
-	import Post from '$lib/components/Post.svelte';
-	import UserCard from '$lib/components/Profile/UserCard.svelte';
-	import Service from '$lib/components/Service.svelte';
+	import Community from '$lib/components/domain/community/Community.svelte';
+	import Post from '$lib/components/domain/post/Post.svelte';
+	import UserCard from '$lib/components/shared/Profile/UserCard.svelte';
+	import Service from '$lib/components/domain/service/Service.svelte';
 
 	const me = get_user_context();
 	const api = get_api_context();
@@ -43,19 +43,17 @@
 		}
 
 		try {
-			const [all_votes, all_bookmarks] = await Promise.all([
-				api.post_votes.select_by_user_id(me.id),
-				api.post_bookmarks.select_by_user_id_lightweight(me.id),
-			]);
+			const post_ids = post_list.map((p) => p.id);
 
-			const post_ids = new Set(post_list.map((p) => p.id));
-			const votes = all_votes.filter((v) => post_ids.has(v.post_id));
-			const bookmarks = all_bookmarks.filter((b) => post_ids.has(b.post_id));
+			const [votes, bookmarks] = await Promise.all([
+				api.post_votes.select_by_post_ids(me.id, post_ids),
+				api.post_bookmarks.select_by_post_ids(me.id, post_ids),
+			]);
 
 			return post_list.map((post) => ({
 				...post,
-				post_votes: votes.filter((v) => v.post_id === post.id),
-				post_bookmarks: bookmarks.filter((b) => b.post_id === post.id),
+				post_votes: votes.filter((v) => v.post_id === post.id.toString()),
+				post_bookmarks: bookmarks.filter((b) => b.post_id === post.id.toString()),
 			}));
 		} catch (error) {
 			console.error('Failed to attach user interactions:', error);
@@ -169,9 +167,9 @@
 			<div class="mt-4">
 				<Post
 					{post}
-					onGiftCommentAdded={handle_gift_comment_added}
-					onBookmarkChanged={handle_bookmark_changed}
-					onVoteChanged={handle_vote_changed}
+					on_gift_comment_added={handle_gift_comment_added}
+					on_bookmark_changed={handle_bookmark_changed}
+					on_vote_changed={handle_vote_changed}
 				/>
 			</div>
 		{/each}
@@ -187,7 +185,7 @@
 	{:else if selected === 2 && search_data.services.length > 0}
 		<div class="mt-4 grid grid-cols-2 gap-4 px-4">
 			{#each search_data.services as service}
-				<Service {service} service_likes={search_data.service_likes} onLikeChanged={handle_service_like_changed} />
+				<Service {service} service_likes={search_data.service_likes} on_like_changed={handle_service_like_changed} />
 			{/each}
 		</div>
 	{:else if selected === 3 && search_data.profiles.length > 0}

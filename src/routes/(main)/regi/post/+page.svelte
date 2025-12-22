@@ -8,7 +8,7 @@
 
 	import CustomCarousel from '$lib/components/ui/Carousel.svelte';
 	import Header from '$lib/components/ui/Header.svelte';
-	import SimpleEditor from '$lib/components/tiptap-templates/simple/simple-editor.svelte';
+	import SimpleEditor from '$lib/components/shared/tiptap-templates/simple/simple-editor.svelte';
 
 	import colors from '$lib/config/colors';
 	import { check_login, show_toast } from '$lib/utils/common';
@@ -111,7 +111,7 @@
 
 		//이미지 개수가 7개 이상이면 에러
 		if (images_copy.length > 7) {
-			alert('이미지 개수는 7개를 초과할 수 없습니다.');
+			show_toast('error', '이미지 개수는 7개를 초과할 수 없습니다.');
 			return;
 		}
 
@@ -191,16 +191,16 @@
 				}
 			}
 			if (files_copy.length > 7) {
-				alert('이미지 개수는 7개를 초과할 수 없습니다.');
+				show_toast('error', '이미지 개수는 7개를 초과할 수 없습니다.');
 				return;
 			}
 		} else if (upload_type === 'video') {
 			if (selected_files.length > 1) {
-				alert('영상은 1개만 업로드할 수 있습니다.');
+				show_toast('error', '영상은 1개만 업로드할 수 있습니다.');
 				return;
 			}
 			if (!selected_files[0].type.startsWith('video/')) {
-				alert('영상 파일만 업로드할 수 있습니다.');
+				show_toast('error', '영상 파일만 업로드할 수 있습니다.');
 				return;
 			}
 			selected_files[0].uri = URL.createObjectURL(selected_files[0]);
@@ -232,11 +232,14 @@
 </svelte:head>
 
 <Header>
-	<button slot="left" class="flex items-center" onclick={smart_go_back}>
-		<RiArrowLeftSLine size={26} color={colors.gray[600]} />
-	</button>
-
-	<h1 slot="center" class="font-semibold">{TITLE}</h1>
+	{#snippet left()}
+		<button class="flex items-center" onclick={smart_go_back}>
+			<RiArrowLeftSLine size={26} color={colors.gray[600]} />
+		</button>
+	{/snippet}
+	{#snippet center()}
+		<h1 class="font-semibold">{TITLE}</h1>
+	{/snippet}
 </Header>
 
 <main class="mx-4">

@@ -12,7 +12,7 @@
 
 	import Bottom_nav from '$lib/components/ui/Bottom_nav.svelte';
 	import Header from '$lib/components/ui/Header.svelte';
-	import ServiceTab from '$lib/components/ServiceTab.svelte';
+	import ServiceTab from '$lib/components/domain/service/ServiceTab.svelte';
 
 	import Banner from './Banner.svelte';
 	import SearchInput from './SearchInput.svelte';
@@ -37,17 +37,9 @@
 	];
 
 	const serviceData = create_service_data(
-		{ services: data.services || [], service_likes: [] },
+		{ services: data.services || [], service_likes: data.service_likes || [] },
 		api,
 	);
-
-	$effect(() => {
-		if (data.service_likes) {
-			Promise.resolve(data.service_likes).then((likes) => {
-				serviceData.serviceLikes = likes;
-			});
-		}
-	});
 
 	const serviceInfiniteScroll = create_infinite_scroll({
 		items: serviceData.services,
@@ -90,7 +82,9 @@
 </svelte:head>
 
 <Header>
-	<h1 slot="left" class="font-semibold">{TITLE}</h1>
+	{#snippet left()}
+		<h1 class="font-semibold">{TITLE}</h1>
+	{/snippet}
 </Header>
 
 <main>

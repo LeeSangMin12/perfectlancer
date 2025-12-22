@@ -1,5 +1,5 @@
 <script>
-	import ServiceProposal from '$lib/components/ServiceProposal.svelte';
+	import ServiceProposal from '$lib/components/domain/service/ServiceProposal.svelte';
 	import Header from '$lib/components/ui/Header.svelte';
 	import { RiArrowLeftSLine, RiStarFill, RiHeartFill } from 'svelte-remixicon';
 	import colors from '$lib/config/colors';
@@ -69,10 +69,14 @@
 </svelte:head>
 
 <Header>
-	<button slot="left" onclick={smart_go_back}>
-		<RiArrowLeftSLine size={24} color={colors.gray[600]} />
-	</button>
-	<h1 slot="center" class="font-semibold">서비스</h1>
+	{#snippet left()}
+		<button onclick={smart_go_back}>
+			<RiArrowLeftSLine size={24} color={colors.gray[600]} />
+		</button>
+	{/snippet}
+	{#snippet center()}
+		<h1 class="font-semibold">서비스</h1>
+	{/snippet}
 </Header>
 
 <main class="pb-24">

@@ -16,41 +16,43 @@ export async function load({ params, parent, locals: { supabase } }) {
 	const { user } = await parent();
 	const api = create_api(supabase);
 
-	const bookmarks = await api.post_bookmarks.select_by_user_id(user.id);
+	// 게시물 북마크와 외주 북마크를 병렬로 조회
+	const [post_bookmarks, work_request_bookmarks] = await Promise.all([
+		api.post_bookmarks.select_by_user_id(user.id),
+		api.work_request_bookmarks.select_by_user_id(user.id),
+	]);
 
 	// 북마크한 게시물들에 사용자 상호작용 데이터 추가
-	if (bookmarks.length > 0) {
-		const posts = bookmarks.map(b => b.post).filter(Boolean);
+	let enriched_post_bookmarks = post_bookmarks;
+	if (post_bookmarks.length > 0) {
+		const posts = post_bookmarks.map(b => b.post).filter(Boolean);
 
 		if (posts.length > 0) {
-			const [all_votes, all_bookmarks] = await Promise.all([
-				api.post_votes.select_by_user_id(user.id),
-				api.post_bookmarks.select_by_user_id_lightweight(user.id),
+			const post_ids = posts.map((p) => p.id);
+
+			const [votes, bookmarks_data] = await Promise.all([
+				api.post_votes.select_by_post_ids(user.id, post_ids),
+				api.post_bookmarks.select_by_post_ids(user.id, post_ids),
 			]);
 
-			const post_ids = new Set(posts.map((p) => p.id));
-			const votes = all_votes.filter((v) => post_ids.has(v.post_id));
-			const bookmarks_data = all_bookmarks.filter((b) => post_ids.has(b.post_id));
-
 			// 각 북마크의 post에 상호작용 데이터 병합
-			return {
-				bookmarks: bookmarks.map((bookmark) => {
-					if (!bookmark.post) return bookmark;
+			enriched_post_bookmarks = post_bookmarks.map((bookmark) => {
+				if (!bookmark.post) return bookmark;
 
-					return {
-						...bookmark,
-						post: {
-							...bookmark.post,
-							post_votes: votes.filter((v) => v.post_id === bookmark.post.id),
-							post_bookmarks: bookmarks_data.filter((b) => b.post_id === bookmark.post.id),
-						}
-					};
-				})
-			};
+				return {
+					...bookmark,
+					post: {
+						...bookmark.post,
+						post_votes: votes.filter((v) => v.post_id === bookmark.post.id.toString()),
+						post_bookmarks: bookmarks_data.filter((b) => b.post_id === bookmark.post.id.toString()),
+					}
+				};
+			});
 		}
 	}
 
 	return {
-		bookmarks,
+		post_bookmarks: enriched_post_bookmarks,
+		work_request_bookmarks,
 	};
 }

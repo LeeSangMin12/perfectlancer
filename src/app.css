@@ -12,6 +12,9 @@
 	--color-error: #f82349;
 }
 
+/* ============================================
+   Font Settings
+   ============================================ */
 :root {
 	font-family:
 		'Pretendard Variable',
@@ -33,43 +36,24 @@
 }
 
 pre {
-	font-family:
-		'Pretendard Variable',
-		Pretendard,
-		-apple-system,
-		BlinkMacSystemFont,
-		system-ui,
-		Roboto,
-		'Helvetica Neue',
-		'Segoe UI',
-		'Apple SD Gothic Neo',
-		'Noto Sans KR',
-		'Malgun Gothic',
-		'Apple Color Emoji',
-		'Segoe UI Emoji',
-		'Segoe UI Symbol',
-		sans-serif;
+	font-family: inherit;
+	white-space: pre-wrap;
+	word-wrap: break-word;
+	overflow-wrap: break-word;
 }
 
+body {
+	text-rendering: optimizeSpeed;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+}
+
+/* ============================================
+   Layout & Safe Area
+   ============================================ */
 main {
 	padding-bottom: calc(env(safe-area-inset-bottom) + 100px);
 	padding-bottom: calc(constant(safe-area-inset-bottom) + 100px);
-}
-
-/* 없으면 margin,padding이 적용이 안됨 */
-*::before,
-*::after {
-	margin: 0;
-	padding: 0;
-}
-
-/* 숫자 입력 시 스핀 버튼 제거 */
-@layer base {
-	input[type='number']::-webkit-inner-spin-button,
-	input[type='number']::-webkit-outer-spin-button {
-		-webkit-appearance: none;
-		margin: 0;
-	}
 }
 
 .pt-safe {
@@ -82,70 +66,115 @@ main {
 	padding-bottom: constant(safe-area-inset-bottom);
 }
 
-/* Hide scrollbar for Chrome, Safari and Opera */
-.scrollbar-hide::-webkit-scrollbar {
-	display: none;
-}
-.scrollbar-hide {
-	-ms-overflow-style: none; /* IE and Edge */
-	scrollbar-width: none; /* Firefox */
-}
-
-.btn {
-	@apply shadow-none;
-}
-.btn-gray {
-	@apply border-none bg-gray-200;
+/* ============================================
+   Base Resets
+   ============================================ */
+*::before,
+*::after {
+	margin: 0;
+	padding: 0;
 }
 
-/* Performance optimizations */
+@layer base {
+	input[type='number']::-webkit-inner-spin-button,
+	input[type='number']::-webkit-outer-spin-button {
+		-webkit-appearance: none;
+		margin: 0;
+	}
+}
+
 img {
 	max-width: 100%;
 	height: auto;
 }
 
-/* Reduce layout shift */
-.aspect-ratio-16-9 {
-	aspect-ratio: 16 / 9;
+/* ============================================
+   Utility Classes
+   ============================================ */
+.scrollbar-hide {
+	-ms-overflow-style: none;
+	scrollbar-width: none;
 }
 
-/* Critical CSS for LCP optimization */
-.line-clamp-8 {
-	display: -webkit-box;
-	-webkit-line-clamp: 8;
-	-webkit-box-orient: vertical;
-	overflow: hidden;
+.scrollbar-hide::-webkit-scrollbar {
+	display: none;
 }
 
-.max-h-32 {
-	max-height: 8rem;
+/* ============================================
+   Component Overrides - Buttons
+   ============================================ */
+
+/* Base button reset */
+.btn {
+	@apply rounded-md border-none font-medium shadow-none;
 }
 
-/* Prevent layout shifts */
-.animate-pulse {
-	animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+/* Primary - 파란색 메인 버튼 */
+.btn-primary {
+	@apply bg-primary text-white hover:bg-blue-600 active:bg-blue-700;
 }
 
-@keyframes pulse {
-	0%,
-	100% {
-		opacity: 1;
-	}
-	50% {
-		opacity: 0.5;
-	}
+/* Secondary - 회색 배경 버튼 */
+.btn-secondary {
+	@apply bg-gray-200 text-gray-900 hover:bg-gray-300 active:bg-gray-400;
 }
 
-/* Optimize text rendering */
-body {
-	text-rendering: optimizeSpeed;
-	-webkit-font-smoothing: antialiased;
-	-moz-osx-font-smoothing: grayscale;
+/* Outline - 테두리만 있는 버튼 */
+.btn-outline {
+	@apply border border-gray-300 bg-transparent text-gray-700 hover:bg-gray-50 active:bg-gray-100;
 }
 
-/* Critical content optimization */
-pre {
-	white-space: pre-wrap;
-	word-wrap: break-word;
-	overflow-wrap: break-word;
+/* Ghost - 배경 없는 버튼 */
+.btn-ghost {
+	@apply bg-transparent text-gray-700 hover:bg-gray-100 active:bg-gray-200;
+}
+
+/* Soft - 연한 파란색 배경 */
+.btn-soft {
+	@apply text-primary bg-blue-50 hover:bg-blue-100 active:bg-blue-200;
+}
+
+/* Danger - 빨간색 버튼 */
+.btn-danger {
+	@apply bg-red-500 text-white hover:bg-red-600 active:bg-red-700;
+}
+
+/* Danger Outline - 빨간색 테두리 버튼 */
+.btn-danger-outline {
+	@apply border border-red-300 bg-transparent text-red-600 hover:bg-red-50 active:bg-red-100;
+}
+
+/* Gray - 회색 버튼 (기존 호환) */
+.btn-gray {
+	@apply bg-gray-100 text-gray-900 hover:bg-gray-300 active:bg-gray-400;
+}
+
+/* ============================================
+   Component Overrides - Inputs
+   ============================================ */
+
+/* Input focus state */
+.input,
+.textarea,
+.select {
+	@apply border-gray-300 transition-colors duration-200;
+}
+
+.input:focus,
+.textarea:focus,
+.select:focus {
+	@apply border-primary ring-primary/20 ring-2 outline-none;
+}
+
+/* Input error state */
+.input-error,
+.textarea-error,
+.select-error {
+	@apply border-red-300;
+}
+
+.input-error:focus,
+.textarea-error:focus,
+.select-error:focus {
+	@apply border-red-500 ring-red-500/20;
 }

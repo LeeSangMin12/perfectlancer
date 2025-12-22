@@ -41,19 +41,17 @@ export async function load({ params, parent, locals: { supabase } }) {
 	let posts_with_interactions = posts;
 
 	if (user?.id && posts.length > 0) {
-		const [all_votes, all_bookmarks] = await Promise.all([
-			api.post_votes.select_by_user_id(user.id),
-			api.post_bookmarks.select_by_user_id_lightweight(user.id)
-		]);
+		const post_ids = posts.map((p) => p.id);
 
-		const post_ids = new Set(posts.map((p) => p.id));
-		const votes = all_votes.filter((v) => post_ids.has(v.post_id));
-		const bookmarks = all_bookmarks.filter((b) => post_ids.has(b.post_id));
+		const [votes, bookmarks] = await Promise.all([
+			api.post_votes.select_by_post_ids(user.id, post_ids),
+			api.post_bookmarks.select_by_post_ids(user.id, post_ids)
+		]);
 
 		posts_with_interactions = posts.map((post) => ({
 			...post,
-			post_votes: votes.filter((v) => v.post_id === post.id),
-			post_bookmarks: bookmarks.filter((b) => b.post_id === post.id)
+			post_votes: votes.filter((v) => v.post_id === post.id.toString()),
+			post_bookmarks: bookmarks.filter((b) => b.post_id === post.id.toString())
 		}));
 	}
 

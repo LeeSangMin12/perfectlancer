@@ -196,7 +196,7 @@ export const error_handling = (fn) => {
 			return await fn(...args);
 		} catch (error) {
 			console.error(`Error: ${error.message}`);
-			alert(`Error ${error.message}`);
+			show_toast('error', error.message);
 			throw error;
 		}
 	};

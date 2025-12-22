@@ -41,9 +41,11 @@
 </svelte:head>
 
 <Header>
-	<button slot="left" onclick={smart_go_back}>
-		<RiArrowLeftSLine size={26} color={colors.gray[600]} />
-	</button>
+	{#snippet left()}
+		<button onclick={smart_go_back}>
+			<RiArrowLeftSLine size={26} color={colors.gray[600]} />
+		</button>
+	{/snippet}
 </Header>
 <div class="mx-4 mt-8">
 	<p class="ml-1 font-semibold">Email</p>

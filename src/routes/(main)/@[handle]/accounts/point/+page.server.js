@@ -1,17 +1,22 @@
-import { create_api } from '$lib/supabase/api';
+import { create_api } from '$lib/supabase/api.js';
 
-export async function load({ params, parent, locals: { supabase } }) {
+export async function load({ parent, locals: { supabase } }) {
 	const { user } = await parent();
 	const api = create_api(supabase);
 
-	const moon_withdrawals = await api.moon_withdrawals.select_by_user_id(
-		user.id,
-	);
-	const moon_point_transactions =
-		await api.moon_point_transactions.select_by_user_id(user.id);
+	const [transactions, bank_account, pending_charges, pending_withdrawals, point] = await Promise.all([
+		api.point_transactions.select_by_user_id(user.id, 100),
+		api.user_bank_accounts.select_default_by_user_id(user.id),
+		api.point_charges.select_pending_by_user_id(user.id),
+		api.point_withdrawals.select_pending_by_user_id(user.id),
+		api.point_transactions.select_balance(user.id),
+	]);
 
 	return {
-		moon_point_transactions,
-		moon_withdrawals,
+		transactions,
+		bank_account,
+		pending_charges,
+		pending_withdrawals,
+		point,
 	};
 }

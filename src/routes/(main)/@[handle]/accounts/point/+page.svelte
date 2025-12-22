@@ -1,278 +1,203 @@
 <script>
-	import colors from '$lib/config/colors';
-	import {
-		get_api_context,
-		get_user_context,
-	} from '$lib/contexts/app_context.svelte.js';
-	import { comma, format_date, show_toast } from '$lib/utils/common';
-	import { goto } from '$app/navigation';
+	import { get_user_context } from '$lib/contexts/app_context.svelte.js';
+	import { comma } from '$lib/utils/common';
+	import { smart_go_back } from '$lib/utils/navigation';
+	import { RiArrowLeftSLine, RiArrowRightSLine } from 'svelte-remixicon';
 	import { onMount } from 'svelte';
-	import { RiArrowLeftSLine } from 'svelte-remixicon';
 
 	import Header from '$lib/components/ui/Header.svelte';
-	import Modal from '$lib/components/ui/Modal.svelte';
 
 	const me = get_user_context();
-	const api = get_api_context();
-
-	const TITLE = '포인트';
-
-	const typeMap = {
-		charge: { label: '문 충전' },
-		gift: { label: '문 선물' },
-		receive: { label: '문 선물 받음' },
-		use: { label: '문 사용' },
-		withdrawal: { label: '문 출금' },
-	};
 
 	let { data } = $props();
-	let { moon_point_transactions, moon_withdrawals } = $state(data);
+	let { transactions, bank_account, pending_charges, pending_withdrawals, point } =
+		$derived(data);
 
-	let is_withdraw_modal_open = $state(false);
-	let withdraw_form = $state({
-		amount: me.moon_point,
-		bank: '',
-		account_number: '',
-		account_holder: '',
+	// 페이지 진입 시 최신 포인트를 me context에 동기화
+	onMount(() => {
+		if (point !== undefined) me.point = point;
 	});
-	let withdraw_loading = $state(false);
 
-	function getWithdrawAmount(point) {
-		const 원화 = point * 100;
-		const 수수료 = Math.floor(원화 * 0.1);
-		const 실지급액 = 원화 - 수수료;
-		return { 원화, 수수료, 실지급액 };
-	}
+	const has_pending = $derived(
+		pending_charges?.length > 0 || pending_withdrawals?.length > 0,
+	);
+	const pending_count = $derived(
+		(pending_charges?.length || 0) + (pending_withdrawals?.length || 0),
+	);
 
-	async function handle_withdraw() {
-		if (!withdraw_form.amount || withdraw_form.amount <= 0) {
-			alert('출금할 금액을 입력하세요.');
-			return;
-		}
-		if (
-			!withdraw_form.bank.trim() ||
-			!withdraw_form.account_number.trim() ||
-			!withdraw_form.account_holder.trim()
-		) {
-			alert('은행, 계좌번호, 예금주를 모두 입력하세요.');
-			return;
-		}
+	const type_labels = {
+		charge: '충전',
+		withdraw: '출금',
+		service_payment: '서비스 구매',
+		service_income: '판매 수익',
+		service_payout: '서비스 판매 수익',
+		outsourcing_fee: '외주 등록',
+		expert_payout: '외주 수익',
+		gift_send: '선물 보내기',
+		gift_receive: '선물 받기',
+	};
 
-		if (me.moon_point < withdraw_form.amount) {
-			alert('보유 문이 부족합니다.');
-			return;
-		}
+	// 필터
+	let filter = $state('all');
+	const filters = [
+		{ value: 'all', label: '전체' },
+		{ value: 'in', label: '입금' },
+		{ value: 'out', label: '출금' },
+	];
 
-		withdraw_loading = true;
-		try {
-			const { error } = await api.moon_withdrawals.insert({
-				user_id: me.id,
-				amount: withdraw_form.amount,
-				bank: withdraw_form.bank,
-				account_number: withdraw_form.account_number,
-				account_holder: withdraw_form.account_holder,
+	const filtered_transactions = $derived(() => {
+		if (!transactions) return [];
+		if (filter === 'all') return transactions;
+		if (filter === 'in') return transactions.filter((t) => t.amount > 0);
+		if (filter === 'out') return transactions.filter((t) => t.amount < 0);
+		return transactions;
+	});
+
+	// 날짜별 그룹핑
+	function group_by_date(txs) {
+		const groups = {};
+		for (const tx of txs) {
+			const date = new Date(tx.created_at).toLocaleDateString('ko-KR', {
+				year: 'numeric',
+				month: 'long',
+				day: 'numeric',
 			});
-			if (error) throw error;
-			alert('출금 신청이 완료되었습니다!');
-			is_withdraw_modal_open = false;
-			moon_withdrawals = await api.moon_withdrawals.select_by_user_id(me.id);
-
-			// 필요시 출금 내역 새로고침 등
-		} catch (e) {
-			alert(e.message);
-		} finally {
-			withdraw_loading = false;
+			if (!groups[date]) groups[date] = [];
+			groups[date].push(tx);
 		}
+		return Object.entries(groups);
 	}
+
+	const grouped_transactions = $derived(group_by_date(filtered_transactions()));
 </script>
 
 <svelte:head>
-	<title>문 포인트 | 문</title>
-	<meta
-		name="description"
-		content="문 포인트 내역을 확인하고, 문 포인트를 쉽게 관리할 수 있는 문의 포인트 페이지입니다."
-	/>
+	<title>포인트 | 문</title>
 </svelte:head>
 
-<Header nav_class="bg-white">
-	<div slot="left">
-		<a href={`/@${me.handle}/accounts`}>
-			<RiArrowLeftSLine size={24} color={colors.gray[600]} />
-		</a>
-	</div>
-	<h1 slot="center" class="font-bold text-gray-800">{TITLE}</h1>
+<Header>
+	{#snippet left()}
+		<button onclick={smart_go_back}>
+			<RiArrowLeftSLine size={24} class="text-gray-800" />
+		</button>
+	{/snippet}
+	{#snippet center()}
+		<span class="text-[17px] font-semibold">포인트</span>
+	{/snippet}
 </Header>
 
-<main>
-	<div class="mx-5 mt-7">
-		<div class="flex items-center">
-			<div
-				class="bg-primary mr-2 flex h-5 w-5 items-center justify-center rounded-full"
+<main class="min-h-screen pb-24">
+	<!-- 잔액 카드 -->
+	<section class="bg-white px-5 pt-6 pb-5">
+		<p class="text-[13px] text-gray-500">사용 가능한 캐시</p>
+		<p class="mt-1 text-[32px] font-bold tracking-tight text-gray-900">
+			{comma(point || 0)}<span class="text-[24px] font-semibold"
+				>원</span
 			>
-				<svg
-					width="10"
-					height="7"
-					viewBox="0 0 10 7"
-					fill="none"
-					xmlns="http://www.w3.org/2000/svg"
-				>
-					<path
-						d="M3.38505 6.90608C2.98019 6.90608 2.62849 6.62763 2.53562 6.23357L2.09693 4.37208C2.03485 4.10867 1.79976 3.92255 1.52914 3.92255H1.40188C1.15 3.92255 0.945801 3.71835 0.945801 3.46647V3.37566C0.945801 3.17393 1.10934 3.01039 1.31108 3.01039V3.01039C1.54668 3.01039 1.72066 2.79064 1.66662 2.56132L1.25221 0.802884C1.15882 0.406598 1.45947 0.0268555 1.86661 0.0268555V0.0268555C2.16591 0.0268555 2.42407 0.237045 2.48474 0.530132L2.90373 2.55421C2.95873 2.81987 3.19272 3.01039 3.46402 3.01039V3.01039C3.73074 3.01039 3.96209 2.82608 4.0217 2.5661L4.46698 0.624212C4.54713 0.274656 4.85818 0.0268555 5.21681 0.0268555V0.0268555C5.57544 0.0268555 5.88649 0.274656 5.96664 0.624212L6.41147 2.56416C6.47135 2.82528 6.7037 3.01039 6.97159 3.01039V3.01039C7.2444 3.01039 7.4796 2.81858 7.5345 2.55136L7.94955 0.530768C8.00981 0.237414 8.26802 0.0268555 8.5675 0.0268555V0.0268555C8.97439 0.0268555 9.27486 0.406365 9.18152 0.802409L8.767 2.56132C8.71296 2.79064 8.88694 3.01039 9.12254 3.01039V3.01039C9.32428 3.01039 9.48782 3.17393 9.48782 3.37566V3.46647C9.48782 3.71835 9.28363 3.92255 9.03174 3.92255H8.90448C8.63386 3.92255 8.39877 4.10867 8.33669 4.37208L7.898 6.23357C7.80513 6.62763 7.45343 6.90608 7.04858 6.90608V6.90608C6.64125 6.90608 6.2881 6.6243 6.19766 6.22714L5.77415 4.36725C5.71492 4.10711 5.48361 3.92255 5.21681 3.92255V3.92255C4.95002 3.92255 4.7187 4.10711 4.65947 4.36725L4.23596 6.22714C4.14552 6.6243 3.79237 6.90608 3.38505 6.90608V6.90608ZM3.44427 3.92255C3.30973 3.92255 3.20916 4.04618 3.23655 4.17791L3.40087 4.96803C3.40429 4.98446 3.41877 4.99624 3.43555 4.99624V4.99624C3.45205 4.99624 3.46637 4.98484 3.47007 4.96876L3.65103 4.18228C3.68161 4.04937 3.58065 3.92255 3.44427 3.92255V3.92255ZM5.02422 2.76942C4.99631 2.89291 5.0902 3.01039 5.21681 3.01039V3.01039C5.34342 3.01039 5.43731 2.89291 5.4094 2.76942L5.2458 2.04538C5.24274 2.03183 5.2307 2.02221 5.21681 2.02221V2.02221C5.20292 2.02221 5.19088 2.03183 5.18782 2.04538L5.02422 2.76942ZM6.98933 3.92255C6.85285 3.92255 6.75174 4.04932 6.78209 4.18237L6.9636 4.97825C6.96727 4.99433 6.98157 5.00574 6.99807 5.00574V5.00574C7.01485 5.00574 7.02931 4.99395 7.0327 4.97752L7.19751 4.17802C7.22469 4.04615 7.12397 3.92255 6.98933 3.92255V3.92255Z"
-						fill="white"
-					/>
-				</svg>
-			</div>
-			<p class="text-lg font-semibold">문 포인트</p>
-		</div>
-		<p class="mt-4 text-3xl font-bold">{comma(me.moon_point)}P</p>
-
-		{#if moon_withdrawals?.status === 'pending'}
-			<button class="btn btn-disabled mt-5 w-full">출금 신청 처리중</button>
-		{:else}
-			<button
-				class="btn btn-primary mt-5 w-full"
-				onclick={() => (is_withdraw_modal_open = true)}>출금하기</button
-			>
-		{/if}
-	</div>
-
-	<div class="mt-5 h-2 w-full bg-gray-100"></div>
-
-	<div class="mx-5 mt-5">
-		<p>적립/사용내역</p>
-
-		{#each moon_point_transactions as history}
-			<div class="mt-8">
-				<p
-					class="inline-block rounded-[4px] bg-gray-100 px-2 py-0.5 text-[11px]"
-				>
-					{typeMap[history.type].label}
-				</p>
-
-				<div class="mt-2.5 flex items-center justify-between">
-					<p class="mr-9 truncate">{history.description}</p>
-
-					{#if history.amount > 0}
-						<p class="text-primary flex-shrink-0 font-semibold">
-							+{history.amount}P
-						</p>
-					{:else}
-						<p class="flex-shrink-0 font-semibold text-gray-900">
-							{history.amount}P
-						</p>
-					{/if}
-				</div>
-
-				<div class="mt-1.5 flex items-center justify-between">
-					<p class="text-sm text-gray-800">{format_date(history.created_at)}</p>
-					<p class="text-sm text-gray-800">{history.amount}P</p>
-				</div>
-			</div>
-		{/each}
-	</div>
-</main>
-
-<Modal bind:is_modal_open={is_withdraw_modal_open} modal_position="center">
-	<div class="p-4">
-		<h3 class="mb-4 font-semibold">문 포인트 출금 신청</h3>
-		<div class="mt-2">
-			<p class="ml-1 text-sm font-semibold">출금 금액</p>
-
-			<div class="mt-2">
-				<input
-					type="number"
-					min="1"
-					max={me.moon_point}
-					bind:value={withdraw_form.amount}
-					class="input input-bordered focus:border-primary h-[52px] w-full focus:outline-none"
-				/>
-			</div>
-		</div>
-
-		<div class="mt-4">
-			<p class="ml-1 text-sm font-semibold">은행</p>
-
-			<div class="mt-2">
-				<input
-					type="text"
-					bind:value={withdraw_form.bank}
-					placeholder="예: 국민"
-					class="input input-bordered focus:border-primary h-[52px] w-full focus:outline-none"
-				/>
-			</div>
-		</div>
-
-		<div class="mt-4">
-			<p class="ml-1 text-sm font-semibold">계좌번호</p>
-
-			<div class="mt-2">
-				<input
-					type="text"
-					bind:value={withdraw_form.account_number}
-					placeholder="예: 1234-12-1234567890"
-					class="input input-bordered focus:border-primary h-[52px] w-full focus:outline-none"
-				/>
-			</div>
-		</div>
-
-		<div class="mt-4">
-			<p class="ml-1 text-sm font-semibold">예금주</p>
-
-			<div class="mt-2">
-				<input
-					type="text"
-					bind:value={withdraw_form.account_holder}
-					placeholder="예: 홍길동"
-					class="input input-bordered focus:border-primary h-[52px] w-full focus:outline-none"
-				/>
-			</div>
-		</div>
-
-		<!-- 수수료/실지급액 안내 -->
-		<div
-			class="mt-6 flex flex-col gap-2 rounded-xl border border-gray-100 bg-white p-4 shadow"
-		>
-			<div class="flex items-center justify-between">
-				<span class="text-sm text-gray-500">출금 신청 문</span>
-				<span class="text-base font-bold">{withdraw_form.amount}문</span>
-			</div>
-			<div class="flex items-center justify-between">
-				<span class="text-sm text-gray-500">환산 금액</span>
-				<span class="text-base font-semibold"
-					>{comma(getWithdrawAmount(withdraw_form.amount).원화)}원</span
-				>
-			</div>
-			<div class="flex items-center justify-between">
-				<span class="text-sm text-gray-500"
-					>수수료 <span class="text-xs">(10%)</span></span
-				>
-				<span class="text-base font-semibold text-red-500"
-					>-{comma(getWithdrawAmount(withdraw_form.amount).수수료)}원</span
-				>
-			</div>
-			<div class="mt-2 flex items-center justify-between border-t pt-2">
-				<span class="font-semibold text-gray-700">실지급액</span>
-				<span class="text-lg font-bold text-blue-600"
-					>{comma(getWithdrawAmount(withdraw_form.amount).실지급액)}원</span
-				>
-			</div>
-		</div>
-		<p class="mt-2 text-center text-xs text-gray-400">
-			1문 = 100원, 출금 시 10% 수수료가 차감됩니다.
 		</p>
 
-		<div class="mt-4 flex gap-2">
-			<button
-				class="btn flex-1"
-				onclick={() => (is_withdraw_modal_open = false)}>취소</button
+		{#if has_pending}
+			<div class="mt-4 flex items-center gap-2 text-[13px]">
+				<span
+					class="inline-flex h-5 w-5 items-center justify-center rounded-full bg-orange-100 text-[11px] font-medium text-orange-600"
+				>
+					{pending_count}
+				</span>
+				<span class="text-gray-500">처리 대기 중인 요청이 있어요</span>
+			</div>
+		{/if}
+	</section>
+
+	<!-- 충전/출금 버튼 -->
+	<section class=" bg-white px-5 py-4">
+		<div class="flex gap-3">
+			<a
+				href={`/@${me?.handle}/accounts/point/charge`}
+				class="flex-1 rounded-xl bg-[#237BF8] py-3.5 text-center text-[15px] font-semibold text-white active:bg-blue-700"
 			>
-			<button
-				class="btn btn-primary flex-1"
-				onclick={handle_withdraw}
-				disabled={withdraw_loading}
+				충전하기
+			</a>
+			<a
+				href={`/@${me?.handle}/accounts/point/withdraw`}
+				class="flex-1 rounded-xl bg-gray-100 py-3.5 text-center text-[15px] font-semibold text-gray-900 active:bg-gray-50"
 			>
-				{withdraw_loading ? '신청 중...' : '출금 신청'}
-			</button>
+				출금하기
+			</a>
 		</div>
-	</div>
-</Modal>
+	</section>
+
+	<!-- 거래내역 필터 탭 -->
+	<section class="mt-2 border-b border-gray-100 bg-white">
+		<div class="flex">
+			{#each filters as f}
+				<button
+					onclick={() => (filter = f.value)}
+					class="relative flex-1 py-3.5 text-[14px] font-medium transition
+						{filter === f.value ? 'text-gray-900' : 'text-gray-400'}"
+				>
+					{f.label}
+					{#if filter === f.value}
+						<span
+							class="absolute bottom-0 left-1/2 h-0.5 w-12 -translate-x-1/2 rounded-full bg-gray-900"
+						></span>
+					{/if}
+				</button>
+			{/each}
+		</div>
+	</section>
+
+	<!-- 거래내역 -->
+	{#if grouped_transactions.length > 0}
+		{#each grouped_transactions as [date, txs]}
+			<section class="mt-2 bg-white">
+				<div class="border-b border-gray-50 px-5 py-3">
+					<p class="text-[13px] text-gray-500">{date}</p>
+				</div>
+				<ul>
+					{#each txs as tx}
+						<li
+							class="flex items-center justify-between border-b border-gray-50 px-5 py-4 last:border-b-0"
+						>
+							<div>
+								<p class="text-[15px] text-gray-900">
+									{type_labels[tx.type] || tx.type}
+								</p>
+								{#if tx.description}
+									<p class="mt-0.5 text-[13px] text-gray-500">
+										{tx.description}
+									</p>
+								{/if}
+								<p class="mt-0.5 text-[12px] text-gray-400">
+									{new Date(tx.created_at).toLocaleTimeString('ko-KR', {
+										hour: '2-digit',
+										minute: '2-digit',
+									})}
+								</p>
+							</div>
+							<div class="text-right">
+								<p
+									class="text-[15px] font-semibold {tx.amount > 0
+										? 'text-blue-600'
+										: 'text-gray-900'}"
+								>
+									{tx.amount > 0 ? '+' : ''}{comma(tx.amount)}원
+								</p>
+								<p class="mt-0.5 text-[12px] text-gray-400">
+									잔액 {comma(tx.balance_after)}원
+								</p>
+							</div>
+						</li>
+					{/each}
+				</ul>
+			</section>
+		{/each}
+	{:else}
+		<section class="mt-2 bg-white px-5 py-16 text-center">
+			<p class="text-[14px] text-gray-400">
+				{filter === 'all'
+					? '거래 내역이 없어요'
+					: '해당 유형의 거래 내역이 없어요'}
+			</p>
+		</section>
+	{/if}
+</main>

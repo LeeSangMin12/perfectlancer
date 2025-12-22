@@ -20,13 +20,14 @@
 </svelte:head>
 
 <Header>
-	<h1 slot="left" class="text-xl font-bold">{TITLE}</h1>
-
-	<div slot="right">
+	{#snippet left()}
+		<h1 class="text-xl font-bold">{TITLE}</h1>
+	{/snippet}
+	{#snippet right()}
 		<button>
 			<Icon attribute="search" size={24} color={colors.gray[600]} />
 		</button>
-	</div>
+	{/snippet}
 </Header>
 
 <main class="px-4">

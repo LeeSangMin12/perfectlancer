@@ -22,8 +22,8 @@
 	import Header from '$lib/components/ui/Header.svelte';
 	import Icon from '$lib/components/ui/Icon.svelte';
 	import Modal from '$lib/components/ui/Modal.svelte';
-	import Post from '$lib/components/Post.svelte';
-	import UserCard from '$lib/components/Profile/UserCard.svelte';
+	import Post from '$lib/components/domain/post/Post.svelte';
+	import UserCard from '$lib/components/shared/Profile/UserCard.svelte';
 
 	const me = get_user_context();
 	const api = get_api_context();
@@ -112,19 +112,24 @@
 		}
 
 		try {
-			await api.community_reports.insert({
-				reporter_id: me.id,
-				community_id: community.id,
-				reason: report_reason,
-				details: report_details,
-			});
+			await api.community_reports.create(
+				me.id,
+				community.id,
+				report_reason,
+				report_details || null
+			);
 
 			show_toast('success', '신고가 정상적으로 접수되었습니다.');
 		} catch (error) {
 			console.error('Failed to submit report:', error);
-			show_toast('error', '신고 접수 중 오류가 발생했습니다.');
+			if (error.message?.includes('이미 신고한')) {
+				show_toast('error', '이미 신고한 커뮤니티입니다.');
+			} else {
+				show_toast('error', '신고 접수 중 오류가 발생했습니다.');
+			}
 		} finally {
 			is_report_modal_open = false;
+			is_menu_modal_open = false;
 			report_reason = '';
 			report_details = '';
 		}
@@ -206,7 +211,7 @@
 </svelte:head>
 
 <Header>
-	<div slot="left">
+	{#snippet left()}
 		<button
 			class="flex items-center"
 			onclick={smart_go_back}
@@ -214,9 +219,11 @@
 		>
 			<RiArrowLeftSLine size={28} color={colors.gray[600]} />
 		</button>
-	</div>
-	<h1 slot="center" class="text-medium">{community.title}</h1>
-	<div slot="right">
+	{/snippet}
+	{#snippet center()}
+		<h1 class="text-medium">{community.title}</h1>
+	{/snippet}
+	{#snippet right()}
 		<button
 			class="flex items-center"
 			onclick={() => {
@@ -227,7 +234,7 @@
 		>
 			<Icon attribute="menu" size={24} color={colors.gray[600]} />
 		</button>
-	</div>
+	{/snippet}
 </Header>
 
 <main>
@@ -301,9 +308,9 @@
 		<div class="mt-4">
 			<Post
 				{post}
-				onGiftCommentAdded={handle_gift_comment_added}
-				onBookmarkChanged={handle_bookmark_changed}
-				onVoteChanged={handle_vote_changed}
+				on_gift_comment_added={handle_gift_comment_added}
+				on_bookmark_changed={handle_bookmark_changed}
+				on_vote_changed={handle_vote_changed}
 			/>
 		</div>
 	{/each}
@@ -347,7 +354,7 @@
 			커뮤니티 가이드라인에 어긋나는 내용을 알려주세요.
 		</p>
 
-		<div class="mt-4 space-y-2">
+		<div class="mt-4">
 			{#each REPORT_REASONS as reason, index (index)}
 				<label
 					class="flex cursor-pointer items-center rounded-lg px-3 py-2.5 active:bg-gray-50"
@@ -374,14 +381,14 @@
 		<div class="mt-5 flex gap-2">
 			<button
 				onclick={() => (is_report_modal_open = false)}
-				class="flex-1 rounded-lg bg-gray-100 py-3 text-[14px] font-medium text-gray-700 active:bg-gray-200"
+				class="btn btn-gray flex-1"
 				aria-label="신고 취소"
 			>
 				취소
 			</button>
 			<button
 				onclick={handle_report_submit}
-				class="flex-1 rounded-lg bg-red-500 py-3 text-[14px] font-medium text-white active:bg-red-600"
+				class="btn btn-gray !text-error flex-1"
 				aria-label="신고 제출"
 			>
 				신고하기

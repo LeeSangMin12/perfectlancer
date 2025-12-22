@@ -9,8 +9,15 @@ export async function load({ params, locals: { supabase } }) {
 		api.service_options.select_by_service_id(params.id)
 	]);
 
+	// 판매자 연락처 로드
+	let seller_contact = null;
+	if (service?.author_id) {
+		seller_contact = await api.user_contacts.select_by_user_id(service.author_id);
+	}
+
 	return {
 		service,
 		service_options,
+		seller_contact,
 	};
 }

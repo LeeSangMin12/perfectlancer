@@ -29,17 +29,20 @@
 
 	// Components
 	import CustomCarousel from '$lib/components/ui/Carousel.svelte';
+	import ConfirmModal from '$lib/components/ui/ConfirmModal.svelte';
 	import Header from '$lib/components/ui/Header.svelte';
 	import Icon from '$lib/components/ui/Icon.svelte';
 	import Modal from '$lib/components/ui/Modal.svelte';
 	import StarRating from '$lib/components/ui/StarRating.svelte';
+	import ReviewModal from '$lib/components/modals/ReviewModal.svelte';
+	import ServiceProposal from '$lib/components/domain/service/ServiceProposal.svelte';
 
 	const me = get_user_context();
 	const api = get_api_context();
 
 	// Props & Data
 	let { data } = $props();
-	let { service, service_options } = $state(data);
+	let { service, service_options, seller_contact } = $state(data);
 
 	// 클라이언트에서 lazy load할 데이터
 	let service_likes = $state([]);
@@ -55,6 +58,7 @@
 	let is_service_config_modal_open = $state(false); // 서비스 설정 모달
 	let is_submitting_review = $state(false);
 	let editing_review = $state(null);
+	let show_delete_modal = $state(false);
 
 	// Purchase Form Data
 	let selected_options = $state([]); // 선택된 옵션 IDs
@@ -427,8 +431,6 @@
 
 	// Service Management Handlers
 	const handle_delete_service = async () => {
-		if (!confirm('정말 이 서비스를 삭제하시겠습니까?')) return;
-
 		try {
 			await api.services.delete(service.id);
 			show_toast('success', '서비스가 삭제되었습니다.');
@@ -436,6 +438,8 @@
 		} catch (error) {
 			console.error('서비스 삭제 실패:', error);
 			show_toast('error', '서비스 삭제에 실패했습니다.');
+		} finally {
+			show_delete_modal = false;
 		}
 	};
 
@@ -534,17 +538,21 @@
 </svelte:head>
 
 <Header>
-	<button slot="left" onclick={smart_go_back}>
-		<RiArrowLeftSLine size={24} color={colors.gray[600]} />
-	</button>
-	<h1 slot="center" class="font-semibold">서비스</h1>
-	<div slot="right">
+	{#snippet left()}
+		<button onclick={smart_go_back}>
+			<RiArrowLeftSLine size={24} color={colors.gray[600]} />
+		</button>
+	{/snippet}
+	{#snippet center()}
+		<h1 class="font-semibold">서비스</h1>
+	{/snippet}
+	{#snippet right()}
 		{#if is_own_service}
 			<button onclick={open_service_config_modal}>
 				<Icon attribute="ellipsis" size={20} color={colors.gray[500]} />
 			</button>
 		{/if}
-	</div>
+	{/snippet}
 </Header>
 
 <main>
@@ -586,21 +594,104 @@
 			</div>
 		{/key}
 
-		<!-- Service Price -->
-		<p class="text-primary mt-4 text-xl font-bold">₩{comma(service.price)}</p>
+		<!-- Service Price & Duration -->
+		<div class="mt-4 flex items-end justify-between">
+			<p class="text-primary text-xl font-bold">₩{comma(service.price)}</p>
+			{#if service.duration}
+				<p class="text-sm text-gray-500">예상 작업 기간: {service.duration}</p>
+			{/if}
+		</div>
+
+		<!-- Category Badge -->
+		{#if service.category}
+			<div class="mt-3">
+				<span class="inline-block rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-600">
+					{service.category}
+				</span>
+			</div>
+		{/if}
+
+		<!-- Status Badge (승인 대기/거절된 경우 표시) -->
+		{#if service.status === 'pending_approval'}
+			<div class="mt-4 rounded-lg bg-yellow-50 p-4">
+				<p class="text-sm font-medium text-yellow-800">승인 대기 중</p>
+				<p class="mt-1 text-xs text-yellow-600">관리자 승인 후 다른 사용자에게 공개됩니다.</p>
+			</div>
+		{:else if service.status === 'rejected'}
+			<div class="mt-4 rounded-lg bg-red-50 p-4">
+				<p class="text-sm font-medium text-red-800">등록이 거절되었습니다</p>
+				{#if service.admin_reject_reason}
+					<p class="mt-1 text-xs text-red-600">사유: {service.admin_reject_reason}</p>
+				{/if}
+			</div>
+		{/if}
 
 		<!-- Service Description -->
-
-		<!-- <div class="min-h-[184px] w-full rounded-[7px] bg-gray-50 px-5 py-4">
-				<div class="text-sm whitespace-pre-wrap">{@html service.content}</div>
-			</div> -->
-
 		<div
 			class="prose prose-sm mt-6 max-w-none leading-relaxed"
 			style="white-space: pre-line;"
 		>
 			{@html service.content}
 		</div>
+
+		<!-- Target Audience -->
+		{#if service.target_audience}
+			<div class="mt-8">
+				<h2 class="mb-3 text-base font-bold text-gray-900">이런 분께 추천드립니다</h2>
+				<div class="whitespace-pre-wrap text-sm text-gray-700">
+					{service.target_audience}
+				</div>
+			</div>
+		{/if}
+
+		<!-- Work Process & Deliverables -->
+		{#if (service.work_process?.length > 0) || (service.deliverables?.length > 0)}
+			<div class="mt-8">
+				<h2 class="mb-4 text-base font-bold text-gray-900">서비스 진행 안내</h2>
+				<ServiceProposal
+					steps={service.work_process || []}
+					deliverables={service.deliverables || []}
+					price={service.price}
+					duration={service.duration || '협의'}
+					includes={service.includes || []}
+				/>
+			</div>
+		{/if}
+
+		<!-- Revision Policy -->
+		{#if service.revision_policy}
+			<div class="mt-8">
+				<h2 class="mb-3 text-base font-bold text-gray-900">수정 및 재진행</h2>
+				<div class="rounded-xl bg-gray-50 p-4 text-sm whitespace-pre-wrap text-gray-700">
+					{service.revision_policy}
+				</div>
+			</div>
+		{/if}
+
+		<!-- Refund Policy -->
+		{#if service.refund_policy}
+			<div class="mt-8">
+				<h2 class="mb-3 text-base font-bold text-gray-900">취소 및 환불 규정</h2>
+				<div class="rounded-xl bg-gray-50 p-4 text-sm whitespace-pre-wrap text-gray-700">
+					{service.refund_policy}
+				</div>
+			</div>
+		{/if}
+
+		<!-- FAQ -->
+		{#if service.faq?.length > 0}
+			<div class="mt-8">
+				<h2 class="mb-4 text-base font-bold text-gray-900">자주 묻는 질문</h2>
+				<div class="space-y-3">
+					{#each service.faq as faq}
+						<div class="rounded-xl bg-gray-50 p-4">
+							<p class="mb-2 font-medium text-gray-900">Q. {faq.question}</p>
+							<p class="text-sm text-gray-600">A. {faq.answer}</p>
+						</div>
+					{/each}
+				</div>
+			</div>
+		{/if}
 
 		<style>
 			.prose p {
@@ -737,10 +828,14 @@
 				</button>
 				<button
 					onclick={() => {
-						copy_to_clipboard(
-							service.contact_info,
-							'문의 링크가 복사되었습니다.',
-						);
+						if (seller_contact?.contact_phone) {
+							copy_to_clipboard(
+								seller_contact.contact_phone,
+								'판매자 연락처가 복사되었습니다.',
+							);
+						} else {
+							show_toast('info', '판매자 연락처가 등록되어 있지 않습니다.');
+						}
 					}}
 					class="btn flex h-9 flex-1 items-center justify-center border-none bg-gray-100"
 				>
@@ -853,84 +948,14 @@
 </Modal>
 
 <!-- Review Modal -->
-<Modal bind:is_modal_open={is_review_modal_open} modal_position="center">
-	<div class="p-5">
-		<p class="text-[16px] font-semibold text-gray-900">
-			{editing_review ? '리뷰 수정' : '리뷰 작성'}
-		</p>
-
-		<div class="mt-5 space-y-4">
-			<div>
-				<p class="mb-2 text-[14px] font-medium text-gray-700">별점</p>
-				<StarRating
-					bind:rating={review_form_data.rating}
-					size={24}
-					show_rating_text={true}
-				/>
-			</div>
-
-			<div>
-				<p class="mb-2 text-[14px] font-medium text-gray-700">리뷰 제목</p>
-				<input
-					bind:value={review_form_data.title}
-					type="text"
-					placeholder="리뷰 제목을 입력해주세요"
-					class="w-full rounded-lg border border-gray-200 px-4 py-3 text-[15px] text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:outline-none"
-				/>
-			</div>
-
-			<div>
-				<p class="mb-2 text-[14px] font-medium text-gray-700">리뷰 내용</p>
-				<textarea
-					bind:value={review_form_data.content}
-					placeholder="서비스에 대한 자세한 리뷰를 작성해주세요"
-					class="w-full resize-none rounded-lg border border-gray-200 px-4 py-3 text-[15px] text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:outline-none"
-					rows="4"
-				></textarea>
-			</div>
-		</div>
-
-		<div class="mt-5 flex gap-2">
-			<button
-				onclick={() => {
-					is_review_modal_open = false;
-					editing_review = null;
-				}}
-				class="flex-1 rounded-lg bg-gray-100 py-3 text-[14px] font-medium text-gray-700 active:bg-gray-200"
-			>
-				취소
-			</button>
-			<button
-				onclick={handle_review_submit}
-				disabled={is_submitting_review || !is_review_form_valid}
-				class="flex-1 rounded-lg bg-blue-500 py-3 text-[14px] font-medium text-white active:bg-blue-600 disabled:bg-gray-300 disabled:text-gray-500"
-			>
-				{#if is_submitting_review}
-					<span class="flex items-center justify-center">
-						<svg class="mr-2 h-4 w-4 animate-spin" viewBox="0 0 24 24">
-							<circle
-								class="opacity-25"
-								cx="12"
-								cy="12"
-								r="10"
-								stroke="currentColor"
-								stroke-width="4"
-							></circle>
-							<path
-								class="opacity-75"
-								fill="currentColor"
-								d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-							></path>
-						</svg>
-						{editing_review ? '수정 중...' : '작성 중...'}
-					</span>
-				{:else}
-					{editing_review ? '수정하기' : '작성하기'}
-				{/if}
-			</button>
-		</div>
-	</div>
-</Modal>
+<ReviewModal
+	bind:is_open={is_review_modal_open}
+	is_editing={!!editing_review}
+	is_submitting={is_submitting_review}
+	bind:form_data={review_form_data}
+	on_submit={handle_review_submit}
+	on_close={() => (editing_review = null)}
+/>
 
 <!-- Service Config Modal -->
 <Modal
@@ -951,6 +976,27 @@
 				<RiPencilLine size={20} class="text-gray-500" />
 				<span class="text-[15px] text-gray-900">수정하기</span>
 			</a>
+
+			<hr class="border-gray-100" />
+
+			<button
+				onclick={() => {
+					is_service_config_modal_open = false;
+					show_delete_modal = true;
+				}}
+				class="flex w-full items-center gap-3 px-4 py-4 active:bg-gray-50"
+			>
+				<RiDeleteBinLine size={20} class="text-red-500" />
+				<span class="text-[15px] text-red-500">삭제하기</span>
+			</button>
 		</div>
 	</div>
 </Modal>
+
+<ConfirmModal
+	bind:is_open={show_delete_modal}
+	title="서비스를 삭제할까요?"
+	description="삭제된 서비스는 복구할 수 없습니다."
+	button_2_text="삭제"
+	button_2_action={handle_delete_service}
+/>

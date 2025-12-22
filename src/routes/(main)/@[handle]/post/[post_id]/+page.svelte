@@ -32,8 +32,8 @@
 	import Header from '$lib/components/ui/Header.svelte';
 	import Icon from '$lib/components/ui/Icon.svelte';
 	import Modal from '$lib/components/ui/Modal.svelte';
-	import Comment from '$lib/components/Comment.svelte';
-	import Post from '$lib/components/Post.svelte';
+	import Comment from '$lib/components/domain/post/Comment.svelte';
+	import Post from '$lib/components/domain/post/Post.svelte';
 
 	const me = get_user_context();
 	const api = get_api_context();
@@ -364,28 +364,32 @@
 </svelte:head>
 
 <Header>
-	<button slot="left" class="flex items-center" onclick={smart_go_back}>
-		<RiArrowLeftSLine size={28} color={colors.gray[600]} />
-	</button>
+	{#snippet left()}
+		<button class="flex items-center" onclick={smart_go_back}>
+			<RiArrowLeftSLine size={28} color={colors.gray[600]} />
+		</button>
+	{/snippet}
+	{#snippet center()}
+		<h1 class="text-medium">{TITLE}</h1>
+	{/snippet}
+	{#snippet right()}
+		<button
+			onclick={() => {
+				if (!check_login(me)) return;
 
-	<h1 slot="center" class="text-medium">{TITLE}</h1>
-	<button
-		slot="right"
-		onclick={() => {
-			if (!check_login(me)) return;
-
-			modal.post_config = true;
-		}}
-	>
-		<Icon attribute="menu" size={24} color={colors.gray[600]} />
-	</button>
+				modal.post_config = true;
+			}}
+		>
+			<Icon attribute="menu" size={24} color={colors.gray[600]} />
+		</button>
+	{/snippet}
 </Header>
 
 <Post
 	{post}
-	onGiftCommentAdded={handle_gift_comment_added}
-	onBookmarkChanged={handle_bookmark_changed}
-	onVoteChanged={handle_vote_changed}
+	on_gift_comment_added={handle_gift_comment_added}
+	on_bookmark_changed={handle_bookmark_changed}
+	on_vote_changed={handle_vote_changed}
 />
 
 <main>
@@ -394,15 +398,15 @@
 			<Comment
 				post_id={post.id}
 				{comment}
-				onReplyAdded={handle_reply_added}
-				onGiftCommentAdded={handle_gift_comment_added}
-				onCommentDeleted={handle_comment_deleted}
+				on_reply_added={handle_reply_added}
+				on_gift_comment_added={handle_gift_comment_added}
+				on_comment_deleted={handle_comment_deleted}
 			/>
 		{/each}
 	</div>
 </main>
 
-<CommentInput onLeaveComment={leave_post_comment} />
+<CommentInput on_leave_comment={leave_post_comment} />
 
 <Modal bind:is_modal_open={modal.post_config} modal_position="bottom">
 	<div>
@@ -519,7 +523,7 @@
 			커뮤니티 가이드라인에 어긋나는 내용을 알려주세요.
 		</p>
 
-		<div class="mt-4 space-y-2">
+		<div class="mt-4">
 			{#each REPORT_REASONS as reason}
 				<label
 					class="flex cursor-pointer items-center rounded-lg px-3 py-2.5 active:bg-gray-50"

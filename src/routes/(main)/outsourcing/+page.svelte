@@ -1,14 +1,14 @@
 <script>
-	import { create_expert_request_data } from '$lib/composables/use_expert_request_data.svelte.js';
+	import { create_work_request_data } from '$lib/composables/use_work_request_data.svelte.js';
 	import { create_infinite_scroll } from '$lib/composables/use_infinite_scroll.svelte.js';
-	import { get_api_context } from '$lib/contexts/app_context.svelte.js';
+	import { get_api_context, get_user_context } from '$lib/contexts/app_context.svelte.js';
 	import five_thousand_coupon_png from '$lib/img/common/banner/5,000_coupon.png';
 	import leave_opinion_png from '$lib/img/common/banner/leave_opinion.png';
 
 	import Bottom_nav from '$lib/components/ui/Bottom_nav.svelte';
 	import Header from '$lib/components/ui/Header.svelte';
 	import TabSelector from '$lib/components/ui/TabSelector.svelte';
-	import ExpertRequestTab from '$lib/components/ExpertRequestTab.svelte';
+	import WorkRequestTab from '$lib/components/domain/outsourcing/WorkRequestTab.svelte';
 
 	import Banner from '../service/Banner.svelte';
 	import SearchInput from '../service/SearchInput.svelte';
@@ -32,49 +32,48 @@
 
 	// ===== Context =====
 	const api = get_api_context();
+	const me = get_user_context();
 
 	// ===== Props =====
 	let { data } = $props();
+
+	// ===== Bookmark State =====
+	let bookmarked_ids = $state(data.bookmarked_ids || []);
 
 	// ===== State =====
 	let selected_tab = $state(0);
 	let search_text = $state('');
 
 	// ===== Helper Functions =====
-	/**
-	 * 무한 스크롤 설정을 생성하는 헬퍼 함수
-	 * @param {Object} data - expert request 데이터 객체
-	 * @returns {Object} 무한 스크롤 설정 객체
-	 */
-	function create_infinite_scroll_config(data) {
+	function create_infinite_scroll_config(request_data) {
 		return {
 			items: {
 				get value() {
-					return data.expert_requests;
+					return request_data.work_requests;
 				},
 			},
-			loadMore: data.load_more_expert_requests,
+			loadMore: request_data.load_more_work_requests,
 			isLoading: {
 				get value() {
-					return data.is_infinite_loading;
+					return request_data.is_infinite_loading;
 				},
 				set value(val) {
-					data.is_infinite_loading = val;
+					request_data.is_infinite_loading = val;
 				},
 			},
-			targetId: 'expert_infinite_scroll',
+			targetId: 'work_infinite_scroll',
 		};
 	}
 
 	// ===== Data Management =====
-	const sidejob_data = create_expert_request_data(
-		{ expert_requests: data.sidejob_requests || [] },
+	const sidejob_data = create_work_request_data(
+		{ work_requests: data.sidejob_requests || [] },
 		api,
 		JOB_TYPES[0],
 	);
 
-	const fulltime_data = create_expert_request_data(
-		{ expert_requests: data.fulltime_requests || [] },
+	const fulltime_data = create_work_request_data(
+		{ work_requests: data.fulltime_requests || [] },
 		api,
 		JOB_TYPES[1],
 	);
@@ -87,56 +86,40 @@
 	);
 
 	// ===== Derived State =====
-	/**
-	 * 현재 선택된 탭의 데이터
-	 * @type {Object}
-	 */
-	const current_data = $derived(
-		selected_tab === 0 ? sidejob_data : fulltime_data,
-	);
-
-	/**
-	 * 현재 선택된 탭의 무한 스크롤 설정
-	 * @type {Object}
-	 */
-	const current_infinite_scroll = $derived(
-		selected_tab === 0 ? sidejob_infinite_scroll : fulltime_infinite_scroll,
-	);
-
-	/**
-	 * 현재 선택된 작업 유형
-	 * @type {string}
-	 */
-	const current_job_type = $derived(JOB_TYPES[selected_tab]);
-
-	/**
-	 * 현재 탭의 초기 데이터
-	 * @type {Array}
-	 */
-	const initial_requests = $derived(
-		selected_tab === 0 ? data.sidejob_requests : data.fulltime_requests,
-	);
+	// 탭에 따라 달라지는 값들을 하나의 derived로 통합
+	const current = $derived.by(() => {
+		const is_sidejob = selected_tab === 0;
+		return {
+			data: is_sidejob ? sidejob_data : fulltime_data,
+			infinite_scroll: is_sidejob ? sidejob_infinite_scroll : fulltime_infinite_scroll,
+			job_type: JOB_TYPES[selected_tab],
+			initial_requests: is_sidejob ? data.sidejob_requests : data.fulltime_requests,
+		};
+	});
 
 	// ===== Event Handlers =====
-	/**
-	 * 검색 실행 핸들러
-	 * 검색어가 있으면 검색, 없으면 초기 데이터로 복원
-	 * @returns {Promise<void>}
-	 */
 	const handle_search = async () => {
 		const trimmed = search_text.trim();
 
 		if (trimmed) {
-			const results = await api.expert_requests.select_by_search(trimmed);
-			current_data.expert_requests = results;
+			const results = await api.work_requests.select_by_search(trimmed);
+			current.data.work_requests = results;
 		} else {
-			current_data.expert_requests = initial_requests;
+			current.data.work_requests = current.initial_requests;
 		}
 
-		// 무한 스크롤 lastId 업데이트
 		const last_request =
-			current_data.expert_requests[current_data.expert_requests.length - 1];
-		current_infinite_scroll.lastId = last_request?.id || '';
+			current.data.work_requests[current.data.work_requests.length - 1];
+		current.infinite_scroll.lastId = last_request?.id || '';
+	};
+
+	// 북마크 변경 핸들러
+	const handle_bookmark_changed = (event) => {
+		if (event.action === 'add') {
+			bookmarked_ids = [...bookmarked_ids, String(event.work_request_id)];
+		} else {
+			bookmarked_ids = bookmarked_ids.filter(id => id !== String(event.work_request_id));
+		}
 	};
 </script>
 
@@ -149,7 +132,9 @@
 </svelte:head>
 
 <Header>
-	<h1 slot="left" class="font-semibold">{TITLE}</h1>
+	{#snippet left()}
+		<h1 class="font-semibold">{TITLE}</h1>
+	{/snippet}
 </Header>
 
 <main>
@@ -165,10 +150,12 @@
 		<Banner images={BANNER_IMAGES} />
 	</section>
 
-	<ExpertRequestTab
-		expert_request_data={current_data}
-		infinite_scroll={current_infinite_scroll}
-		job_type={current_job_type}
+	<WorkRequestTab
+		work_request_data={current.data}
+		infinite_scroll={current.infinite_scroll}
+		job_type={current.job_type}
+		{bookmarked_ids}
+		on_bookmark_changed={handle_bookmark_changed}
 	/>
 </main>
 

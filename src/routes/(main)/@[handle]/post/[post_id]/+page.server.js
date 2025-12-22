@@ -28,13 +28,10 @@ export const load = async ({ params, parent, locals: { supabase }, url }) => {
 	let post_with_interactions = post;
 
 	if (user?.id && post) {
-		const [all_votes, all_bookmarks] = await Promise.all([
-			api.post_votes.select_by_user_id(user.id),
-			api.post_bookmarks.select_by_user_id_lightweight(user.id),
+		const [votes, bookmarks] = await Promise.all([
+			api.post_votes.select_by_post_ids(user.id, [post.id]),
+			api.post_bookmarks.select_by_post_ids(user.id, [post.id]),
 		]);
-
-		const votes = all_votes.filter((v) => v.post_id === post.id);
-		const bookmarks = all_bookmarks.filter((b) => b.post_id === post.id);
 
 		post_with_interactions = {
 			...post,

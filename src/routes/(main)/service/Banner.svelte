@@ -1,11 +1,11 @@
 <script>
 	import { onMount } from 'svelte';
 
-	export let images;
+	let { images } = $props();
 
-	let screen_size;
-	let active_index = 0;
-	let carousel_container;
+	let screen_size = $state(0);
+	let active_index = $state(0);
+	let carousel_container = $state(null);
 
 	onMount(() => {
 		const timer = setInterval(scroll_to_next, 5000);
@@ -105,7 +105,8 @@
 			<li class="shrink-0 snap-center">
 				<a
 					href={`#${get_item_id(index)}`}
-					on:click|preventDefault={() => {
+					onclick={(e) => {
+						e.preventDefault();
 						active_index = index;
 						scroll_to_next();
 					}}>{title}</a

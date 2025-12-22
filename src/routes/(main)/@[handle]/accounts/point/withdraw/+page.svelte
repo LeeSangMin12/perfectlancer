@@ -1,0 +1,221 @@
+<script>
+	import {
+		get_api_context,
+		get_user_context,
+	} from '$lib/contexts/app_context.svelte.js';
+	import { comma, show_toast } from '$lib/utils/common';
+	import { smart_go_back } from '$lib/utils/navigation';
+	import { RiArrowLeftSLine, RiArrowRightSLine } from 'svelte-remixicon';
+
+	import Header from '$lib/components/ui/Header.svelte';
+
+	const me = get_user_context();
+	const api = get_api_context();
+
+	let { data } = $props();
+	let bank_account = $derived(data.bank_account);
+	let pending_withdrawals = $state(data.pending_withdrawals || []);
+
+	// 폼
+	let amount = $state('');
+	let submitting = $state(false);
+
+	const amounts = [10000, 30000, 50000, 100000];
+	const balance = $derived(me?.point || 0);
+
+	function set_amount(val) {
+		amount = String(Math.min(val, balance));
+	}
+
+	function set_all() {
+		amount = String(balance);
+	}
+
+	function on_amount_input(e) {
+		const val = e.target.value.replace(/[^0-9]/g, '');
+		amount = val;
+	}
+
+	const num_amount = $derived(Number(amount) || 0);
+	const display_amount = $derived(amount ? comma(num_amount) : '');
+	const is_over = $derived(num_amount > balance);
+	const has_pending = $derived(pending_withdrawals.length > 0);
+	const can_submit = $derived(
+		num_amount >= 1000 && num_amount <= balance && bank_account && !has_pending,
+	);
+
+	async function submit() {
+		if (!can_submit || submitting) return;
+
+		submitting = true;
+		try {
+			const result = await api.point_withdrawals.insert({
+				user_id: me.id,
+				amount: num_amount,
+				bank: bank_account.bank,
+				account_number: bank_account.account_number,
+				account_holder: bank_account.account_holder,
+				account_type: bank_account.account_type,
+			});
+			pending_withdrawals = [result, ...pending_withdrawals];
+			amount = '';
+			show_toast('success', '출금 신청이 완료되었어요');
+		} catch (e) {
+			show_toast('error', '출금 신청에 실패했어요');
+		} finally {
+			submitting = false;
+		}
+	}
+</script>
+
+<svelte:head>
+	<title>출금하기 | 문</title>
+</svelte:head>
+
+<Header>
+	{#snippet left()}
+		<button onclick={smart_go_back}>
+			<RiArrowLeftSLine size={24} class="text-gray-800" />
+		</button>
+	{/snippet}
+	{#snippet center()}
+		<span class="text-[17px] font-semibold">출금하기</span>
+	{/snippet}
+</Header>
+
+<main class="min-h-screen bg-gray-50 pb-32">
+	<!-- 잔액 -->
+	<section class="bg-white px-5 py-5">
+		<p class="text-[13px] text-gray-500">출금 가능</p>
+		<p class="mt-1 text-[24px] font-bold text-gray-900">{comma(balance)}원</p>
+	</section>
+
+	<!-- 출금 계좌 -->
+	<section class="mt-2 bg-white">
+		<a
+			href={`/@${me?.handle}/accounts/point/bank-account`}
+			class="flex items-center justify-between px-5 py-4 active:bg-gray-50"
+		>
+			<div>
+				<p class="text-[13px] text-gray-500">출금 계좌</p>
+				{#if bank_account}
+					<p class="mt-1 text-[15px] font-medium text-gray-900">
+						{bank_account.bank}
+						{bank_account.account_number}
+					</p>
+					<p class="text-[13px] text-gray-500">{bank_account.account_holder}</p>
+				{:else}
+					<p class="mt-1 text-[15px] font-medium text-orange-500">
+						계좌를 등록해주세요
+					</p>
+				{/if}
+			</div>
+			<RiArrowRightSLine size={20} class="text-gray-400" />
+		</a>
+	</section>
+
+	<!-- 대기 중인 출금이 있으면 -->
+	{#if has_pending}
+		<section class="mt-2 bg-white px-5 py-5">
+			<div class="rounded-xl bg-orange-50 p-4 text-center">
+				<p class="text-[15px] font-medium text-orange-600">출금 대기 중</p>
+				<p class="mt-1 text-[13px] text-orange-500">
+					처리 완료 후 추가 출금이 가능해요
+				</p>
+			</div>
+			<ul class="mt-4 space-y-3">
+				{#each pending_withdrawals as w}
+					<li class="flex items-center justify-between rounded-lg bg-gray-50 px-4 py-3">
+						<div>
+							<p class="text-[15px] font-medium text-gray-900">
+								{comma(w.amount)}원
+							</p>
+							{#if w.bank}
+								<p class="text-[12px] text-gray-400">{w.bank} {w.account_number}</p>
+							{/if}
+						</div>
+						<span class="text-[13px] font-medium text-orange-500">처리 중</span>
+					</li>
+				{/each}
+			</ul>
+		</section>
+	{:else if bank_account}
+		<!-- 금액 입력 -->
+		<section class="mt-2 bg-white px-5 py-5">
+			<p class="text-[13px] text-gray-500">출금 금액</p>
+			<div class="relative mt-3">
+				<input
+					type="text"
+					inputmode="numeric"
+					value={display_amount}
+					oninput={on_amount_input}
+					placeholder="0"
+					class="w-full border-0 border-b-2 bg-transparent pb-2 text-[28px] font-bold placeholder-gray-300 focus:outline-none
+						{is_over
+						? 'border-red-300 text-red-500 focus:border-red-500'
+						: 'border-gray-200 text-gray-900 focus:border-gray-900'}"
+				/>
+				<span
+					class="absolute right-0 bottom-2 text-[20px] font-semibold text-gray-400"
+					>원</span
+				>
+			</div>
+
+			{#if is_over}
+				<p class="mt-2 text-[13px] text-red-500">잔액이 부족해요</p>
+			{/if}
+
+			<div class="mt-4 flex gap-2">
+				{#each amounts as amt}
+					<button
+						onclick={() => set_amount(amt)}
+						disabled={amt > balance}
+						class="flex-1 rounded-lg py-2.5 text-[13px] font-medium
+							{amt > balance
+							? 'cursor-not-allowed bg-gray-50 text-gray-300'
+							: 'bg-gray-100 text-gray-700 active:bg-gray-200'}"
+					>
+						+{comma(amt)}
+					</button>
+				{/each}
+			</div>
+
+			<button
+				onclick={set_all}
+				class="mt-2 w-full rounded-lg bg-gray-100 py-2.5 text-[13px] font-medium text-gray-700 active:bg-gray-200"
+			>
+				전액
+			</button>
+		</section>
+	{/if}
+
+	<!-- 안내 -->
+	<section class="px-5 py-5">
+		<ul class="space-y-1.5 text-[12px] text-gray-400">
+			<li>• 출금 수수료는 무료예요</li>
+			<li>• 영업일 기준 1주일 내 처리됩니다</li>
+			<li>• 최소 출금 금액은 1,000원입니다</li>
+		</ul>
+	</section>
+</main>
+
+<!-- 하단 버튼 -->
+{#if bank_account}
+	<div class="fixed bottom-0 w-full max-w-screen-md bg-white p-4">
+		<div class="pb-safe">
+			<button
+				onclick={submit}
+				disabled={!can_submit || submitting || has_pending}
+				class="btn w-full {has_pending || submitting ? 'btn-gray' : 'btn-primary'}"
+			>
+				{#if has_pending}
+					출금 대기중
+				{:else if submitting}
+					처리 중...
+				{:else}
+					출금 신청하기
+				{/if}
+			</button>
+		</div>
+	</div>
+{/if}

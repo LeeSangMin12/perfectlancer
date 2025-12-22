@@ -1,7 +1,5 @@
 <script>
-	export let tabs = [];
-	export let selected = 0;
-	export let on_change = () => {};
+	let { tabs = [], selected = $bindable(0), on_change = () => {} } = $props();
 
 	const handle_change = (i) => {
 		selected = i;

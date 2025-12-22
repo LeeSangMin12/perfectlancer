@@ -16,10 +16,14 @@
 </svelte:head>
 
 <Header>
-	<button slot="left" class="flex items-center" onclick={smart_go_back}>
-		<RiArrowLeftSLine size={24} color={colors.gray[600]} />
-	</button>
-	<h1 slot="center" class="font-semibold">{TITLE}</h1>
+	{#snippet left()}
+		<button class="flex items-center" onclick={smart_go_back}>
+			<RiArrowLeftSLine size={24} color={colors.gray[600]} />
+		</button>
+	{/snippet}
+	{#snippet center()}
+		<h1 class="font-semibold">{TITLE}</h1>
+	{/snippet}
 </Header>
 
 <main>

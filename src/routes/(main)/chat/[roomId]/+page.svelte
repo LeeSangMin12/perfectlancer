@@ -16,17 +16,19 @@
 </script>
 
 <Header>
-	<div slot="left">
+	{#snippet left()}
 		<button class="flex items-center" onclick={smart_go_back}>
 			<RiArrowLeftSLine size={28} color={colors.gray[600]} />
 		</button>
-	</div>
-	<h1 slot="center" class="text-medium">이상민</h1>
-	<div slot="right">
+	{/snippet}
+	{#snippet center()}
+		<h1 class="text-medium">이상민</h1>
+	{/snippet}
+	{#snippet right()}
 		<button class="flex items-center">
 			<Icon attribute="menu" size={24} color={colors.gray[600]} />
 		</button>
-	</div>
+	{/snippet}
 </Header>
 
 <main class="px-4">

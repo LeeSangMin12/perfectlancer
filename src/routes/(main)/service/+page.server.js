@@ -21,12 +21,14 @@ export async function load({ params, parent, locals: { supabase } }) {
 	const result = { services };
 
 	if (user?.id) {
-		result.service_likes = api.service_likes
-			.select_by_user_id(user.id)
-			.catch((error) => {
-				console.error('Failed to load service likes:', error);
-				return [];
-			});
+		try {
+			result.service_likes = await api.service_likes.select_by_user_id(user.id);
+		} catch (error) {
+			console.error('Failed to load service likes:', error);
+			result.service_likes = [];
+		}
+	} else {
+		result.service_likes = [];
 	}
 
 	return result;
