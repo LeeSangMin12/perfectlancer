@@ -62,7 +62,7 @@ export const create_services_api = (supabase) => ({
 	},
 
 	/**
-	 * 제목으로 서비스 검색
+	 * 제목으로 서비스 검색 (공개된 서비스만)
 	 * @param {string} search_text - 검색어
 	 * @returns {Promise<Array>} 검색된 서비스 목록
 	 */
@@ -70,6 +70,7 @@ export const create_services_api = (supabase) => ({
 		const { data, error } = await supabase
 			.from('services')
 			.select('*')
+			.eq('status', 'open')
 			.ilike('title', `%${search_text}%`)
 			.order('created_at', { ascending: false });
 
@@ -79,7 +80,7 @@ export const create_services_api = (supabase) => ({
 	},
 
 	/**
-	 * 무한 스크롤 방식으로 서비스 목록 조회
+	 * 무한 스크롤 방식으로 서비스 목록 조회 (공개된 서비스만)
 	 * @param {string} last_service_id - 마지막 서비스 ID (페이지네이션)
 	 * @param {number} limit - 조회 개수 (기본 20)
 	 * @returns {Promise<Array>} 서비스 목록
@@ -88,6 +89,7 @@ export const create_services_api = (supabase) => ({
 		let query = supabase
 			.from('services')
 			.select('id, title, author_id, images, created_at, price, rating, rating_count')
+			.eq('status', 'open')
 			.order('created_at', { ascending: false })
 			.limit(limit);
 
@@ -127,12 +129,78 @@ export const create_services_api = (supabase) => ({
 	select_by_user_id: async (user_id) => {
 		const { data, error } = await supabase
 			.from('services')
-			.select('id, title, author_id, images, created_at, price, rating, rating_count, visibility, contact_info, updated_at, users:author_id(id, name, avatar_url, handle)')
+			.select('id, title, author_id, images, created_at, price, rating, rating_count, visibility, contact_info, updated_at, status, users:author_id(id, name, avatar_url, handle)')
 			.eq('author_id', user_id)
 			.order('created_at', { ascending: false });
 
 		if (error) throw new Error(`Failed to fetch user services: ${error.message}`);
 
 		return data || [];
+	},
+
+	/**
+	 * 관리자용: 전체 서비스 목록 조회
+	 * @returns {Promise<Array>} 서비스 목록 (작성자 정보 포함)
+	 */
+	select_all_for_admin: async () => {
+		const { data, error } = await supabase
+			.from('services')
+			.select('id, title, author_id, images, created_at, price, rating, rating_count, status, category, users:author_id(id, name, avatar_url, handle)')
+			.order('created_at', { ascending: false });
+
+		if (error) throw new Error(`Failed to fetch all services: ${error.message}`);
+
+		return data || [];
+	},
+
+	/**
+	 * 관리자용: 승인 대기 중인 서비스 목록 조회
+	 * @returns {Promise<Array>} 승인 대기 서비스 목록
+	 */
+	select_pending: async () => {
+		const { data, error } = await supabase
+			.from('services')
+			.select('id, title, author_id, images, created_at, price, category, users:author_id(id, name, avatar_url, handle)')
+			.eq('status', 'pending_approval')
+			.order('created_at', { ascending: false });
+
+		if (error) throw new Error(`Failed to fetch pending services: ${error.message}`);
+
+		return data || [];
+	},
+
+	/**
+	 * 서비스 승인
+	 * @param {number} id - 서비스 ID
+	 * @returns {Promise<void>}
+	 */
+	approve: async (id) => {
+		const { error } = await supabase
+			.from('services')
+			.update({
+				status: 'open',
+				approved_at: new Date().toISOString(),
+			})
+			.eq('id', id);
+
+		if (error) throw new Error(`Failed to approve service: ${error.message}`);
+	},
+
+	/**
+	 * 서비스 거절
+	 * @param {number} id - 서비스 ID
+	 * @param {string} reason - 거절 사유
+	 * @returns {Promise<void>}
+	 */
+	reject: async (id, reason) => {
+		const { error } = await supabase
+			.from('services')
+			.update({
+				status: 'rejected',
+				admin_reject_reason: reason,
+			})
+			.eq('id', id);
+
+		if (error) throw new Error(`Failed to reject service: ${error.message}`);
 	},
 });

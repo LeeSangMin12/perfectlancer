@@ -5,8 +5,18 @@
 		backdrop_opacity = 'bg-black/50',
 		disable_backdrop_close = false,
 		on_modal_close,
+		size = 'default',
 		children
 	} = $props();
+
+	const size_classes = {
+		sm: 'max-w-sm',
+		default: 'max-w-xl',
+		lg: 'max-w-2xl',
+		full: 'max-w-4xl'
+	};
+
+	const modal_size = $derived(size_classes[size] || size_classes.default);
 
 	const close_modal = () => {
 		is_modal_open = false;
@@ -20,7 +30,7 @@
 			class={`scrollbar-hide fixed inset-0 z-50 flex items-center justify-center overflow-auto bg-black px-5 ${backdrop_opacity}`}
 		>
 			<div
-				class="scrollbar-hide relative z-10 max-h-[75vh] w-full max-w-xl overflow-y-auto rounded-lg bg-white"
+				class="scrollbar-hide relative z-10 max-h-[75vh] w-full {modal_size} overflow-y-auto rounded-lg bg-white"
 			>
 				{@render children?.()}
 			</div>

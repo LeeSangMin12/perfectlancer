@@ -35,6 +35,7 @@
 	import Modal from '$lib/components/ui/Modal.svelte';
 	import StarRating from '$lib/components/ui/StarRating.svelte';
 	import ReviewModal from '$lib/components/modals/ReviewModal.svelte';
+	import ServiceProposal from '$lib/components/domain/service/ServiceProposal.svelte';
 
 	const me = get_user_context();
 	const api = get_api_context();
@@ -593,21 +594,104 @@
 			</div>
 		{/key}
 
-		<!-- Service Price -->
-		<p class="text-primary mt-4 text-xl font-bold">₩{comma(service.price)}</p>
+		<!-- Service Price & Duration -->
+		<div class="mt-4 flex items-end justify-between">
+			<p class="text-primary text-xl font-bold">₩{comma(service.price)}</p>
+			{#if service.duration}
+				<p class="text-sm text-gray-500">예상 작업 기간: {service.duration}</p>
+			{/if}
+		</div>
+
+		<!-- Category Badge -->
+		{#if service.category}
+			<div class="mt-3">
+				<span class="inline-block rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-600">
+					{service.category}
+				</span>
+			</div>
+		{/if}
+
+		<!-- Status Badge (승인 대기/거절된 경우 표시) -->
+		{#if service.status === 'pending_approval'}
+			<div class="mt-4 rounded-lg bg-yellow-50 p-4">
+				<p class="text-sm font-medium text-yellow-800">승인 대기 중</p>
+				<p class="mt-1 text-xs text-yellow-600">관리자 승인 후 다른 사용자에게 공개됩니다.</p>
+			</div>
+		{:else if service.status === 'rejected'}
+			<div class="mt-4 rounded-lg bg-red-50 p-4">
+				<p class="text-sm font-medium text-red-800">등록이 거절되었습니다</p>
+				{#if service.admin_reject_reason}
+					<p class="mt-1 text-xs text-red-600">사유: {service.admin_reject_reason}</p>
+				{/if}
+			</div>
+		{/if}
 
 		<!-- Service Description -->
-
-		<!-- <div class="min-h-[184px] w-full rounded-[7px] bg-gray-50 px-5 py-4">
-				<div class="text-sm whitespace-pre-wrap">{@html service.content}</div>
-			</div> -->
-
 		<div
 			class="prose prose-sm mt-6 max-w-none leading-relaxed"
 			style="white-space: pre-line;"
 		>
 			{@html service.content}
 		</div>
+
+		<!-- Target Audience -->
+		{#if service.target_audience}
+			<div class="mt-8">
+				<h2 class="mb-3 text-base font-bold text-gray-900">이런 분께 추천드립니다</h2>
+				<div class="whitespace-pre-wrap text-sm text-gray-700">
+					{service.target_audience}
+				</div>
+			</div>
+		{/if}
+
+		<!-- Work Process & Deliverables -->
+		{#if (service.work_process?.length > 0) || (service.deliverables?.length > 0)}
+			<div class="mt-8">
+				<h2 class="mb-4 text-base font-bold text-gray-900">서비스 진행 안내</h2>
+				<ServiceProposal
+					steps={service.work_process || []}
+					deliverables={service.deliverables || []}
+					price={service.price}
+					duration={service.duration || '협의'}
+					includes={service.includes || []}
+				/>
+			</div>
+		{/if}
+
+		<!-- Revision Policy -->
+		{#if service.revision_policy}
+			<div class="mt-8">
+				<h2 class="mb-3 text-base font-bold text-gray-900">수정 및 재진행</h2>
+				<div class="rounded-xl bg-gray-50 p-4 text-sm whitespace-pre-wrap text-gray-700">
+					{service.revision_policy}
+				</div>
+			</div>
+		{/if}
+
+		<!-- Refund Policy -->
+		{#if service.refund_policy}
+			<div class="mt-8">
+				<h2 class="mb-3 text-base font-bold text-gray-900">취소 및 환불 규정</h2>
+				<div class="rounded-xl bg-gray-50 p-4 text-sm whitespace-pre-wrap text-gray-700">
+					{service.refund_policy}
+				</div>
+			</div>
+		{/if}
+
+		<!-- FAQ -->
+		{#if service.faq?.length > 0}
+			<div class="mt-8">
+				<h2 class="mb-4 text-base font-bold text-gray-900">자주 묻는 질문</h2>
+				<div class="space-y-3">
+					{#each service.faq as faq}
+						<div class="rounded-xl bg-gray-50 p-4">
+							<p class="mb-2 font-medium text-gray-900">Q. {faq.question}</p>
+							<p class="text-sm text-gray-600">A. {faq.answer}</p>
+						</div>
+					{/each}
+				</div>
+			</div>
+		{/if}
 
 		<style>
 			.prose p {

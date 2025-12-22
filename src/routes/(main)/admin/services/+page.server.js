@@ -9,11 +9,15 @@ export async function load({ parent, locals: { supabase } }) {
 	const api = create_api(supabase);
 
 	try {
-		const services = await api.services.select();
+		const [all_services, pending_services] = await Promise.all([
+			api.services.select_all_for_admin(),
+			api.services.select_pending(),
+		]);
 
 		return {
 			user,
-			services,
+			all_services,
+			pending_services,
 		};
 	} catch (err) {
 		console.error('Admin services page load error:', err);
