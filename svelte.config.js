@@ -10,7 +10,7 @@ export default {
 		prerender: {
 			handleHttpError: 'warn',
 			handleMissingId: 'warn',
-			origin: 'https://moon.it.kr',
+			origin: 'https://perfectlancer.kr',
 		},
 	},
 };

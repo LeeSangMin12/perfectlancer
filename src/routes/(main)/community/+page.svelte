@@ -126,7 +126,7 @@
 </script>
 
 <svelte:head>
-	<title>커뮤니티 | 문</title>
+	<title>커뮤니티 | 퍼펙트랜서</title>
 	<meta
 		name="description"
 		content="다양한 주제와 관심사를 가진 사람들이 모여 소통하고 정보를 나누는 공간입니다."

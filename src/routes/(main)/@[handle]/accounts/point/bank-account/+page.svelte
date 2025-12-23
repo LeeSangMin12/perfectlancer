@@ -181,7 +181,7 @@
 </script>
 
 <svelte:head>
-	<title>출금 계좌 | 문</title>
+	<title>출금 계좌 | 퍼펙트랜서</title>
 </svelte:head>
 
 <Header>

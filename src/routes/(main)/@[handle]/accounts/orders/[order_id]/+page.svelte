@@ -159,7 +159,7 @@
 </script>
 
 <svelte:head>
-	<title>주문 상세 | 문</title>
+	<title>주문 상세 | 퍼펙트랜서</title>
 </svelte:head>
 
 <Header>

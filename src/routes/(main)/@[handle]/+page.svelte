@@ -337,7 +337,7 @@
 </script>
 
 <svelte:head>
-	<title>{user?.name || '사용자'}의 프로필 | 문</title>
+	<title>{user?.name || '사용자'}의 프로필 | 퍼펙트랜서</title>
 	<meta
 		name="description"
 		content={user?.self_introduction ||

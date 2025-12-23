@@ -124,7 +124,7 @@
 </script>
 
 <svelte:head>
-	<title>외주 | 문</title>
+	<title>외주 | 퍼펙트랜서</title>
 	<meta
 		name="description"
 		content="사이드잡부터 풀타임 외주까지 다양한 프로젝트를 찾아보세요."

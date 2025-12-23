@@ -27,8 +27,8 @@
 </script>
 
 <svelte:head>
-	<title>문 외주 무료 등록 쿠폰 이벤트 | 문</title>
-	<meta name="description" content="문 외주 무료 등록 쿠폰을 받아보세요!" />
+	<title>퍼펙트랜서 외주 무료 등록 쿠폰 이벤트 | 퍼펙트랜서</title>
+	<meta name="description" content="퍼펙트랜서 외주 무료 등록 쿠폰을 받아보세요!" />
 </svelte:head>
 
 <Header>
@@ -38,7 +38,7 @@
 		</button>
 	{/snippet}
 	{#snippet center()}
-		<h1 class="font-semibold">문 외주 무료 등록 쿠폰 이벤트</h1>
+		<h1 class="font-semibold">퍼펙트랜서 외주 무료 등록 쿠폰 이벤트</h1>
 	{/snippet}
 </Header>
 
@@ -47,7 +47,7 @@
 	<div class="relative">
 		<enhanced:img
 			src="./event.png"
-			alt="문 외주 무료 등록 쿠폰 이벤트"
+			alt="퍼펙트랜서 외주 무료 등록 쿠폰 이벤트"
 			class="block w-full"
 		/>
 

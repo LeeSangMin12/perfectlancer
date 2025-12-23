@@ -69,7 +69,7 @@
 </script>
 
 <svelte:head>
-	<title>출금하기 | 문</title>
+	<title>출금하기 | 퍼펙트랜서</title>
 </svelte:head>
 
 <Header>

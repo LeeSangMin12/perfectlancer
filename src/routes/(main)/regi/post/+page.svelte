@@ -224,7 +224,7 @@
 </script>
 
 <svelte:head>
-	<title>게시글 작성 | 문</title>
+	<title>게시글 작성 | 퍼펙트랜서</title>
 	<meta
 		name="description"
 		content="새로운 게시글을 작성하고 지식을 공유하세요. 이미지와 함께 풍부한 콘텐츠를 만들어보세요."

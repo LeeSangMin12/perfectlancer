@@ -22,7 +22,7 @@
 	import Post from '$lib/components/domain/post/Post.svelte';
 
 	// ===== Constants =====
-	const TITLE = '문';
+	const TITLE = '퍼펙트랜서';
 	const SKELETON_COUNT = 5;
 	const MAX_NOTIFICATION_BADGE = 99;
 
@@ -144,10 +144,10 @@
 </script>
 
 <svelte:head>
-	<title>전문가 매칭의 모든것, 문</title>
+	<title>전문가의 기준, 퍼펙트랜서</title>
 	<meta
 		name="description"
-		content="AI·마케팅·디자인·IT 등 다양한 분야의 전문가를 문에서 만나보세요."
+		content="AI·마케팅·디자인·IT 등 다양한 분야의 전문가를 퍼펙트랜서에서 만나보세요."
 	/>
 </svelte:head>
 

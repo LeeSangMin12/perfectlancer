@@ -25,7 +25,7 @@
 </script>
 
 <svelte:head>
-	<title>{TITLE} | 문</title>
+	<title>{TITLE} | 퍼펙트랜서</title>
 	<meta
 		name="description"
 		content="서비스 판매, 정산, 외주 관리를 한눈에 확인하세요."

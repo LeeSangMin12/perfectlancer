@@ -60,7 +60,7 @@
 </script>
 
 <svelte:head>
-	<title>{page_title} | 문</title>
+	<title>{page_title} | 퍼펙트랜서</title>
 	<meta
 		name="description"
 		content="내가 북마크한 게시물과 외주 공고를 한눈에 확인하고, 관심 있는 콘텐츠를 쉽게 관리"

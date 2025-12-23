@@ -119,7 +119,7 @@
 </script>
 
 <svelte:head>
-	<title>검색 | 문</title>
+	<title>검색 | 퍼펙트랜서</title>
 	<meta
 		name="description"
 		content="게시글, 커뮤니티, 서비스, 프로필을 검색하여 원하는 정보와 전문가를 찾아보세요."

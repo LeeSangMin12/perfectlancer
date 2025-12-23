@@ -160,10 +160,10 @@
 </script>
 
 <svelte:head>
-	<title>회원가입 | 문</title>
+	<title>회원가입 | 퍼펙트랜서</title>
 	<meta
 		name="description"
-		content="문에 가입하고 전문가들과 소통하세요. 간단한 회원가입으로 지식 공유 플랫폼을 시작하세요."
+		content="퍼펙트랜서에 가입하고 전문가들과 소통하세요. 간단한 회원가입으로 지식 공유 플랫폼을 시작하세요."
 	/>
 </svelte:head>
 

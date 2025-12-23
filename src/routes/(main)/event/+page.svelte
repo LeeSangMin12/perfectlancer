@@ -15,8 +15,8 @@
 </script>
 
 <svelte:head>
-	<title>{TITLE} | 문</title>
-	<meta name="description" content="문의 이벤트 페이지입니다." />
+	<title>{TITLE} | 퍼펙트랜서</title>
+	<meta name="description" content="퍼펙트랜서 이벤트 페이지입니다." />
 </svelte:head>
 
 <Header>

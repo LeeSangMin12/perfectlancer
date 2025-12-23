@@ -337,7 +337,7 @@
 </script>
 
 <svelte:head>
-	<title>포트원 결제 테스트 | Moon</title>
+	<title>포트원 결제 테스트 | PerfectLancer</title>
 </svelte:head>
 
 <div class="container mx-auto max-w-6xl px-4 py-8">

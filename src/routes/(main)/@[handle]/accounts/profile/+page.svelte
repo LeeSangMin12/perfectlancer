@@ -22,7 +22,7 @@
 </script>
 
 <svelte:head>
-	<title>회원 정보 설정 | 문</title>
+	<title>회원 정보 설정 | 퍼펙트랜서</title>
 	<meta name="description" content="회원 정보 설정 페이지입니다." />
 </svelte:head>
 

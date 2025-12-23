@@ -318,7 +318,7 @@
 </script>
 
 <svelte:head>
-	<title>{post.title} | 문</title>
+	<title>{post.title} | 퍼펙트랜서</title>
 	<meta name="description" content={(post.content ?? '').slice(0, 160)} />
 	<link rel="canonical" href={page_url} />
 

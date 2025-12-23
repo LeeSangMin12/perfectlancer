@@ -238,7 +238,7 @@
 </script>
 
 <svelte:head>
-	<title>견적서 수정 | 문</title>
+	<title>견적서 수정 | 퍼펙트랜서</title>
 </svelte:head>
 
 <Header>

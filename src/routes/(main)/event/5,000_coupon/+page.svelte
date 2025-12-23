@@ -27,10 +27,10 @@
 </script>
 
 <svelte:head>
-	<title>문 서비스 구매 5,000원 쿠폰 이벤트 | 문</title>
+	<title>퍼펙트랜서 서비스 구매 5,000원 쿠폰 이벤트 | 퍼펙트랜서</title>
 	<meta
 		name="description"
-		content="문 서비스 구매 시 사용 가능한 5,000원 할인 쿠폰을 받아보세요!"
+		content="퍼펙트랜서 서비스 구매 시 사용 가능한 5,000원 할인 쿠폰을 받아보세요!"
 	/>
 </svelte:head>
 
@@ -41,14 +41,14 @@
 		</button>
 	{/snippet}
 	{#snippet center()}
-		<h1 class="font-semibold">문 서비스 5,000원 쿠폰 이벤트</h1>
+		<h1 class="font-semibold">퍼펙트랜서 서비스 5,000원 쿠폰 이벤트</h1>
 	{/snippet}
 </Header>
 
 <div class="relative mx-auto max-w-screen-md bg-white">
 	<!-- 이벤트 이미지 -->
 	<div class="relative">
-		<enhanced:img src="./event.png" alt="문 서비스 5,000원 쿠폰 이벤트" class="block w-full" />
+		<enhanced:img src="./event.png" alt="퍼펙트랜서 서비스 5,000원 쿠폰 이벤트" class="block w-full" />
 
 		<!-- 쿠폰 코드 복사 버튼 (투명 오버레이) -->
 		<!-- WELCOME5000 텍스트 영역 위에 배치 -->

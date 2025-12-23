@@ -204,7 +204,7 @@
 </script>
 
 <svelte:head>
-	<title>결제 정보 관리 | 문</title>
+	<title>결제 정보 관리 | 퍼펙트랜서</title>
 	<meta
 		name="description"
 		content="외주 프로젝트 결제 정보를 관리하는 페이지입니다."

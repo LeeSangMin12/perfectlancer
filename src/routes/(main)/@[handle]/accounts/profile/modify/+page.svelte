@@ -73,7 +73,7 @@
 </script>
 
 <svelte:head>
-	<title>프로필 수정 | 문</title>
+	<title>프로필 수정 | 퍼펙트랜서</title>
 	<meta
 		name="description"
 		content="프로필 사진과 이름, 소개글을 수정할 수 있는 문의 프로필 수정 페이지입니다."

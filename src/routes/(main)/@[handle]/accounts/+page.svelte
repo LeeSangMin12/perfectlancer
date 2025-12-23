@@ -27,7 +27,7 @@
 </script>
 
 <svelte:head>
-	<title>더보기 | 문</title>
+	<title>더보기 | 퍼펙트랜서</title>
 	<meta
 		name="description"
 		content="내 프로필, 포인트, 구매 내역, 북마크 등을 관리할 수 있는 문의 더보기 페이지입니다."

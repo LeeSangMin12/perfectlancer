@@ -38,7 +38,7 @@
 </script>
 
 <svelte:head>
-	<title>{TITLE} | 문</title>
+	<title>{TITLE} | 퍼펙트랜서</title>
 </svelte:head>
 
 <Header>

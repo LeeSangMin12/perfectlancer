@@ -53,7 +53,7 @@
 </script>
 
 <svelte:head>
-	<title>알림 | 문</title>
+	<title>알림 | 퍼펙트랜서</title>
 </svelte:head>
 
 <Header>
