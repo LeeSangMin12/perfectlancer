@@ -7,7 +7,7 @@
 </script>
 
 <svelte:head>
-	<title>공지사항 | 문</title>
+	<title>공지사항 | 퍼펙트랜서</title>
 	<meta
 		name="description"
 		content="문의 바뀐 정보를 확인하고, 최신 공지사항을 확인할 수 있는 문의 공지사항 페이지입니다."

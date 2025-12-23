@@ -33,10 +33,10 @@
 </script>
 
 <svelte:head>
-	<title>관리자 로그인 | 문</title>
+	<title>관리자 로그인 | 퍼펙트랜서</title>
 	<meta
 		name="description"
-		content="문 플랫폼 관리자 페이지입니다. 관리자 계정으로 로그인하여 플랫폼을 관리하세요."
+		content="퍼펙트랜서 플랫폼 관리자 페이지입니다. 관리자 계정으로 로그인하여 플랫폼을 관리하세요."
 	/>
 </svelte:head>
 

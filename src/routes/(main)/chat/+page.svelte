@@ -12,7 +12,7 @@
 </script>
 
 <svelte:head>
-	<title>채팅 | 문</title>
+	<title>채팅 | 퍼펙트랜서</title>
 	<meta
 		name="description"
 		content="전문가와 1:1 채팅으로 실시간 소통하세요. 질문하고 답변받는 개인화된 채팅 서비스를 이용해보세요."

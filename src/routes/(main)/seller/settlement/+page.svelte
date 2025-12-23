@@ -112,7 +112,7 @@
 </script>
 
 <svelte:head>
-	<title>{TITLE} | 문</title>
+	<title>{TITLE} | 퍼펙트랜서</title>
 	<meta name="description" content="서비스 판매 수익을 정산 신청하세요." />
 </svelte:head>
 

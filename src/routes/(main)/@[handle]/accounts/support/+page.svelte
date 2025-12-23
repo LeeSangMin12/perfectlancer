@@ -19,7 +19,7 @@
 </script>
 
 <svelte:head>
-	<title>고객센터 | 문</title>
+	<title>고객센터 | 퍼펙트랜서</title>
 	<meta
 		name="description"
 		content="문의 고객센터 페이지입니다. 카카오톡 또는 전화로 상담받으세요."

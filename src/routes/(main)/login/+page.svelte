@@ -16,7 +16,7 @@
 	let corporation_login_id = $state('');
 	let corporation_login_pw = $state('');
 
-	const TITLE = '문';
+	const TITLE = '퍼펙트랜서';
 
 	let { data } = $props();
 
@@ -48,10 +48,10 @@
 </script>
 
 <svelte:head>
-	<title>로그인 | 문 - 질문할땐? 문!</title>
+	<title>로그인 | 퍼펙트랜서</title>
 	<meta
 		name="description"
-		content="문에 로그인하고 전문가들과 소통하세요. 지식 공유, 후원, 서비스 판매, 채용 연계까지 모든 것을 문에서 경험하세요."
+		content="퍼펙트랜서에 로그인하고 전문가들과 소통하세요. 외주, 사이드잡, 풀타임 매칭까지 모든 것을 퍼펙트랜서에서 경험하세요."
 	/>
 </svelte:head>
 
@@ -65,7 +65,7 @@
 
 <main class="flex h-screen flex-col items-center justify-between">
 	<div class="mt-26 flex flex-col items-center">
-		<h1 class="text-primary text-2xl font-semibold">질문할땐? 문!</h1>
+		<h1 class="text-primary text-2xl font-semibold">퍼펙트랜서</h1>
 
 		<enhanced:img
 			src="$lib/img/partials/login/landing_logo.jpg"

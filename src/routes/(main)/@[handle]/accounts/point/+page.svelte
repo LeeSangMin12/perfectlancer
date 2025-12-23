@@ -72,7 +72,7 @@
 </script>
 
 <svelte:head>
-	<title>포인트 | 문</title>
+	<title>포인트 | 퍼펙트랜서</title>
 </svelte:head>
 
 <Header>

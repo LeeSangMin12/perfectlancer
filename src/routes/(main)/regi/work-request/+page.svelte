@@ -326,7 +326,7 @@
 </script>
 
 <svelte:head>
-	<title>{TITLE} | 문</title>
+	<title>{TITLE} | 퍼펙트랜서</title>
 	<meta
 		name="description"
 		content="사이드잡, 풀타임잡 외주 프로젝트를 등록하고 전문가들의 제안을 받아보세요."

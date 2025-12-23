@@ -55,7 +55,7 @@
 </script>
 
 <svelte:head>
-	<title>참여 커뮤니티 | 문</title>
+	<title>참여 커뮤니티 | 퍼펙트랜서</title>
 	<meta
 		name="description"
 		content="내가 참여한 커뮤니티 목록을 한눈에 확인하고, 커뮤니티 활동을 쉽게 관리"

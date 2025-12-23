@@ -115,7 +115,7 @@
 </script>
 
 <svelte:head>
-	<title>충전하기 | 문</title>
+	<title>충전하기 | 퍼펙트랜서</title>
 </svelte:head>
 
 <Header>

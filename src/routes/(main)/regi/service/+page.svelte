@@ -350,7 +350,7 @@
 </script>
 
 <svelte:head>
-	<title>{TITLE} | 문</title>
+	<title>{TITLE} | 퍼펙트랜서</title>
 	<meta
 		name="description"
 		content="서비스를 등록할 수 있는 문의 서비스 등록 페이지입니다."

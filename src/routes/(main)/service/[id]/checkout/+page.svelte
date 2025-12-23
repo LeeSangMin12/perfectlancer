@@ -296,7 +296,7 @@
 </script>
 
 <svelte:head>
-	<title>주문하기 | 문</title>
+	<title>주문하기 | 퍼펙트랜서</title>
 </svelte:head>
 
 <Header>

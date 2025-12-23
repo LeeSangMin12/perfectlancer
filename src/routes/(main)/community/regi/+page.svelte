@@ -179,10 +179,10 @@
 </script>
 
 <svelte:head>
-	<title>커뮤니티 생성 | 문</title>
+	<title>커뮤니티 생성 | 퍼펙트랜서</title>
 	<meta
 		name="description"
-		content="커뮤니티를 생성할 수 있는 문의 커뮤니티 생성 페이지입니다."
+		content="퍼펙트랜서에서 커뮤니티를 생성할 수 있는 페이지입니다."
 	/>
 </svelte:head>
 

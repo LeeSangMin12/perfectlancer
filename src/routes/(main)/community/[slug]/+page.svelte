@@ -166,7 +166,7 @@
 </script>
 
 <svelte:head>
-	<title>{community?.title || '커뮤니티'} | 문</title>
+	<title>{community?.title || '커뮤니티'} | 퍼펙트랜서</title>
 	<meta
 		name="description"
 		content={community?.content ||

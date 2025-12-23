@@ -487,7 +487,7 @@
 </script>
 
 <svelte:head>
-	<title>{service?.title || '서비스'} | 문</title>
+	<title>{service?.title || '서비스'} | 퍼펙트랜서</title>
 	<meta
 		name="description"
 		content={service?.description ||

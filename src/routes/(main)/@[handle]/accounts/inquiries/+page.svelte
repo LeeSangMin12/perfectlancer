@@ -85,7 +85,7 @@
 </script>
 
 <svelte:head>
-	<title>문의함 | 문</title>
+	<title>문의함 | 퍼펙트랜서</title>
 	<meta
 		name="description"
 		content="받은 문의와 보낸 문의를 확인하고 관리할 수 있습니다."

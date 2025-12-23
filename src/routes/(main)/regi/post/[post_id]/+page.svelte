@@ -119,7 +119,7 @@
 </script>
 
 <svelte:head>
-	<title>게시글 수정 | 문</title>
+	<title>게시글 수정 | 퍼펙트랜서</title>
 	<meta
 		name="description"
 		content="게시글을 수정할 수 있는 문의 게시글 수정 페이지입니다."

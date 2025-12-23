@@ -229,7 +229,7 @@
 </script>
 
 <svelte:head>
-	<title>{TITLE} | 문</title>
+	<title>{TITLE} | 퍼펙트랜서</title>
 	<meta
 		name="description"
 		content="내가 구매한 서비스와 판매한 서비스를 한눈에 확인하고, 주문을 쉽게 관리할 수 있는 문의 주문 내역 페이지입니다."

@@ -296,7 +296,7 @@
 </script>
 
 <svelte:head>
-	<title>{work_request.title} | 문</title>
+	<title>{work_request.title} | 퍼펙트랜서</title>
 	<meta name="description" content={work_request.description} />
 </svelte:head>
 

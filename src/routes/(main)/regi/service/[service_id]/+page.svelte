@@ -177,7 +177,7 @@
 </script>
 
 <svelte:head>
-	<title>서비스 수정 | 문</title>
+	<title>서비스 수정 | 퍼펙트랜서</title>
 	<meta
 		name="description"
 		content="서비스를 수정할 수 있는 문의 서비스 수정 페이지입니다."

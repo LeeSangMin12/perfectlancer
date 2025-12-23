@@ -74,7 +74,7 @@
 </script>
 
 <svelte:head>
-	<title>서비스 | 문</title>
+	<title>서비스 | 퍼펙트랜서</title>
 	<meta
 		name="description"
 		content="AI·마케팅·디자인·IT 등 다양한 분야의 전문가 서비스를 찾아보고 이용해보세요. 맞춤형 서비스로 니즈를 해결하세요."

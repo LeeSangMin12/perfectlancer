@@ -41,7 +41,7 @@
 </script>
 
 <svelte:head>
-	<title>견적서 템플릿 | 문</title>
+	<title>견적서 템플릿 | 퍼펙트랜서</title>
 	<meta
 		name="description"
 		content="외주 견적서 템플릿을 관리하는 페이지입니다."

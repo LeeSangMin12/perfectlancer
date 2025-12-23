@@ -21,12 +21,12 @@ api_url = "http://127.0.0.1"
 [auth]
 enabled = true
 site_url = "http://127.0.0.1:5173"
-additional_redirect_urls = ["https://moon.it.kr"]
+additional_redirect_urls = ["https://perfectlancer.kr"]
 
 [storage]
 enabled = true
 file_size_limit = "50MiB"
 
 # 프로젝트 참조 정보
-# 개발: uqaiqevdmwlpsozwnigg (moon-local)
-# 운영: xgnnhfmpporixibxpeas (moon-production)
+# 개발: uqaiqevdmwlpsozwnigg (perfectlancer-local)
+# 운영: xgnnhfmpporixibxpeas (perfectlancer-production)
