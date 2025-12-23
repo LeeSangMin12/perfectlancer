@@ -1,21 +1,21 @@
 {
   "project_info": {
-    "project_number": "997229744908",
-    "project_id": "moon-68d95",
-    "storage_bucket": "moon-68d95.firebasestorage.app"
+    "project_number": "605356037706",
+    "project_id": "perfectlancer-5ae32",
+    "storage_bucket": "perfectlancer-5ae32.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:997229744908:android:a1f7160b2ac105bbcaef29",
+        "mobilesdk_app_id": "1:605356037706:android:b55d01a8311714c09ff8b3",
         "android_client_info": {
-          "package_name": "kr.it.moon"
+          "package_name": "kr.perfectlancer.app"
         }
       },
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyAOAY9H29MopIK8oxk0iGajtf6624XMI0o"
+          "current_key": "AIzaSyDxcYUqXo_AGosFHMClEkf0bTUZaV2q1Tc"
         }
       ],
       "services": {
