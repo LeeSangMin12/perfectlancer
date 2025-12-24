@@ -112,7 +112,7 @@ export const create_services_api = (supabase) => ({
 	select_by_id: async (id) => {
 		const { data, error } = await supabase
 			.from('services')
-			.select('*, users:author_id(id, name, avatar_url, handle)')
+			.select('*, users:author_id(id, name, avatar_url, handle, phone, email)')
 			.eq('id', id);
 
 		if (error) throw new Error(`Failed to fetch service: ${error.message}`);

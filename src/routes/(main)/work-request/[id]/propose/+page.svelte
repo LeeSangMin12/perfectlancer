@@ -38,14 +38,11 @@
 	let has_payment_info = $state(false);
 
 	onMount(async () => {
-		// 결제 정보 확인
+		// 결제 정보 확인 (users 테이블의 phone + 계좌)
 		try {
-			const [contact, accounts] = await Promise.all([
-				api.user_contacts.select_by_user_id(me.id),
-				api.user_bank_accounts.select_by_user_id(me.id),
-			]);
+			const accounts = await api.user_bank_accounts.select_by_user_id(me.id);
 
-			has_payment_info = !!(contact?.contact_phone && accounts?.length > 0);
+			has_payment_info = !!(me?.phone && accounts?.length > 0);
 
 			if (!has_payment_info) {
 				show_payment_modal = true;
@@ -229,8 +226,8 @@
 		update_global_store('loading', true);
 
 		try {
-			// 연락처 정보
-			const contact_phone = me.user_contact?.contact_phone || '';
+			// 연락처 정보 (users 테이블의 phone 사용)
+			const contact_phone = me.phone || '';
 			const formatted_contact =
 				contact_phone.length === 11
 					? `${contact_phone.slice(0, 3)}-${contact_phone.slice(3, 7)}-${contact_phone.slice(7)}`

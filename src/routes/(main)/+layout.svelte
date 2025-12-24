@@ -54,20 +54,20 @@
 
 	/**
 	 * 인증된 사용자의 전체 데이터를 로드
+	 * 연락처 정보는 users 테이블의 phone, email 필드 사용
 	 *
 	 * @param {string} user_id - Supabase 사용자 ID
 	 * @returns {Promise<void>}
 	 */
 	async function load_authenticated_user(user_id) {
 		try {
-			const [user_data, user_contact, point] = await Promise.all([
+			const [user_data, point] = await Promise.all([
 				api.users.select(user_id),
-				api.user_contacts.select_by_user_id(user_id),
 				api.point_transactions.select_balance(user_id),
 			]);
 
 			if (user_data?.handle) {
-				Object.assign(me, user_data, { user_contact, point });
+				Object.assign(me, user_data, { point });
 				load_follow_data(user_data.id);
 
 				// 로그인 후 FCM 토큰 등록 (네이티브 앱 전용)

@@ -9,6 +9,7 @@
 	import { goto } from '$app/navigation';
 	import { RiArrowLeftSLine } from 'svelte-remixicon';
 
+	import FixedBottomButton from '$lib/components/ui/FixedBottomButton.svelte';
 	import Header from '$lib/components/ui/Header.svelte';
 	import Modal from '$lib/components/ui/Modal.svelte';
 
@@ -17,6 +18,7 @@
 	import PhoneVerification from './_components/PhoneVerification.svelte';
 	import SetAvatar from './_components/SetAvatar.svelte';
 	import SetBasic from './_components/SetBasic.svelte';
+	import SetConsent from './_components/SetConsent.svelte';
 	import SetPersonal from './_components/SetPersonal.svelte';
 
 	const me = get_user_context();
@@ -32,6 +34,11 @@
 	let is_back_modal = $state(false);
 
 	let sign_up_form_data = $state({
+		// 약관 동의
+		agree_terms: false,
+		agree_privacy: false,
+		agree_marketing: false,
+		// 회원 정보
 		phone: '',
 		phone_verified: false,
 		gender: '',
@@ -41,6 +48,8 @@
 		birth_date: '',
 		avatar_url: '',
 	});
+
+	const TOTAL_STEPS = 5;
 
 	let handle_error = $state(false); //id 유효성 체크
 	let email_error = $state(false); //email 유효성 체크
@@ -68,13 +77,23 @@
 	 * 다음 버튼 disabled 검사
 	 */
 	const is_next_btn_disabled = () => {
-		const { phone_verified, name, handle, email, gender, birth_date } =
-			sign_up_form_data;
+		const {
+			agree_terms,
+			agree_privacy,
+			phone_verified,
+			name,
+			handle,
+			email,
+			gender,
+			birth_date,
+		} = sign_up_form_data;
 
 		switch (page_count) {
-			case 1:
+			case 1: // 약관 동의
+				return !agree_terms || !agree_privacy;
+			case 2: // 전화번호 인증
 				return !phone_verified;
-			case 2:
+			case 3: // 기본 정보
 				return (
 					name === '' ||
 					handle === '' ||
@@ -82,7 +101,7 @@
 					handle_error === true ||
 					email_error === true
 				);
-			case 3:
+			case 4: // 개인 정보
 				return gender === '' || birth_date === '';
 			default:
 				return false;
@@ -94,12 +113,18 @@
 	 */
 	const go_next = async () => {
 		if (page_count === 1) {
+			// 약관 동의 확인
+			if (!sign_up_form_data.agree_terms || !sign_up_form_data.agree_privacy) {
+				show_toast('error', '필수 약관에 동의해주세요');
+				return;
+			}
+		} else if (page_count === 2) {
 			// 전화번호 인증 완료 확인
 			if (!sign_up_form_data.phone_verified) {
 				show_toast('error', '전화번호 인증을 완료해주세요');
 				return;
 			}
-		} else if (page_count === 2) {
+		} else if (page_count === 3) {
 			// 아이디 중복 확인
 			const handle_exists = await api.users.check_handle_exists(
 				sign_up_form_data.handle,
@@ -109,7 +134,7 @@
 				show_toast('error', '중복된 아이디 입니다.');
 				return;
 			}
-		} else if (page_count === 4) {
+		} else if (page_count === 5) {
 			// 회원가입 완료
 			await save_users();
 		}
@@ -135,6 +160,7 @@
 				email: sign_up_form_data.email,
 				gender: sign_up_form_data.gender,
 				birth_date: sign_up_form_data.birth_date,
+				marketing_consent: sign_up_form_data.agree_marketing,
 			});
 
 			Object.assign(me, {
@@ -146,6 +172,7 @@
 				gender: sign_up_form_data.gender,
 				birth_date: sign_up_form_data.birth_date,
 				avatar_url: sign_up_form_data.avatar_url,
+				marketing_consent: sign_up_form_data.agree_marketing,
 			});
 
 			show_toast('success', '가입이 완료되었어요!');
@@ -183,43 +210,47 @@
 	<div class="h-1 w-full rounded-full bg-gray-200">
 		<div
 			class="h-1 rounded-lg bg-blue-600 transition-all duration-300"
-			style="width: {page_count * (100 / 4)}%"
+			style="width: {page_count * (100 / TOTAL_STEPS)}%"
 		></div>
 	</div>
 </div>
 
 <main>
 	{#if page_count === 1}
+		<SetConsent
+			bind:agree_terms={sign_up_form_data.agree_terms}
+			bind:agree_privacy={sign_up_form_data.agree_privacy}
+			bind:agree_marketing={sign_up_form_data.agree_marketing}
+		/>
+	{:else if page_count === 2}
 		<PhoneVerification
 			bind:phone={sign_up_form_data.phone}
 			on_verified={handle_phone_verified}
 		/>
-	{:else if page_count === 2}
+	{:else if page_count === 3}
 		<SetBasic
 			bind:data={sign_up_form_data}
 			bind:handle_error
 			bind:email_error
 		/>
-	{:else if page_count === 3}
-		<SetPersonal bind:data={sign_up_form_data} />
 	{:else if page_count === 4}
+		<SetPersonal bind:data={sign_up_form_data} />
+	{:else if page_count === 5}
 		<SetAvatar
 			bind:avatar_url={sign_up_form_data.avatar_url}
 			user_id={session?.user?.id}
 		/>
 	{/if}
-
-	<div class="fixed bottom-0 w-full max-w-screen-md bg-white p-4">
-		<div class="pb-safe">
-			<button
-				onclick={go_next}
-				class="btn btn-primary w-full"
-				disabled={is_next_btn_disabled()}
-				>{page_count === 4 ? '시작하기' : '다음'}
-			</button>
-		</div>
-	</div>
 </main>
+
+<FixedBottomButton>
+	<button
+		onclick={go_next}
+		class="btn btn-primary w-full"
+		disabled={is_next_btn_disabled()}
+		>{page_count === TOTAL_STEPS ? '시작하기' : '다음'}
+	</button>
+</FixedBottomButton>
 
 <Modal bind:is_modal_open={is_back_modal} modal_position="center">
 	<div class="p-5">

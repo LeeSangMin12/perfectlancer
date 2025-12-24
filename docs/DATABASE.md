@@ -4,7 +4,7 @@
 
 ---
 
-## 1. 테이블 (44개)
+## 1. 테이블 (43개)
 
 ### 핵심 테이블
 
@@ -74,11 +74,12 @@
 | 테이블명 | 설명 | 행 수 |
 |---------|------|-------|
 | `user_follows` | 팔로우 | 15 |
-| `user_contacts` | 연락처 정보 | 2 |
 | `user_bank_accounts` | 출금 계좌 | 3 |
 | `user_devices` | FCM 토큰 (푸시) | 1 |
 | `user_coupons` | 쿠폰 사용 내역 | 6 |
 | `user_reports` | 유저 신고 | 0 |
+
+> **Note**: 연락처 정보(phone, email)는 `users` 테이블로 통합됨
 
 ### 알림 관련
 

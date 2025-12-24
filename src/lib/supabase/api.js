@@ -21,7 +21,6 @@ import { create_post_comment_reports_api } from '$lib/supabase/post/post_comment
 // === User APIs ===
 import { create_users_api } from '$lib/supabase/user/users';
 import { create_user_follows_api } from '$lib/supabase/user/user_follows';
-import { create_user_contacts_api } from '$lib/supabase/user/user_contacts';
 import { create_user_devices_api } from '$lib/supabase/user/user_devices';
 import { create_user_coupons_api } from '$lib/supabase/user/user_coupons';
 import { create_user_bank_accounts_api } from '$lib/supabase/user/user_bank_accounts';
@@ -81,7 +80,6 @@ export const create_api = (supabase) => ({
 	// User
 	users: create_users_api(supabase),
 	user_follows: create_user_follows_api(supabase),
-	user_contacts: create_user_contacts_api(supabase),
 	user_devices: create_user_devices_api(supabase),
 	user_coupons: create_user_coupons_api(supabase),
 	user_bank_accounts: create_user_bank_accounts_api(supabase),
