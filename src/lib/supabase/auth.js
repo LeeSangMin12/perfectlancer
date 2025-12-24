@@ -92,4 +92,60 @@ export const create_auth_api = (supabase) => ({
 		}
 		return without_prefix;
 	},
+
+	/**
+	 * 이메일로 가입된 auth provider 확인
+	 * 중복 이메일 체크 시 "이미 [카카오/구글]로 가입된 이메일입니다" 안내에 사용
+	 *
+	 * @param {string} email - 확인할 이메일
+	 * @returns {Promise<{exists: boolean, provider: string|null}>} 존재 여부 및 provider
+	 */
+	check_email_provider: async (email) => {
+		// 1. users 테이블에서 이메일 존재 여부 확인
+		const { data: user_data, error: user_error } = await supabase
+			.from('users')
+			.select('id, email')
+			.eq('email', email)
+			.maybeSingle();
+
+		if (user_error) {
+			console.error('check_email_provider error:', user_error);
+			return { exists: false, provider: null };
+		}
+
+		if (!user_data) {
+			return { exists: false, provider: null };
+		}
+
+		// 2. auth.identities에서 provider 조회 (RPC 함수 사용)
+		const { data: provider_data, error: provider_error } = await supabase.rpc(
+			'get_user_auth_provider',
+			{ user_email: email },
+		);
+
+		if (provider_error) {
+			console.error('get_user_auth_provider error:', provider_error);
+			return { exists: true, provider: 'unknown' };
+		}
+
+		return {
+			exists: true,
+			provider: provider_data?.[0]?.provider || 'unknown',
+		};
+	},
+
+	/**
+	 * Provider 이름을 한글로 변환
+	 *
+	 * @param {string} provider - auth provider (kakao, google, email)
+	 * @returns {string} 한글 이름
+	 */
+	get_provider_name: (provider) => {
+		const names = {
+			kakao: '카카오',
+			google: '구글',
+			email: '이메일',
+		};
+		return names[provider] || provider;
+	},
 });
