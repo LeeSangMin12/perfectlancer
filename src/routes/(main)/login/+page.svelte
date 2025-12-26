@@ -147,7 +147,7 @@
 
 <div class="flex min-h-[calc(100dvh-56px)] flex-col justify-between px-6">
 	<!-- 브랜딩 영역 -->
-	<div class="flex flex-col items-center pt-24">
+	<div class="flex flex-1 flex-col items-center justify-center">
 		<!-- 로고 아이콘 -->
 		<img
 			src={perfect_lancer_logo}
