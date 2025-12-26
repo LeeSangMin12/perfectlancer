@@ -15,9 +15,11 @@
 	let is_verified = $state(false);
 	let phone_error = $state('');
 	let retry_count = $state(0);
+	let send_count = $state(0);
 	const MAX_RETRIES = 5;
+	const MAX_SEND_COUNT = 3;
 
-	let otp_input_ref;
+	let otp_input_ref = $state(null);
 
 	/**
 	 * 전화번호 형식 검증
@@ -76,6 +78,12 @@
 			return;
 		}
 
+		// 최대 전송 횟수 체크
+		if (send_count >= MAX_SEND_COUNT) {
+			show_toast('error', '인증번호 전송 횟수를 초과했습니다. 잠시 후 다시 시도해주세요');
+			return;
+		}
+
 		// 중복 체크
 		try {
 			is_sending = true;
@@ -90,6 +98,7 @@
 			// OTP 전송
 			await api.auth.send_otp(international_phone);
 			is_otp_sent = true;
+			send_count++;
 			start_countdown();
 			show_toast('success', '인증번호가 전송되었습니다');
 
@@ -151,7 +160,7 @@
 	 * 카운트다운 시작
 	 */
 	const start_countdown = () => {
-		countdown = 180; // 3분
+		countdown = 30; // 30초
 		const interval = setInterval(() => {
 			countdown--;
 			if (countdown <= 0) {
@@ -177,7 +186,7 @@
 	/**
 	 * 카운트다운 표시 형식 (mm:ss)
 	 */
-	const format_countdown = $derived(() => {
+	const format_countdown = $derived.by(() => {
 		const minutes = Math.floor(countdown / 60);
 		const seconds = countdown % 60;
 		return `${minutes}:${seconds.toString().padStart(2, '0')}`;
@@ -216,7 +225,7 @@
 			{#if is_sending}
 				<span class="loading loading-spinner loading-sm"></span>
 			{:else if countdown > 0}
-				{format_countdown()}
+				{format_countdown}
 			{:else}
 				인증번호
 			{/if}
@@ -262,14 +271,23 @@
 			</button>
 		</div>
 
-		<div class="mt-4 flex justify-center">
+		<div class="mt-4 flex flex-col items-center gap-1">
 			<button
 				onclick={send_otp}
-				disabled={countdown > 0 || is_sending || is_verified}
+				disabled={countdown > 0 || is_sending || is_verified || send_count >= MAX_SEND_COUNT}
 				class="btn btn-ghost btn-sm"
 			>
-				{countdown > 0 ? `재전송 (${format_countdown()})` : '인증번호 재전송'}
+				{countdown > 0 ? `재전송 (${format_countdown})` : '인증번호 재전송'}
 			</button>
+			{#if send_count > 0 && send_count < MAX_SEND_COUNT && !is_verified}
+				<p class="text-sm text-gray-500">
+					재전송 {MAX_SEND_COUNT - send_count}회 남음
+				</p>
+			{:else if send_count >= MAX_SEND_COUNT && !is_verified}
+				<p class="text-sm text-red-500">
+					재전송 횟수를 초과했습니다
+				</p>
+			{/if}
 		</div>
 
 		{#if retry_count > 0}
