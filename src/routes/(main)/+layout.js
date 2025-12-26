@@ -19,6 +19,9 @@ export const load = async ({ fetch, data, depends }) => {
 				global: {
 					fetch,
 				},
+				auth: {
+					flowType: 'implicit',
+				},
 			})
 		: createServerClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
 				global: {

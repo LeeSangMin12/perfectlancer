@@ -78,14 +78,11 @@
 			return;
 		}
 
-		// 결제 정보 확인
+		// 결제 정보 확인 (users 테이블의 phone + 계좌)
 		try {
-			const [contact, accounts] = await Promise.all([
-				api.user_contacts.select_by_user_id(me.id),
-				api.user_bank_accounts.select_by_user_id(me.id),
-			]);
+			const accounts = await api.user_bank_accounts.select_by_user_id(me.id);
 
-			has_payment_info = !!(contact?.contact_phone && accounts?.length > 0);
+			has_payment_info = !!(me?.phone && accounts?.length > 0);
 
 			if (!has_payment_info) {
 				show_payment_modal = true;

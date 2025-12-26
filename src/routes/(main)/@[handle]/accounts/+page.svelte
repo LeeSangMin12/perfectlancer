@@ -12,10 +12,12 @@
 		RiContactsLine,
 		RiCustomerService2Line,
 		RiFileList2Line,
+		RiFileTextLine,
 		RiGiftLine,
 		RiHeartLine,
 		RiQuestionnaireLine,
 		RiSettings4Line,
+		RiShieldUserLine,
 		RiShoppingBag3Line,
 		RiTeamLine,
 		RiWallet3Line,
@@ -94,7 +96,7 @@
 		>
 			<div class="flex items-center">
 				<RiContactsLine size={22} color={colors.gray[600]} class="mr-3" />
-				<span>결제 정보 관리</span>
+				<span>정산 계좌 관리</span>
 			</div>
 			<RiArrowRightSLine size={20} color={colors.gray[400]} />
 		</a>
@@ -232,6 +234,28 @@
 			<div class="flex items-center">
 				<RiSettings4Line size={22} color={colors.gray[600]} class="mr-3" />
 				<span>설정</span>
+			</div>
+			<RiArrowRightSLine size={20} color={colors.gray[400]} />
+		</a>
+
+		<a
+			href="/terms"
+			class="flex items-center justify-between px-4 py-4 transition hover:bg-gray-50"
+		>
+			<div class="flex items-center">
+				<RiFileTextLine size={22} color={colors.gray[600]} class="mr-3" />
+				<span>이용약관</span>
+			</div>
+			<RiArrowRightSLine size={20} color={colors.gray[400]} />
+		</a>
+
+		<a
+			href="/privacy"
+			class="flex items-center justify-between px-4 py-4 transition hover:bg-gray-50"
+		>
+			<div class="flex items-center">
+				<RiShieldUserLine size={22} color={colors.gray[600]} class="mr-3" />
+				<span>개인정보처리방침</span>
 			</div>
 			<RiArrowRightSLine size={20} color={colors.gray[400]} />
 		</a>
