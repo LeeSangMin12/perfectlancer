@@ -134,158 +134,154 @@
 	/>
 </svelte:head>
 
-<div class="min-h-dvh to-white">
-	<Header>
-		{#snippet left()}
+<Header>
+	{#snippet left()}
+		<button
+			onclick={smart_go_back}
+			class="rounded-lg p-1 transition-colors hover:bg-slate-100"
+		>
+			<RiArrowLeftSLine size={28} color={colors.gray[600]} />
+		</button>
+	{/snippet}
+</Header>
+
+<div class="flex min-h-[calc(100dvh-56px)] flex-col justify-between px-6">
+	<!-- 브랜딩 영역 -->
+	<div class="flex flex-col items-center pt-24">
+		<!-- 로고 아이콘 -->
+		<img
+			src={perfect_lancer_logo}
+			alt="퍼펙트랜서"
+			class="mb-6 h-20 w-20 rounded-2xl shadow-lg shadow-blue-500/25"
+		/>
+
+		<!-- 태그라인 -->
+		<div class="mb-3 text-center">
+			<p class="mb-1.5 text-sm font-medium text-slate-500">
+				일이 필요한 모든 순간
+			</p>
+			<h1 class="text-2xl leading-tight font-bold text-slate-800">
+				전문가의 기준,
+				<span class="text-blue-500">퍼펙트랜서</span>
+			</h1>
+		</div>
+
+		<p class="text-[13px] text-slate-400">
+			외주부터 채용까지, 검증된 전문가와 함께하세요
+		</p>
+	</div>
+
+	<!-- 로그인 버튼 영역 + 이용약관 (하단 고정) -->
+	<div class="pb-8">
+		<div class="mb-4 flex flex-col gap-2.5">
+			<!-- 카카오 로그인 -->
 			<button
-				onclick={smart_go_back}
-				class="rounded-lg p-1 transition-colors hover:bg-slate-100"
+				id="kakao_login_for_ga4"
+				onclick={sign_in_with_kakao}
+				class="flex h-[50px] w-full items-center justify-center gap-2 rounded-xl bg-[#FEE500] text-[15px] font-semibold text-[#191919] shadow-sm transition-all hover:-translate-y-0.5 hover:bg-[#FDD800] hover:shadow-md active:translate-y-0"
 			>
-				<RiArrowLeftSLine size={28} color={colors.gray[600]} />
+				<RiKakaoTalkFill size={20} color="#191919" />
+				<span>카카오로 시작하기</span>
 			</button>
-		{/snippet}
-	</Header>
 
-	<main class="flex min-h-[calc(100dvh-56px)] flex-col justify-between px-6">
-		<!-- 브랜딩 영역 -->
-		<div class="flex flex-1 flex-col items-center justify-center pt-8">
-			<!-- 로고 아이콘 -->
-			<img
-				src={perfect_lancer_logo}
-				alt="퍼펙트랜서"
-				class="mb-8 h-[72px] w-[72px] rounded-[20px] shadow-lg shadow-blue-500/30"
-			/>
+			<!-- 구글 로그인 -->
+			<button
+				id="google_login_for_ga4"
+				onclick={sign_in_with_google}
+				class="flex h-[50px] w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white text-[15px] font-semibold text-slate-700 shadow-sm transition-all hover:-translate-y-0.5 hover:border-slate-300 hover:bg-slate-50 hover:shadow-md active:translate-y-0"
+			>
+				<svg width="20" height="20" viewBox="0 0 24 24">
+					<path
+						fill="#4285F4"
+						d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+					/>
+					<path
+						fill="#34A853"
+						d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+					/>
+					<path
+						fill="#FBBC05"
+						d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+					/>
+					<path
+						fill="#EA4335"
+						d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+					/>
+				</svg>
+				<span>Google로 시작하기</span>
+			</button>
 
-			<!-- 태그라인 -->
-			<div class="mb-4 text-center">
-				<p class="mb-2 text-[15px] font-medium text-slate-500">
-					일이 필요한 모든 순간
-				</p>
-				<h1 class="text-[26px] leading-tight font-bold text-slate-800">
-					전문가의 기준,
-					<span class="text-blue-500">퍼펙트랜서</span>
-				</h1>
+			<!-- 구분선 -->
+			<div class="flex items-center gap-3 py-1">
+				<div class="h-px flex-1 bg-slate-200"></div>
+				<span class="text-xs text-slate-400">또는</span>
+				<div class="h-px flex-1 bg-slate-200"></div>
 			</div>
 
-			<p class="text-sm text-slate-400">
-				외주부터 채용까지, 검증된 전문가와 함께하세요
-			</p>
+			<!-- 이메일 로그인 -->
+			<button
+				onclick={open_email_login_modal}
+				class="flex h-[50px] w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white text-[15px] font-medium text-slate-600 transition-colors hover:border-slate-300 hover:bg-slate-50"
+			>
+				<RiMailLine size={18} color={colors.gray[500]} />
+				<span>이메일로 시작하기</span>
+			</button>
 		</div>
 
-		<!-- 로그인 버튼 영역 -->
-		<div class="pb-safe pb-10">
-			<div class="mb-5 flex flex-col gap-3">
-				<!-- 카카오 로그인 -->
-				<button
-					id="kakao_login_for_ga4"
-					onclick={sign_in_with_kakao}
-					class="flex h-[52px] w-full items-center justify-center gap-2 rounded-xl bg-[#FEE500] text-[15px] font-semibold text-[#191919] shadow-sm transition-all hover:-translate-y-0.5 hover:bg-[#FDD800] hover:shadow-md active:translate-y-0"
-				>
-					<RiKakaoTalkFill size={20} color="#191919" />
-					<span>카카오로 시작하기</span>
-				</button>
+		<p class="text-center text-xs leading-relaxed text-slate-400">
+			로그인 시 <a
+				href="/terms"
+				class="text-slate-500 underline underline-offset-2 hover:text-blue-500"
+				>이용약관</a
+			>
+			및
+			<a
+				href="/privacy"
+				class="text-slate-500 underline underline-offset-2 hover:text-blue-500"
+				>개인정보처리방침</a
+			>에 동의합니다
+		</p>
+	</div>
+</div>
 
-				<!-- 구글 로그인 -->
-				<button
-					id="google_login_for_ga4"
-					onclick={sign_in_with_google}
-					class="flex h-[52px] w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white text-[15px] font-semibold text-slate-700 shadow-sm transition-all hover:-translate-y-0.5 hover:border-slate-300 hover:bg-slate-50 hover:shadow-md active:translate-y-0"
-				>
-					<svg width="20" height="20" viewBox="0 0 24 24">
-						<path
-							fill="#4285F4"
-							d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-						/>
-						<path
-							fill="#34A853"
-							d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-						/>
-						<path
-							fill="#FBBC05"
-							d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-						/>
-						<path
-							fill="#EA4335"
-							d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-						/>
-					</svg>
-					<span>Google로 시작하기</span>
-				</button>
+<div class="mx-6 mt-6 flex flex-col items-center">
+	<div>
+		<p class="text-[13px] text-[#767676]">퓨처밴스</p>
+		<p class="mt-1.5 text-[13px] text-[#767676]">대표 : 이상민</p>
+		<p class="mt-1.5 text-[13px] text-[#767676]">
+			부산 수영구 수영로 642번길 28 2층 1호
+		</p>
+		<p class="mt-1.5 text-[13px] text-[#767676]">
+			사업자등록번호 : 507-06-34662
+		</p>
+		<p class="mt-1.5 text-[13px] text-[#767676]">개인정보보호책임자 : 이상민</p>
 
-				<!-- 구분선 -->
-				<div class="flex items-center gap-3 py-2">
-					<div class="h-px flex-1 bg-slate-200"></div>
-					<span class="text-xs text-slate-400">또는</span>
-					<div class="h-px flex-1 bg-slate-200"></div>
-				</div>
+		<p class="mt-1.5 text-[13px] text-[#767676]">
+			이메일: devsangmin32@gmail.com
+		</p>
+		<p class="mt-8 text-lg font-semibold text-[#111111]">070-8018-6194</p>
 
-				<!-- 이메일 로그인 -->
-				<button
-					onclick={open_email_login_modal}
-					class="flex h-[52px] w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white text-[15px] font-medium text-slate-600 transition-colors hover:border-slate-300 hover:bg-slate-50"
-				>
-					<RiMailLine size={18} color={colors.gray[500]} />
-					<span>이메일로 시작하기</span>
-				</button>
-			</div>
+		<!-- <p class="mt-8 text-lg font-semibold text-[#111111]">070-8098-4659</p> -->
 
-			<p class="text-center text-xs leading-relaxed text-slate-400">
-				로그인 시 <a
-					href="/terms"
-					class="text-slate-500 underline underline-offset-2 hover:text-blue-500"
-					>이용약관</a
-				>
-				및
-				<a
-					href="/privacy"
-					class="text-slate-500 underline underline-offset-2 hover:text-blue-500"
-					>개인정보처리방침</a
-				>에 동의합니다
-			</p>
-		</div>
-	</main>
+		<!-- <div class="mt-[30px] flex pb-8">
+			<a href="https://apps.apple.com/app/id6608968892">
+				<enhanced:img
+					src="@/lib/img/common/app_store/app_store.png"
+					alt="app_store"
+					class="mr-2 h-11 w-[120px]"
+				/>
+			</a>
 
-	<div class="mx-6 flex flex-col items-center">
-		<div>
-			<p class="text-[13px] text-[#767676]">퓨처밴스</p>
-			<p class="mt-1.5 text-[13px] text-[#767676]">대표 : 이상민</p>
-			<p class="mt-1.5 text-[13px] text-[#767676]">
-				부산 수영구 수영로 642번길 28 2층 1호
-			</p>
-			<p class="mt-1.5 text-[13px] text-[#767676]">
-				사업자등록번호 : 507-06-34662
-			</p>
-			<p class="mt-1.5 text-[13px] text-[#767676]">
-				개인정보보호책임자 : 이상민
-			</p>
-
-			<p class="mt-1.5 text-[13px] text-[#767676]">
-				이메일: devsangmin32@gmail.com
-			</p>
-			<p class="mt-8 text-lg font-semibold text-[#111111]">070-8018-6194</p>
-
-			<!-- <p class="mt-8 text-lg font-semibold text-[#111111]">070-8098-4659</p> -->
-
-			<!-- <div class="mt-[30px] flex pb-8">
-				<a href="https://apps.apple.com/app/id6608968892">
-					<enhanced:img
-						src="@/lib/img/common/app_store/app_store.png"
-						alt="app_store"
-						class="mr-2 h-11 w-[120px]"
-					/>
-				</a>
-
-				<a
-					href="https://play.google.com/store/apps/details?id=io.dabitiz.surveymoa"
-				>
-					<enhanced:img
-						src="@/lib/img/common/app_store/play_store.png"
-						alt="play_store"
-						class="h-11 w-[120px]"
-					/>
-				</a>
-			</div> -->
-		</div>
+			<a
+				href="https://play.google.com/store/apps/details?id=io.dabitiz.surveymoa"
+			>
+				<enhanced:img
+					src="@/lib/img/common/app_store/play_store.png"
+					alt="play_store"
+					class="h-11 w-[120px]"
+				/>
+			</a>
+		</div> -->
 	</div>
 </div>
 
